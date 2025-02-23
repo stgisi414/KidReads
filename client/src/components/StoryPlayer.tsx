@@ -30,15 +30,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         totalWords: story.words.length
       });
 
-      // Split heard text into individual words
-      const heardWords = heard.split(/\s+/);
+      // Split heard text into individual words and clean them
+      const heardWords = heard.split(/\s+/).map(w => w.trim().toLowerCase());
 
-      // Check if any of the heard words contains or is contained by the expected word
+      // Match if any heard word matches exactly OR contains/is contained by the expected word
       const isMatch = heardWords.some(word => {
-        const heardWord = word.trim();
-        return heardWord === expected || // exact match
-               expected.includes(heardWord) || // heard word is part of expected
-               heardWord.includes(expected); // expected word is part of heard word
+        return word === expected || 
+               word.indexOf(expected) >= 0 || 
+               expected.indexOf(word) >= 0;
       });
 
       console.log('🎯 Word Match Check:', {
@@ -62,7 +61,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         }
       } else {
         toast({
-          title: "Almost there! 💪",
+          title: "Almost there! 💪", 
           description: `I heard "${heard}". Try saying "${story.words[index]}" again.`,
         });
       }
