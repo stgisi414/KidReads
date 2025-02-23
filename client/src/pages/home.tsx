@@ -36,7 +36,7 @@ export default function Home() {
           <div className="flex items-center justify-center gap-4">
             <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
             <h5 className="text-2xl font-bold text-primary">
-              Reading Adventure!
+              KidReads
             </h5>
           </div>
           <p className="text-2xl text-gray-600">
