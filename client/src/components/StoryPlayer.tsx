@@ -153,7 +153,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   return (
-    {alert("isRecording: " + isRecording);}
     <div className="space-y-8">
       <WordDisplay words={story.words} currentIndex={currentWordIndex} />
 
