@@ -90,11 +90,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   return (
     <div className="p-8 text-center space-y-6">
       {/* Full story display */}
-      <div className="text-xl mb-8 leading-relaxed text-wrap">
+      <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
         {story.words.map((word, i) => (
           <span 
             key={i}
-            className={`mx-1 ${i === index ? 'text-2xl font-semibold text-primary' : 'text-gray-600'}`} 
+            className={`inline-block mx-1 ${i === index ? 'text-2xl font-semibold text-primary' : 'text-gray-600'}`} 
           >
             {word}
           </span>
