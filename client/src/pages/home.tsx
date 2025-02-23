@@ -48,7 +48,22 @@ export default function Home() {
               className="w-full bg-primary/90 hover:bg-primary text-white text-xl py-6"
               size="lg"
               disabled={isLoading}
-              onClick={() => handleTopicSubmit("friendly cat")}
+              onClick={() => {
+                const topics = [
+                  "friendly cat",
+                  "playful puppy",
+                  "magical rainbow",
+                  "flying butterfly",
+                  "happy elephant",
+                  "silly monkey",
+                  "gentle giraffe",
+                  "swimming dolphin",
+                  "busy bee",
+                  "wise owl"
+                ];
+                const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+                handleTopicSubmit(randomTopic);
+              }}
             >
               Try an Example Story
             </Button>
