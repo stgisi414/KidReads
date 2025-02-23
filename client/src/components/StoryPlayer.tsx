@@ -15,12 +15,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [lastHeard, setLastHeard] = useState<string>("");
   const { toast } = useToast();
 
+  // Store the current word we're looking for
+  const currentWord = story.words[index];
+
   const { startRecording, stopRecording } = useSpeechRecognition({
     continuous: false,
     interimResults: false,
     onTranscriptionUpdate: (heard) => {
-      // Get the current word we're expecting
-      const currentWord = story.words[index];
+      // Always work with the current word based on the current index
       const expected = currentWord.toLowerCase().trim();
       heard = heard.toLowerCase().trim();
       setLastHeard(heard);
@@ -52,7 +54,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         console.log('Word matching comparison:', {
           word,
           cleanExpected,
-          match
+          match,
+          currentIndex: index
         });
 
         return match;
@@ -62,7 +65,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         heardWords,
         cleanExpected,
         isMatch,
-        currentIndex: index
+        currentIndex: index,
+        currentWord
       });
 
       if (isMatch) {
@@ -71,7 +75,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             title: "Great job! 🌟",
             description: `You correctly said "${currentWord}"!`,
           });
-          setIndex(prev => prev + 1);
+          setIndex(index => index + 1);
         } else {
           toast({
             title: "Congratulations! 🎉",
