@@ -1,0 +1,88 @@
+Replit Agent, I need you to create an interactive read-along web app for kids learning to read, featuring a **"Word-by-Word Repeat Mode"** as the core reading experience.  This app will dynamically generate stories based on voice input, illustrate them, and provide this interactive word-by-word read-along.
+
+**Core Technologies:**
+
+*   **Story Generation: Google Gemini REST API** (Same as before - for generating story content based on voice topic input)
+*   **Voice Input (Topic Selection): WebKit Speech Recognition (SpeechRecognition API)** (Same as before - for initial topic selection)
+*   **Audio Playback (TTS) for Word-by-Word Reading: WebKit Speech Synthesis (SpeechSynthesis API)**
+    *   Use the browser's built-in **Web Speech API (SpeechSynthesis interface)** to read the story text, **word by word**.
+    *   Implement TTS entirely on the **client-side (Javascript)**.
+    *   Control speech rate (speed adjustment - might be less crucial in word-by-word mode, but keep it).
+    *   **Highlight the *current word* being spoken** before TTS reads it.
+*   **Speech Recognition (User Word Repetition): WebKit Speech Recognition (SpeechRecognition API)**
+    *   Use the browser's built-in **Web Speech API (SpeechRecognition interface)** to capture the user's speech after each word is read.
+    *   Implement speech recognition entirely on the **client-side (Javascript)**.
+*   **Illustration Generation: fal.ai Node Package and `fast-lightning-sdxl`** (Same as before - backend image generation)
+
+**Functionality Requirements:**
+
+*   **Voice-Activated Topic Selection:** (Same as before - initial topic selection via voice)
+*   **Story Generation:** (Same as before - backend Gemini API story generation based on topic)
+*   **Word-by-Word Repeat Read-Along Mode:**
+    *   **Word Highlighting:** Before each word is read, highlight it clearly in the text.
+    *   **Word-by-Word TTS Playback:** Use Web Speech API to read *one word at a time*.
+    *   **Automatic Pause after each word:** Pause the read-along after each word is spoken.
+    *   **Activate User Speech Recognition:**  After the pause, automatically activate Web Speech Recognition to listen for the user's spoken input.
+    *   **User Input Check (Basic):** Compare the user's spoken input to the word that was just read (simple string comparison for now).
+    *   **Feedback (Initial Simple Feedback):**
+        *   **Correct Repetition:** Provide brief positive feedback (visual checkmark or sound) and automatically proceed to highlight and read the *next word*.
+        *   **Incorrect or No Repetition:** For the first version, simply proceed to highlight and read the *next word* after a short pause and perhaps a subtle visual cue indicating incorrect/missed attempt (e.g., brief color change of the word highlight).  *We will refine feedback in later iterations.*
+*   **Playback Control:** (Speed adjustment - keep it, though less critical; Play/Pause might be less relevant in word-by-word mode, but maybe keep a "Pause Read-Along" button).
+*   **Interactive Spelling Activity:** (Same as before - pause and spelling activity)
+*   **Simple Navigation:** (Next/Previous Page buttons – might navigate word-by-word or page-by-page – decide which is more intuitive in word-by-word mode - maybe page-by-page initially).
+*   **Kid-Friendly Design:** (Same as before)
+
+**Content and Story Example (Illustrative):**  (Example needs to be adapted to word-by-word flow)
+
+*   **Generated Story (Example - Gemini Output, Topic: "Dog"):** "A dog runs fast." (Very short example for word-by-word demo)
+*   **Word-by-Word Read-Along Flow (Example - Sentence: "A dog runs fast."):**
+    1.  **Highlight "A"**  -> TTS reads "A" -> Pause -> User attempts to repeat "A" -> Feedback (simple - proceed regardless for now)
+    2.  **Highlight "dog"** -> TTS reads "dog" -> Pause -> User attempts to repeat "dog" -> Feedback (simple - proceed)
+    3.  **Highlight "runs"** -> TTS reads "runs" -> Pause -> User attempts to repeat "runs" -> Feedback (simple - proceed)
+    4.  **Highlight "fast."** -> TTS reads "fast." -> Pause -> User attempts to repeat "fast." -> Feedback (simple - proceed) -> End of sentence/page (maybe trigger spelling activity or next page).
+
+**Steps for Replit Agent (Revised for Word-by-Word Mode):**
+
+1.  **Project Setup:** (Node.js project)
+2.  **Backend Setup (Node.js):** (Same as before - Gemini Story API, fal.ai Image API endpoints)
+3.  **Frontend Setup (HTML, CSS, Javascript):**
+    *   **Initial Screen UI:** (Same as before - voice topic selection)
+    *   **Read-Along UI:** (Structure for story text, illustrations, controls, spelling activity) -  Needs to be adapted for clear word-by-word presentation and highlighting.
+    *   **Client-side Javascript Logic (Crucially Revised for Word-by-Word Mode):**
+        *   **Voice Input for Topic:** (Same as before)
+        *   **Story and Image Loading:** (Same as before)
+        *   **Word-by-Word Read-Along Logic (New and Core):**
+            *   When read-along starts:
+                *   Get the text content of the current page/sentence.
+                *   Split the text into an array of words.
+                *   **Iterate through the words:** For each word in the array:
+                    *   **Highlight the current word in the UI.**
+                    *   **Use Web Speech API to read *only* the current word.**
+                    *   **Pause after TTS finishes.**
+                    *   **Activate Web Speech Recognition to listen for user input.**
+                    *   **Get user's speech input.**
+                    *   **Compare user input to the current word (basic string compare).**
+                    *   **Provide simple feedback (visual cue).**
+                    *   **Delay briefly, then proceed to the *next word* in the array.**
+            *   **Playback Control:** (Implement play/pause might be less direct in word-by-word. Maybe a "Pause Read-Along" button to stop the word-by-word sequence. Speed control - for Web Speech API rate).
+            *   **Spelling Activity Trigger:** (Same as before).
+            *   **Navigation:** (Page-by-page or maybe sentence-by-sentence navigation in word-by-word mode).
+4.  **API Key Management:** (Secure storage in Replit)
+5.  **Testing and Refinement:** (Thorough testing, *especially* of the word-by-word flow, user interaction, and feedback).
+
+**Please provide the initial code structure for this Word-by-Word Repeat Mode version, focusing on:**
+
+*   **Basic Frontend (HTML, CSS, Javascript):**
+    *   HTML structure for the read-along page with an area to display story text (initially just placeholder text - e.g., "Placeholder Story Sentence.").
+    *   Javascript:  Focus on setting up the *core word-by-word read-along loop*.
+        *   Hardcode a sentence in Javascript (e.g., `const sentence = "The cat sat";`).
+        *   Split the sentence into words: `const words = sentence.split(" ");`.
+        *   Implement a Javascript loop that iterates through the `words` array.
+        *   Inside the loop:
+            *   `console.log()` the current word.
+            *   Use `SpeechSynthesis` to speak the current word (no highlighting, no speech recognition yet - just get TTS word-by-word working in a loop).
+            *   Add a `setTimeout` or `async/await` delay after each word's TTS to simulate the pause before user repetition (e.g., 1-2 seconds).
+
+This initial code will just demonstrate the fundamental word-by-word TTS playback loop in the frontend.  We can then build on this core to add highlighting, speech recognition, user input checking, feedback, and backend integration.
+
+Let me know if this revised prompt and plan for the Word-by-Word Repeat Mode sounds good!  This is a really powerful feature for early readers!
