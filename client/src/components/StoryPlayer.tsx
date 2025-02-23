@@ -32,16 +32,20 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       // Split heard text into individual words and clean them
       const heardWords = heard.split(/\s+/).map(w => w.trim().toLowerCase());
+      const cleanExpected = expected.replace(/[.,!?]$/, '');
 
-      // Match if any heard word matches exactly OR contains/is contained by the expected word
+      // Match more flexibly
       const isMatch = heardWords.some(word => {
-        // First try exact match
-        if (word === expected) return true;
-        
-        // Then try without punctuation
         const cleanWord = word.replace(/[.,!?]$/, '');
-        const cleanExpected = expected.replace(/[.,!?]$/, '');
-        return cleanWord === cleanExpected;
+        return cleanWord === cleanExpected || 
+               cleanWord.includes(cleanExpected) || 
+               cleanExpected.includes(cleanWord);
+      });
+
+      console.log('Word matching:', {
+        heard: heardWords,
+        expected: cleanExpected,
+        isMatch
       });
 
       console.log('🎯 Word Match Check:', {
