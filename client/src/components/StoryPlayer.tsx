@@ -1,4 +1,3 @@
-//client/src/components/StoryPlayer.tsx
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import WordDisplay from "@/components/WordDisplay";
@@ -11,7 +10,22 @@ interface StoryPlayerProps {
   story: Story;
 }
 
-declare var webkitSpeechRecognition: any;
+// Properly declare the webkitSpeechRecognition interface
+interface IWebkitSpeechRecognition extends EventTarget {
+  new(): IWebkitSpeechRecognition;
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onerror: (event: any) => void;
+  onend: () => void;
+  onresult: (event: any) => void;
+  onstart: () => void;
+}
+
+declare var webkitSpeechRecognition: new () => IWebkitSpeechRecognition;
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -20,11 +34,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [speed, setSpeed] = useState(0.8);
   const { toast } = useToast();
 
-  // Use useRef for recognition and synthesis to avoid re-initialization
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<IWebkitSpeechRecognition | null>(null);
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
-  // Initialize speech synthesis (it doesn't require user gesture)
+  // Initialize speech synthesis
   useEffect(() => {
     if ('speechSynthesis' in window) {
       synthesisRef.current = window.speechSynthesis;
@@ -36,99 +49,90 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       });
     }
 
-    // Cleanup: cancel any ongoing speech when unmounting
     return () => {
       if (synthesisRef.current) {
         synthesisRef.current.cancel();
       }
     };
-  }, []); // Empty dependency array: run only once on mount
+  }, []);
 
+  // Initialize speech recognition immediately
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window) {
+      const newRecognition = new webkitSpeechRecognition();
+      newRecognition.continuous = false;
+      newRecognition.interimResults = false;
+      newRecognition.lang = 'en-US';
 
-    useEffect(() => {
-        // Cleanup: cancel any ongoing speech when unmounting
-        return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current.abort();
-            }
-        };
-    }, []);
+      newRecognition.onstart = () => {
+        console.log('Recognition started');
+        setIsListening(true);
+      };
 
+      newRecognition.onend = () => {
+        console.log('Recognition ended');
+        setIsListening(false);
+        if (isPlaying) {
+          setTimeout(startListening, 500);
+        }
+      };
 
-  const initializeRecognition = () => {
-      if (!recognitionRef.current && 'webkitSpeechRecognition' in window) {
-          const newRecognition = new webkitSpeechRecognition();
-          newRecognition.continuous = false;
-          newRecognition.interimResults = false;
-          newRecognition.lang = 'en-US';
+      newRecognition.onerror = (event: any) => {
+        console.error('Recognition error:', event.error);
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          toast({
+            title: "Microphone Access Required",
+            description: "Please allow microphone access to continue.",
+            variant: "destructive",
+          });
+          setIsPlaying(false);
+        }
+      };
 
-          newRecognition.onstart = () => {
-              console.log('Recognition started');
-              setIsListening(true);
-          };
+      newRecognition.onresult = (event: any) => {
+        const spokenWord = event.results[0][0].transcript.toLowerCase().trim();
+        const currentWord = story.words[currentWordIndex].toLowerCase().trim();
+        console.log('Spoken:', spokenWord, 'Expected:', currentWord);
 
-          newRecognition.onend = () => {
-              console.log('Recognition ended');
-              setIsListening(false);
-              if (isPlaying) {
-                  // If we're still playing, restart recognition after a short delay
-                  setTimeout(startListening, 500);
-              }
-          };
+        if (spokenWord.includes(currentWord) || currentWord.includes(spokenWord)) {
+          toast({
+            description: "Great reading! ⭐",
+            duration: 1000,
+          });
+          handleNextWord();
+        } else {
+          toast({
+            title: "Try Again",
+            description: `Let's try reading: "${story.words[currentWordIndex]}"`,
+            duration: 2000,
+          });
+          setTimeout(() => {
+            speakWord(story.words[currentWordIndex]);
+          }, 1500);
+        }
+      };
 
-          newRecognition.onerror = (event: any) => {
-              console.error('Recognition error:', event.error);
-              setIsListening(false);
-              setIsPlaying(false); // Stop playback on error
+      recognitionRef.current = newRecognition;
+    } else {
+      toast({
+        title: "Speech Recognition Not Available",
+        description: "Your browser doesn't support speech recognition.",
+        variant: "destructive",
+      });
+    }
 
-              if (event.error === 'not-allowed') {
-                  toast({
-                      title: "Microphone Access Required",
-                      description: "Please click 'Start Reading' again and allow microphone access.",
-                      variant: "destructive",
-                  });
-              } else {
-                  toast({
-                      title: "Speech Recognition Error",
-                      description: "There was an error with speech recognition. Please try again.",
-                      variant: "destructive",
-                  });
-              }
-          };
-
-          newRecognition.onresult = (event: any) => {
-                const spokenWord = event.results[0][0].transcript.toLowerCase().trim();
-                const currentWord = story.words[currentWordIndex].toLowerCase().trim();
-                console.log('Spoken:', spokenWord, 'Expected:', currentWord);
-
-                if (spokenWord.includes(currentWord) || currentWord.includes(spokenWord)) {
-                  toast({
-                    description: "Great reading! ⭐",
-                    duration: 1000,
-                  });
-                  handleNextWord();
-                } else {
-                  toast({
-                    title: "Try Again",
-                    description: `Let's try reading: "${story.words[currentWordIndex]}"`,
-                    duration: 2000,
-                  });
-                  // Repeat the word after a short delay
-                  setTimeout(() => {
-                    speakWord(story.words[currentWordIndex]);
-                  }, 1500);
-                }
-          };
-
-          recognitionRef.current = newRecognition;
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
       }
-  }
+    };
+  }, [story.words, currentWordIndex, isPlaying]);
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
       try {
         recognitionRef.current.start();
-        console.log('Starting recognition');
       } catch (error) {
         console.error('Failed to start recognition:', error);
         setIsListening(false);
@@ -139,13 +143,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const speakWord = (word: string) => {
     if (!synthesisRef.current) return;
 
-    synthesisRef.current.cancel(); // Cancel any ongoing speech
-
+    synthesisRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = speed;
 
     utterance.onend = () => {
-      console.log('Finished speaking:', word);
       if (isPlaying) {
         setTimeout(() => {
           startListening();
@@ -153,16 +155,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       }
     };
 
-    console.log('Speaking word:', word);
     synthesisRef.current.speak(utterance);
   };
 
   const handleNextWord = () => {
     if (currentWordIndex < story.words.length - 1) {
       setCurrentWordIndex(prev => prev + 1);
-        if (recognitionRef.current) {
-            recognitionRef.current.abort();
-        }
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
       setTimeout(() => {
         speakWord(story.words[currentWordIndex + 1]);
       }, 1000);
@@ -177,15 +178,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const togglePlayback = () => {
     if (!isPlaying) {
-        // Initialize recognition (if not already done) AND start it immediately
-        initializeRecognition();
-        if(recognitionRef.current){
-            startListening(); // Attempt to start, triggering the permission prompt
-        }
-
       setIsPlaying(true);
-      speakWord(story.words[currentWordIndex]);  // Start speaking the first word
-
+      speakWord(story.words[currentWordIndex]);
     } else {
       setIsPlaying(false);
       if (synthesisRef.current) {
@@ -245,7 +239,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           </Button>
           <Button
             size="lg"
-            onClick={togglePlayback}  //  onClick now handles initialization
+            onClick={togglePlayback}
             variant={isPlaying ? "destructive" : "default"}
           >
             {isPlaying ? (
