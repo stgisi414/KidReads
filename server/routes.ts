@@ -23,14 +23,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { content, words } = await generateStory(topic);
       console.log('Generated story:', { content, wordCount: words.length });
 
-      // Generate illustration using fal.ai
+      // Generate illustration using fal.ai subscription
       console.log('Generating illustration for topic:', topic);
-      const result = await fal.run('fast-lightning-sdxl', {
+      const result = await fal.subscribe("fal-ai/fast-lightning-sdxl", {
         input: {
           prompt: `A children's book illustration of ${topic}, cute, colorful, simple style`,
           negative_prompt: "text, words, letters, scary, violent",
-        },
+        }
       });
+
+      if (!result?.images?.[0]?.url) {
+        throw new Error('Failed to generate illustration');
+      }
 
       const imageUrl = result.images[0].url;
       console.log('Generated illustration URL:', imageUrl);
