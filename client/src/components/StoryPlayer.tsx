@@ -33,8 +33,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       // Split heard text into individual words
       const heardWords = heard.split(/\s+/);
 
-      // Check if any of the heard words exactly match the expected word
-      const isMatch = heardWords.some(word => word === expected);
+      // Check if any of the heard words contains or is contained by the expected word
+      const isMatch = heardWords.some(word => {
+        const heardWord = word.trim();
+        return heardWord === expected || // exact match
+               expected.includes(heardWord) || // heard word is part of expected
+               heardWord.includes(expected); // expected word is part of heard word
+      });
 
       console.log('🎯 Word Match Check:', {
         heardWords,
@@ -46,7 +51,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         if (index < story.words.length - 1) {
           toast({
             title: "Great job! 🌟",
-            description: `You correctly said "${expected}"!`,
+            description: `You correctly said "${story.words[index]}"!`,
           });
           setIndex(index + 1);
         } else {
