@@ -207,11 +207,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             speakWord(story.words[currentWordIndex]); // Start reading
         } else {
             setIsPlaying(false);
+            setIsListening(false); // Ensure listening state is updated
             if (synthesisRef.current) {
                 synthesisRef.current.cancel();
             }
             if (recognitionRef.current) {
-                recognitionRef.current.abort(); // Correctly abort
+                recognitionRef.current.stop(); // Use stop() instead of abort()
             }
         }
     };
