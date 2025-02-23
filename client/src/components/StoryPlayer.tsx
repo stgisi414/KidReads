@@ -232,7 +232,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </div>
       </div>
 
-      {console.log("isRecording:", isRecording)}
+      
       {isRecording && (
         <div className="text-center space-y-2">
           <Mic className="w-4 h-4 text-green-500 mx-auto animate-pulse" />
