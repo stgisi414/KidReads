@@ -29,7 +29,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       toast({
         title: "Text-to-Speech Not Available",
         description: "Your browser doesn't support text-to-speech.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
 
@@ -61,23 +61,28 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   }, []);
 
   const handleTranscription = (transcript: string) => {
+    console.log('Received transcription:', transcript);
     if (!transcript) return;
 
     setDictation(transcript);
     const spokenWord = transcript.toLowerCase().trim();
     const currentWord = story.words[currentWordIndex].toLowerCase().trim();
 
-    // Compare words after removing punctuation
+    console.log('Comparing words:', { spokenWord, currentWord });
+
+    // Simple word comparison without punctuation
     const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, "").trim();
     const cleanCurrentWord = currentWord.replace(/[.,!?]/g, "").trim();
 
     if (cleanSpokenWord.includes(cleanCurrentWord) || cleanCurrentWord.includes(cleanSpokenWord)) {
+      console.log('Word matched! Moving to next word');
       toast({
         description: "Great reading! ⭐",
         duration: 1000,
       });
       handleNextWord();
     } else {
+      console.log('Word did not match, trying again');
       toast({
         title: "Try Again",
         description: `Let's try reading: "${story.words[currentWordIndex]}"`,
@@ -96,6 +101,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   });
 
   const speakWord = (word: string) => {
+    console.log('Starting to speak word:', word);
     if (!synthesisRef.current) return;
 
     // Cancel any ongoing speech and recording
@@ -123,7 +129,20 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       // Only start recording if we're still in playing mode
       if (isPlaying && hasMicPermission) {
         console.log('Starting recording after speech');
-        startRecording();
+        // Add a small delay before starting recording
+        setTimeout(() => {
+          try {
+            console.log('Actually starting recording now');
+            startRecording();
+          } catch (error) {
+            console.error('Failed to start recording:', error);
+            toast({
+              title: "Recognition Error",
+              description: "Failed to start speech recognition",
+              variant: "destructive"
+            });
+          }
+        }, 500);
       }
     };
 
@@ -136,12 +155,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       });
     };
 
-    utterance.onpause = () => console.log('Speech paused');
-    utterance.onresume = () => console.log('Speech resumed');
-    utterance.onboundary = (event) => console.log('Speech boundary hit:', event.charIndex);
-
     try {
-      console.log('Starting speech for word:', word);
       synthesisRef.current.speak(utterance);
     } catch (error) {
       console.error('Speech synthesis failed:', error);
@@ -154,6 +168,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   const handleNextWord = () => {
+    console.log('Moving to next word');
     stopRecording();
     if (currentWordIndex < story.words.length - 1) {
       const nextIndex = currentWordIndex + 1;

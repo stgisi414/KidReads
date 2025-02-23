@@ -8,14 +8,6 @@ interface UseSpeechRecognitionProps {
   interimResults?: boolean;
 }
 
-// Proper type declarations for Speech Recognition API
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
-
 export function useSpeechRecognition({ 
   language = 'en-US', 
   onTranscriptionUpdate,
@@ -38,10 +30,12 @@ export function useSpeechRecognition({
       recognition.interimResults = interimResults;
 
       recognition.onstart = () => {
+        console.log('Speech recognition started');
         setIsRecording(true);
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
+        console.log('Speech recognition result received');
         let finalTranscript = '';
         let interimTranscript = '';
 
@@ -57,6 +51,7 @@ export function useSpeechRecognition({
         }
 
         const currentTranscript = finalTranscript || interimTranscript;
+        console.log('Transcription:', currentTranscript);
         setTranscript(currentTranscript);
 
         if (onTranscriptionUpdate && (finalTranscript || !interimResults)) {
@@ -83,6 +78,7 @@ export function useSpeechRecognition({
       };
 
       recognition.onend = () => {
+        console.log('Speech recognition ended');
         setIsRecording(false);
       };
 
@@ -105,6 +101,7 @@ export function useSpeechRecognition({
   const startRecording = () => {
     if (recognitionRef.current) {
       try {
+        console.log('Starting speech recognition...');
         setIsRecording(true);
         recognitionRef.current.start();
       } catch (error) {
@@ -116,6 +113,7 @@ export function useSpeechRecognition({
 
   const stopRecording = () => {
     if (recognitionRef.current) {
+      console.log('Stopping speech recognition...');
       setIsRecording(false);
       recognitionRef.current.stop();
     }
