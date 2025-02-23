@@ -1,11 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import WordDisplay from "@/components/WordDisplay";
-import { Play, Pause, RotateCcw, Mic } from "lucide-react";
+import { Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Slider } from "@/components/ui/slider";
 import type { Story } from "@shared/schema";
-import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 
 interface StoryPlayerProps {
   story: Story;
@@ -13,36 +10,13 @@ interface StoryPlayerProps {
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(0.8);
-  const [dictation, setDictation] = useState("");
+  const [isReading, setIsReading] = useState(false);
   const [hasMicPermission, setHasMicPermission] = useState(false);
   const { toast } = useToast();
-  const synthesisRef = useRef<SpeechSynthesis | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Initialize speech synthesis
+  // Check microphone permission on mount
   useEffect(() => {
-    if ("speechSynthesis" in window) {
-      synthesisRef.current = window.speechSynthesis;
-    } else {
-      toast({
-        title: "Text-to-Speech Not Available",
-        description: "Your browser doesn't support text-to-speech.",
-        variant: "destructive"
-      });
-    }
-
-    return () => {
-      if (synthesisRef.current && utteranceRef.current) {
-        synthesisRef.current.cancel();
-      }
-    };
-  }, []);
-
-  // Request microphone permission on mount
-  useEffect(() => {
-    const requestMicPermission = async () => {
+    const checkMicPermission = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach(track => track.stop());
@@ -52,244 +26,108 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         setHasMicPermission(false);
         toast({
           title: "Microphone Access Required",
-          description: "Please allow microphone access to use this feature",
+          description: "Please allow microphone access and refresh the page to start reading",
           variant: "destructive"
         });
       }
     };
-    requestMicPermission();
+    checkMicPermission();
   }, []);
 
-  const handleTranscription = (transcript: string) => {
-    console.log('📥 Received transcription:', transcript);
-    if (!transcript) {
-      console.log('❌ Empty transcript received, ignoring');
-      return;
-    }
-
-    setDictation(transcript);
-    const spokenWord = transcript.toLowerCase().trim();
-    const currentWord = story.words[currentWordIndex].toLowerCase().trim();
-
-    console.log('🔍 Word Comparison:', {
-      spoken: spokenWord,
-      expected: currentWord,
-      currentIndex: currentWordIndex
-    });
-
-    // Simple word comparison without punctuation
-    const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, "").trim();
-    const cleanCurrentWord = currentWord.replace(/[.,!?]/g, "").trim();
-
-    console.log('🧹 Cleaned Words:', {
-      cleaned_spoken: cleanSpokenWord,
-      cleaned_expected: cleanCurrentWord
-    });
-
-    if (cleanSpokenWord.includes(cleanCurrentWord) || cleanCurrentWord.includes(cleanSpokenWord)) {
-      console.log('✅ Word matched! Moving to next word');
-      toast({
-        description: "Great reading! ⭐",
-        duration: 1000,
-      });
-      handleNextWord();
-    } else {
-      console.log('❌ Word did not match, trying again');
-      toast({
-        title: "Try Again",
-        description: `Let's try reading: "${story.words[currentWordIndex]}"`,
-        duration: 2000,
-      });
-      // Repeat the word after a short delay
-      setTimeout(() => speakWord(story.words[currentWordIndex]), 1000);
-    }
-  };
-
-  const { isRecording, startRecording, stopRecording } = useSpeechRecognition({
-    language: "en-US",
-    onTranscriptionUpdate: handleTranscription,
-    continuous: false,
-    interimResults: false,
-  });
-
-  const speakWord = (word: string) => {
-    console.log('Starting to speak word:', word);
-    if (!synthesisRef.current) return;
-
-    // Only cancel ongoing speech synthesis
-    if (utteranceRef.current) {
-      synthesisRef.current.cancel();
-    }
-
-    // Create new utterance
-    const utterance = new SpeechSynthesisUtterance(word);
-    utteranceRef.current = utterance;
-
-    // Configure utterance
-    utterance.rate = speed;
-    utterance.lang = "en-US";
-    utterance.volume = 1;
-
-    // Debug logs for speech synthesis events
-    utterance.onstart = () => {
-      console.log('Speech started:', word);
-    };
-
-    utterance.onend = () => {
-      console.log('Speech ended:', word);
-      // Only start recording if we're still in playing mode
-      if (isPlaying && hasMicPermission) {
-        console.log('Starting recording after speech');
-        // Add a small delay before starting recording
-        setTimeout(() => {
-          try {
-            console.log('Actually starting recording now');
-            startRecording();
-          } catch (error) {
-            console.error('Failed to start recording:', error);
-            toast({
-              title: "Recognition Error",
-              description: "Failed to start speech recognition",
-              variant: "destructive"
-            });
-          }
-        }, 500);
-      }
-    };
-
-    utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event.error);
-      toast({
-        title: "Speech Error",
-        description: "Failed to speak the word",
-        variant: "destructive"
-      });
-    };
-
-    try {
-      synthesisRef.current.speak(utterance);
-    } catch (error) {
-      console.error('Speech synthesis failed:', error);
-      toast({
-        title: "Speech Error",
-        description: "Failed to speak the word",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleNextWord = () => {
-    console.log('Moving to next word');
-    stopRecording();
-    if (currentWordIndex < story.words.length - 1) {
-      const nextIndex = currentWordIndex + 1;
-      setCurrentWordIndex(nextIndex);
-      // Small delay before speaking next word
-      setTimeout(() => speakWord(story.words[nextIndex]), 500);
-    } else {
-      setIsPlaying(false);
-      toast({
-        title: "Story Complete! 🎉",
-        description: "Great job reading!",
-      });
-    }
-  };
-
-  const togglePlayback = () => {
+  const readAndListen = async () => {
     if (!hasMicPermission) {
       toast({
-        title: "Microphone Required",
-        description: "Please allow microphone access to start reading",
+        title: "Microphone Access Required",
+        description: "Please allow microphone access and refresh the page",
         variant: "destructive"
       });
       return;
     }
 
-    if (!isPlaying) {
-      setIsPlaying(true);
-      speakWord(story.words[currentWordIndex]);
-    } else {
-      setIsPlaying(false);
-      stopRecording();
-      if (synthesisRef.current) {
-        synthesisRef.current.cancel();
-      }
-    }
-  };
+    setIsReading(true);
 
-  const restart = () => {
-    setCurrentWordIndex(0);
-    setIsPlaying(false);
-    stopRecording();
-    if (synthesisRef.current) {
-      synthesisRef.current.cancel();
-    }
-    toast({ description: "Starting from the beginning!" });
+    // Read the current word
+    const utterance = new SpeechSynthesisUtterance(story.words[currentWordIndex]);
+    utterance.rate = 0.8;
+    utterance.onend = () => {
+      // After reading, start listening
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        console.log('Started listening for:', story.words[currentWordIndex]);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.toLowerCase().trim();
+        const currentWord = story.words[currentWordIndex].toLowerCase().trim();
+
+        console.log('Heard:', transcript, 'Expected:', currentWord);
+
+        // Simple word matching
+        if (transcript.includes(currentWord) || currentWord.includes(transcript)) {
+          toast({ description: "Correct! ⭐" });
+          if (currentWordIndex < story.words.length - 1) {
+            setCurrentWordIndex(prev => prev + 1);
+            setTimeout(readAndListen, 1000);
+          } else {
+            toast({ description: "Story complete! 🎉" });
+            setIsReading(false);
+          }
+        } else {
+          toast({ 
+            description: `Try again: "${story.words[currentWordIndex]}"`,
+            variant: "destructive" 
+          });
+          setTimeout(readAndListen, 1000);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Recognition error:', event.error);
+        setIsReading(false);
+        toast({
+          title: "Error",
+          description: "Failed to start listening. Please try again.",
+          variant: "destructive"
+        });
+      };
+
+      recognition.start();
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   return (
     <div className="space-y-8">
-      <WordDisplay words={story.words} currentIndex={currentWordIndex} />
-
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">Reading Speed:</span>
-          <Slider
-            value={[speed]}
-            onValueChange={([newSpeed]) => setSpeed(newSpeed)}
-            min={0.5}
-            max={2}
-            step={0.1}
-            className="w-[200px]"
-          />
-          <span className="text-sm">{speed.toFixed(1)}x</span>
+      {!hasMicPermission ? (
+        <div className="text-center p-4 bg-yellow-50 rounded-lg">
+          <h3 className="text-lg font-semibold text-yellow-800">Microphone Access Required</h3>
+          <p className="text-sm text-yellow-600 mt-2">
+            Please allow microphone access when prompted and refresh the page to start reading.
+          </p>
         </div>
-
-        <div className="flex justify-center gap-4">
-          <Button size="lg" variant="outline" onClick={restart}>
-            <RotateCcw className="mr-2 h-4 w-4" /> Restart
-          </Button>
-          <Button
-            size="lg"
-            onClick={togglePlayback}
-            variant={isPlaying ? "destructive" : "default"}
-          >
-            {isPlaying ? (
-              <>
-                <Pause className="mr-2 h-4 w-4" /> Pause
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" /> Start Reading
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      <div className="text-center space-y-2">
-        {!hasMicPermission && (
-          <div className="text-yellow-600 bg-yellow-50 p-4 rounded-lg">
-            <p>Microphone access is required for interactive reading.</p>
-            <p className="text-sm">Please allow microphone access when prompted.</p>
+      ) : (
+        <>
+          <div className="text-4xl font-bold text-center">
+            {story.words[currentWordIndex]}
           </div>
-        )}
 
-        {isRecording && (
-          <div>
-            <Mic className="w-4 h-4 text-green-500 mx-auto animate-pulse" />
-            <p className="text-sm text-green-600">
-              Your turn! Say: "{story.words[currentWordIndex]}"
-            </p>
-            <div className="border p-2 rounded-md mt-2">
-              <p className="text-xs">Live Dictation:</p>
-              <pre className="text-xs bg-gray-50 p-2 rounded">
-                {dictation || 'Listening...'}
-              </pre>
-            </div>
+          <div className="flex justify-center">
+            <Button
+              size="lg"
+              onClick={() => !isReading && readAndListen()}
+              disabled={isReading || !hasMicPermission}
+            >
+              <Play className="mr-2 h-4 w-4" />
+              {isReading ? "Listening..." : "Start Reading"}
+            </Button>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }
