@@ -19,6 +19,7 @@ export function useSpeechRecognition({
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const minListenTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Request microphone permission and initialize recognition
   const initializeSpeechRecognition = async () => {
@@ -40,6 +41,11 @@ export function useSpeechRecognition({
       recognition.onstart = () => {
         console.log('🎤 Speech recognition started');
         setIsRecording(true);
+
+        // Set a minimum listening time of 2 seconds
+        minListenTimeoutRef.current = setTimeout(() => {
+          minListenTimeoutRef.current = null;
+        }, 2000);
       };
 
       recognition.onspeechstart = () => {
@@ -72,6 +78,12 @@ export function useSpeechRecognition({
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('❌ Speech recognition error:', event.error);
+
+        // Don't stop if we're still in minimum listen time
+        if (minListenTimeoutRef.current) {
+          return;
+        }
+
         setIsRecording(false);
 
         switch (event.error) {
@@ -84,11 +96,11 @@ export function useSpeechRecognition({
             });
             break;
           case 'no-speech':
-            toast({
-              title: "No Speech Detected",
-              description: "Please try speaking again.",
-              variant: "destructive"
-            });
+            // Restart recognition if no speech detected
+            if (isRecording) {
+              recognition.stop();
+              setTimeout(() => recognition.start(), 100);
+            }
             break;
           default:
             toast({
@@ -101,6 +113,13 @@ export function useSpeechRecognition({
 
       recognition.onend = () => {
         console.log('🛑 Speech recognition ended');
+
+        // Don't stop if we're still in minimum listen time
+        if (minListenTimeoutRef.current) {
+          recognition.start();
+          return;
+        }
+
         setIsRecording(false);
       };
 
@@ -134,6 +153,9 @@ export function useSpeechRecognition({
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (minListenTimeoutRef.current) {
+        clearTimeout(minListenTimeoutRef.current);
+      }
     };
   }, [language, onTranscriptionUpdate, continuous, interimResults]);
 
@@ -159,6 +181,10 @@ export function useSpeechRecognition({
 
   const stopRecording = () => {
     if (recognitionRef.current && isRecording) {
+      if (minListenTimeoutRef.current) {
+        clearTimeout(minListenTimeoutRef.current);
+        minListenTimeoutRef.current = null;
+      }
       recognitionRef.current.stop();
     }
   };
