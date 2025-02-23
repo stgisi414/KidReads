@@ -10,11 +10,10 @@ interface StoryPlayerProps {
   story: Story;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
+// Add proper type declarations for Speech Recognition
+interface IWindow extends Window {
+  SpeechRecognition: new () => SpeechRecognition;
+  webkitSpeechRecognition: new () => SpeechRecognition;
 }
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
@@ -23,19 +22,26 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [speed, setSpeed] = useState(0.8); // Default speed
+  const [speed, setSpeed] = useState(0.8);
   const { toast } = useToast();
 
+  // Initialize speech recognition and synthesis on component mount
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // Initialize speech synthesis
+      const synth = window.speechSynthesis;
+      setSynthesis(synth);
+
+      // Initialize speech recognition
       try {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechRecognition = (window as unknown as IWindow).SpeechRecognition || 
+                                 (window as unknown as IWindow).webkitSpeechRecognition;
         if (SpeechRecognition) {
           const newRecognition = new SpeechRecognition();
           newRecognition.continuous = false;
           newRecognition.interimResults = false;
+          newRecognition.lang = 'en-US';
           setRecognition(newRecognition);
-          setSynthesis(window.speechSynthesis);
         } else {
           toast({
             title: "Speech Recognition Not Available",
@@ -54,6 +60,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, []);
 
+  // Function to speak a word and wait for user input
   const speakWord = (word: string) => {
     if (synthesis) {
       // Cancel any ongoing speech
@@ -61,11 +68,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.rate = speed;
+
+      // Add a delay after speaking to allow for user response
       utterance.onend = () => {
         if (isPlaying) {
-          startListening();
+          setTimeout(() => {
+            startListening();
+          }, 500); // Short delay before starting recognition
         }
       };
+
       synthesis.speak(utterance);
     }
   };
@@ -93,43 +105,43 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     } else {
       setIsPlaying(false);
       toast({
-        title: "Story Complete!",
-        description: "You've finished reading the story.",
+        title: "Story Complete! 🎉",
+        description: "Great job reading the whole story!",
       });
     }
   };
 
+  // Set up recognition event handlers
   useEffect(() => {
     if (recognition) {
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         const spokenWord = event.results[0][0].transcript.toLowerCase().trim();
         const currentWord = story.words[currentWordIndex].toLowerCase().trim();
 
+        // Compare spoken word with current word
         if (spokenWord.includes(currentWord)) {
           toast({
-            description: "Good job! ✨",
+            description: "Great reading! ⭐",
             duration: 1000,
           });
           handleNextWord();
         } else {
           toast({
             title: "Try Again",
-            description: `Try saying: "${story.words[currentWordIndex]}"`,
+            description: `Let's try reading: "${story.words[currentWordIndex]}"`,
           });
-          // Repeat the current word
-          speakWord(story.words[currentWordIndex]);
+          // Repeat the current word after a short delay
+          setTimeout(() => {
+            speakWord(story.words[currentWordIndex]);
+          }, 1000);
         }
       };
 
       recognition.onend = () => {
         setIsListening(false);
-        if (isPlaying) {
-          // Small delay before restarting recognition
-          setTimeout(startListening, 100);
-        }
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
         toast({
@@ -166,7 +178,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       recognition.abort();
     }
     toast({
-      description: "Starting from the beginning",
+      description: "Starting from the beginning!",
     });
   };
 
@@ -215,8 +227,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       </div>
 
       {isListening && (
-        <p className="text-center text-sm text-green-600 mt-2">
-          Listening... Say: "{story.words[currentWordIndex]}"
+        <p className="text-center text-sm text-green-600 mt-2 animate-pulse">
+          Your turn! Say: "{story.words[currentWordIndex]}"
         </p>
       )}
     </div>
