@@ -33,10 +33,12 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-lg p-8 shadow-xl bg-white/90 backdrop-blur">
         <div className="text-center space-y-6">
-          <img src={logoImage} alt="Logo" className="h-24 w-auto mb-4"/>
-          <h1 className="text-5xl font-bold text-primary">
-            Reading Adventure!
-          </h1>
+          <div className="flex items-center justify-center gap-4">
+            <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
+            <h5 className="text-2xl font-bold text-primary">
+              Reading Adventure!
+            </h5>
+          </div>
           <p className="text-2xl text-gray-600">
             Tell me what you want to read about!
           </p>
