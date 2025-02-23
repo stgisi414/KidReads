@@ -56,12 +56,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     // --- Speech Recognition Setup ---
 
-    const initializeRecognition = () => {
-        if ('webkitSpeechRecognition' in window && !recognitionRef.current) {
-            const newRecognition = new webkitSpeechRecognition();
-            newRecognition.continuous = false;
-            newRecognition.interimResults = false;
-            newRecognition.lang = 'en-US';
+    const initializeRecognition = async () => {
+        try {
+            // Request microphone permission explicitly
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            if ('webkitSpeechRecognition' in window && !recognitionRef.current) {
+                const newRecognition = new webkitSpeechRecognition();
+                newRecognition.continuous = false;
+                newRecognition.interimResults = false;
+                newRecognition.lang = 'en-US';
 
             newRecognition.onstart = () => {
                 if (isComponentMounted.current) {  // Check if mounted
@@ -135,6 +139,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             };
 
             recognitionRef.current = newRecognition;
+            }
+        } catch (error) {
+            toast({
+                title: "Microphone Access Required",
+                description: "Please allow microphone access to use voice recognition.",
+                variant: "destructive",
+            });
+            console.error("Microphone permission error:", error);
         }
     };
 
