@@ -34,8 +34,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   const startListening = () => {
-    if (recognition) {
-      recognition.start();
+    if (recognition && !isListening) {
+      try {
+        recognition.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Failed to start speech recognition:', error);
+      }
     }
   };
 
