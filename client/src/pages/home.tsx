@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import VoiceInput from "@/components/VoiceInput";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoImage from "../../components/logo.jpg";
+import logoImage from "../assets/logo.jpg";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
