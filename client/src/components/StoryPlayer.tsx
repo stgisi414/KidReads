@@ -56,8 +56,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     };
   }, []);
 
-  // Initialize speech recognition immediately
-  useEffect(() => {
+  const initializeRecognition = () => {
     if ('webkitSpeechRecognition' in window) {
       const newRecognition = new webkitSpeechRecognition();
       newRecognition.continuous = false;
@@ -121,13 +120,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         variant: "destructive",
       });
     }
+  };
 
+  // Cleanup effect for recognition
+  useEffect(() => {
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
     };
-  }, [story.words, currentWordIndex, isPlaying]);
+  }, []);
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
@@ -178,6 +180,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const togglePlayback = () => {
     if (!isPlaying) {
+      // Initialize recognition when starting
+      if (!recognitionRef.current) {
+        initializeRecognition();
+      }
       setIsPlaying(true);
       speakWord(story.words[currentWordIndex]);
     } else {
