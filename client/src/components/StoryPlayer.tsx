@@ -18,7 +18,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const { toast } = useToast();
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
   const [dictation, setDictation] = useState("");
-  
+
   useEffect(() => {
     if ("speechSynthesis" in window) {
       synthesisRef.current = window.speechSynthesis;
@@ -32,6 +32,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     return () => {
       if (synthesisRef.current) {
+        console.log("Cleaning up speech synthesis");
         synthesisRef.current.cancel();
       }
     };
@@ -99,27 +100,56 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   });
 
   const speakWord = (word: string) => {
-    if (!synthesisRef.current) return;
+    if (!synthesisRef.current) {
+      console.log("Speech synthesis not available");
+      return;
+    }
 
+    console.log("Starting to speak word:", word);
+
+    // Cancel any ongoing speech
     synthesisRef.current.cancel();
+
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = speed;
     utterance.lang = "en-US";
 
+    // Set up all event handlers before speaking
+    utterance.onstart = () => {
+      console.log("Speech started for word:", word);
+    };
+
     utterance.onend = () => {
+      console.log("Speech ended for word:", word);
       if (isPlaying) {
-        alert("About to call startRecording"); // Add this line
+        console.log("Will start recording in 300ms");
         setTimeout(() => {
+          console.log("Starting recording now");
           startRecording();
         }, 300);
       }
     };
 
     utterance.onerror = (event) => {
-      alert("SpeechSynthesis Error: " + event.error);
+      console.error("Speech synthesis error:", event.error);
+      toast({
+        title: "Speech Error",
+        description: `Failed to speak: ${event.error}`,
+        variant: "destructive",
+      });
     };
 
-    synthesisRef.current.speak(utterance);
+    // Speak the word
+    try {
+      synthesisRef.current.speak(utterance);
+    } catch (error) {
+      console.error("Failed to start speech:", error);
+      toast({
+        title: "Speech Error",
+        description: "Failed to start speaking",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleNextWord = () => {
