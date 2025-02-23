@@ -8,6 +8,14 @@ interface UseSpeechRecognitionProps {
   interimResults?: boolean;
 }
 
+// Proper type declarations for Speech Recognition API
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 export function useSpeechRecognition({ 
   language = 'en-US', 
   onTranscriptionUpdate,
@@ -21,26 +29,42 @@ export function useSpeechRecognition({
 
   useEffect(() => {
     // Check for both standard and webkit prefixed versions
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
     if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.lang = language;
-      recognitionRef.current.continuous = continuous;
-      recognitionRef.current.interimResults = interimResults;
+      const recognition = new SpeechRecognition();
+      recognition.lang = language;
+      recognition.continuous = continuous;
+      recognition.interimResults = interimResults;
 
-      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-        const currentTranscript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
+      recognition.onstart = () => {
+        setIsRecording(true);
+      };
 
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+
+          if (result.isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        const currentTranscript = finalTranscript || interimTranscript;
         setTranscript(currentTranscript);
-        if (onTranscriptionUpdate) {
+
+        if (onTranscriptionUpdate && (finalTranscript || !interimResults)) {
           onTranscriptionUpdate(currentTranscript);
         }
       };
 
-      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error', event.error);
         if (event.error === 'not-allowed') {
           toast({ 
@@ -55,11 +79,14 @@ export function useSpeechRecognition({
             variant: "destructive" 
           });
         }
-      };
-
-      recognitionRef.current.onend = () => {
         setIsRecording(false);
       };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
     } else {
       toast({ 
         title: "Speech Recognition Not Available",

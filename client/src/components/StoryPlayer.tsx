@@ -38,16 +38,19 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   }, []);
 
   const handleTranscription = (transcript: string) => {
+    if (!transcript) return;
+
     const spokenWord = transcript.toLowerCase().trim();
     const currentWord = story.words[currentWordIndex].toLowerCase().trim();
 
     console.log('Spoken:', spokenWord, 'Expected:', currentWord);
 
-    // Clean up punctuation for comparison
-    const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, '');
-    const cleanCurrentWord = currentWord.replace(/[.,!?]/g, '');
+    // Clean up punctuation and extra spaces for comparison
+    const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim();
+    const cleanCurrentWord = currentWord.replace(/[.,!?]/g, '').trim();
 
-    if (cleanSpokenWord === cleanCurrentWord) {
+    // More flexible matching - check if spoken word contains or matches the current word
+    if (cleanSpokenWord.includes(cleanCurrentWord) || cleanCurrentWord.includes(cleanSpokenWord)) {
       toast({
         description: "Great reading! ⭐",
         duration: 1000,
@@ -68,6 +71,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   const { isRecording, startRecording, stopRecording } = useSpeechRecognition({
+    language: 'en-US',
     onTranscriptionUpdate: handleTranscription,
     continuous: false,
     interimResults: false
@@ -79,10 +83,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     synthesisRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = speed;
+    utterance.lang = 'en-US';
 
     utterance.onend = () => {
       if (isPlaying) {
-        startRecording();
+        // Short delay before starting recording
+        setTimeout(() => {
+          startRecording();
+        }, 300);
       }
     };
 
@@ -90,16 +98,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   const handleNextWord = () => {
+    stopRecording();
+
     if (currentWordIndex < story.words.length - 1) {
       setCurrentWordIndex(prev => prev + 1);
-      stopRecording();
-
       setTimeout(() => {
         speakWord(story.words[currentWordIndex + 1]);
       }, 1000);
     } else {
       setIsPlaying(false);
-      stopRecording();
       toast({ 
         title: "Story Complete! 🎉", 
         description: "Great job!" 
@@ -178,7 +185,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       {!isRecording && isPlaying && (
         <div className="text-center space-y-2">
           <div className="w-4 h-4 rounded-full mx-auto bg-blue-400 animate-bounce" />
-          <p className="text-sm text-blue-600">Listening...</p>
+          <p className="text-sm text-blue-600">Get ready...</p>
         </div>
       )}
     </div>
