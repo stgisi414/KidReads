@@ -33,6 +33,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             description: "You've completed the story!",
           });
         }
+      } else {
+        toast({
+          title: "Try Again",
+          description: `Almost! Try saying "${story.words[index]}" again.`,
+        });
       }
       setIsActive(false);
       stopRecording();
@@ -62,6 +67,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         size="lg" 
         onClick={readWord}
         disabled={isActive}
+        className={isActive ? "animate-pulse" : ""}
       >
         <Play className="mr-2 h-4 w-4" />
         {isActive ? "Listening..." : "Read Word"}

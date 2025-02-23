@@ -24,7 +24,15 @@ export function useSpeechRecognition({
   // Request microphone permission and initialize recognition
   const initializeSpeechRecognition = async () => {
     try {
-      // First, request microphone permission
+      // Check for available audio input devices first
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+      if (audioInputs.length === 0) {
+        throw new Error('No microphone found. Please connect a microphone and try again.');
+      }
+
+      // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
       setHasPermission(true);
 
@@ -42,10 +50,16 @@ export function useSpeechRecognition({
         console.log('🎤 Speech recognition started');
         setIsRecording(true);
 
-        // Set a minimum listening time of 2 seconds
+        // Set a minimum listening time of 3 seconds
         minListenTimeoutRef.current = setTimeout(() => {
           minListenTimeoutRef.current = null;
-        }, 2000);
+        }, 3000);
+
+        // Show toast to indicate listening started
+        toast({
+          title: "Listening",
+          description: "Speak now...",
+        });
       };
 
       recognition.onspeechstart = () => {
@@ -99,8 +113,28 @@ export function useSpeechRecognition({
             // Restart recognition if no speech detected
             if (isRecording) {
               recognition.stop();
-              setTimeout(() => recognition.start(), 100);
+              setTimeout(() => {
+                recognition.start();
+                toast({
+                  title: "No Speech Detected",
+                  description: "Please try speaking again...",
+                });
+              }, 100);
             }
+            break;
+          case 'audio-capture':
+            toast({
+              title: "Microphone Error",
+              description: "No microphone detected or microphone is not working. Please check your device settings.",
+              variant: "destructive"
+            });
+            break;
+          case 'not-found':
+            toast({
+              title: "Microphone Not Found",
+              description: "Please connect a microphone and try again.",
+              variant: "destructive"
+            });
             break;
           default:
             toast({
