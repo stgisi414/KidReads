@@ -31,27 +31,26 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       });
 
       // Split heard text into individual words and clean them
-      const heardWords = heard.split(/\s+/).map(w => w.trim().toLowerCase());
-      const cleanExpected = expected.replace(/[.,!?]$/, '');
+      const heardWords = heard.split(/\s+/).map(w => w.replace(/[.,!?]$/, '').trim().toLowerCase());
+      const cleanExpected = expected.replace(/[.,!?]$/, '').toLowerCase();
 
-      // Match more flexibly
+      // Match more flexibly by checking if any heard word contains or matches the expected word
       const isMatch = heardWords.some(word => {
-        const cleanWord = word.replace(/[.,!?]$/, '');
-        return cleanWord === cleanExpected || 
-               cleanWord.includes(cleanExpected) || 
-               cleanExpected.includes(cleanWord);
+        return (
+          word === cleanExpected ||
+          word.includes(cleanExpected) ||
+          cleanExpected.includes(word) ||
+          // Allow for slight variations
+          (word.length > 3 && cleanExpected.length > 3 && 
+           (word.includes(cleanExpected.slice(0, -1)) || 
+            cleanExpected.includes(word.slice(0, -1))))
+        );
       });
 
       console.log('Word matching:', {
-        heard: heardWords,
-        expected: cleanExpected,
-        isMatch
-      });
-
-      console.log('🎯 Word Match Check:', {
         heardWords,
-        expected,
-        isMatch: isMatch ? '✅ Match!' : '❌ No match'
+        cleanExpected,
+        isMatch
       });
 
       if (isMatch) {
@@ -70,7 +69,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       } else {
         toast({
           title: "Almost there! 💪", 
-          description: `I heard "${heard}". Try saying "${story.words[index]}" again.`,
+          description: `Try saying "${story.words[index]}" again.`,
         });
       }
       setIsActive(false);
@@ -85,10 +84,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsActive(true);
     setLastHeard("");
 
-    // Read the word
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.onend = () => {
-      // Start listening for response
       startRecording();
     };
 
@@ -108,8 +105,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           </span>
         ))}
       </div>
-
-      <h1 className="text-5xl mb-8">{story.words[index]}</h1>
 
       <Button 
         size="lg" 
