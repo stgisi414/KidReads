@@ -11,10 +11,13 @@ interface StoryPlayerProps {
   story: Story;
 }
 
+type PlayerState = "idle" | "speaking" | "listening" | "transitioning";
+
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(0.8);
+  const [playerState, setPlayerState] = useState<PlayerState>("idle");
   const { toast } = useToast();
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
   const [dictation, setDictation] = useState("");
@@ -32,21 +35,17 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     return () => {
       if (synthesisRef.current) {
-        console.log("Cleaning up speech synthesis");
         synthesisRef.current.cancel();
       }
     };
   }, []);
 
   const handleTranscription = (transcript: string) => {
-    if (!transcript) return;
+    if (!transcript || playerState !== "listening") return;
 
     setDictation(transcript);
-
     const spokenWord = transcript.toLowerCase().trim();
     const currentWord = story.words[currentWordIndex].toLowerCase().trim();
-
-    console.log("Spoken:", spokenWord, "Expected:", currentWord);
 
     const cleanSpokenWord = spokenWord
       .replace(/[.,!?]/g, "")
@@ -70,27 +69,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         duration: 2000,
       });
       if (isPlaying) {
-        setTimeout(() => {
-          speakWord(story.words[currentWordIndex]);
-        }, 1500);
+        setPlayerState("speaking");
+        speakWord(story.words[currentWordIndex]);
       }
     }
   };
-
-  const [hasPermission, setHasPermission] = useState<boolean>(false);
-
-  useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then(() => setHasPermission(true))
-      .catch(() => {
-        toast({
-          title: "Microphone Access Required",
-          description: "Please allow microphone access to use this feature",
-          variant: "destructive",
-        });
-      });
-  }, []);
 
   const { isRecording, startRecording, stopRecording } = useSpeechRecognition({
     language: "en-US",
@@ -101,32 +84,23 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const speakWord = (word: string) => {
     if (!synthesisRef.current) {
-      console.log("Speech synthesis not available");
+      console.error("Speech synthesis not available");
       return;
     }
 
-    console.log("Starting to speak word:", word);
-
-    // Cancel any ongoing speech
     synthesisRef.current.cancel();
-
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = speed;
     utterance.lang = "en-US";
 
-    // Set up all event handlers before speaking
     utterance.onstart = () => {
-      console.log("Speech started for word:", word);
+      setPlayerState("speaking");
     };
 
     utterance.onend = () => {
-      console.log("Speech ended for word:", word);
       if (isPlaying) {
-        console.log("Will start recording in 300ms");
-        setTimeout(() => {
-          console.log("Starting recording now");
-          startRecording();
-        }, 300);
+        setPlayerState("listening");
+        startRecording();
       }
     };
 
@@ -137,13 +111,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         description: `Failed to speak: ${event.error}`,
         variant: "destructive",
       });
+      setPlayerState("idle");
     };
 
-    // Speak the word
     try {
       synthesisRef.current.speak(utterance);
     } catch (error) {
       console.error("Failed to start speech:", error);
+      setPlayerState("idle");
       toast({
         title: "Speech Error",
         description: "Failed to start speaking",
@@ -154,14 +129,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const handleNextWord = () => {
     stopRecording();
+    setPlayerState("transitioning");
 
     if (currentWordIndex < story.words.length - 1) {
       setCurrentWordIndex((prev) => prev + 1);
-      setTimeout(() => {
-        speakWord(story.words[currentWordIndex + 1]);
-      }, 1000);
+      setPlayerState("speaking");
+      speakWord(story.words[currentWordIndex]);
     } else {
       setIsPlaying(false);
+      setPlayerState("idle");
       toast({
         title: "Story Complete! 🎉",
         description: "Great job!",
@@ -172,9 +148,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const togglePlayback = () => {
     if (!isPlaying) {
       setIsPlaying(true);
+      setPlayerState("speaking");
       speakWord(story.words[currentWordIndex]);
     } else {
       setIsPlaying(false);
+      setPlayerState("idle");
       stopRecording();
       if (synthesisRef.current) {
         synthesisRef.current.cancel();
@@ -185,6 +163,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const restart = () => {
     setCurrentWordIndex(0);
     setIsPlaying(false);
+    setPlayerState("idle");
     stopRecording();
     if (synthesisRef.current) {
       synthesisRef.current.cancel();
@@ -232,25 +211,27 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </div>
       </div>
 
-      
-      {isRecording && (
-        <div className="text-center space-y-2">
-          <Mic className="w-4 h-4 text-green-500 mx-auto animate-pulse" />
-          <p className="text-sm text-green-600">
-            Your turn! Say: "{story.words[currentWordIndex]}"
-          </p>
-          <div className="border p-2 rounded-md">
-            <p className="text-xs">Dictation:</p>
-            <p>{dictation}</p>
+      <div className="text-center space-y-2">
+        {playerState === "speaking" && (
+          <div className="animate-bounce">
+            <div className="w-4 h-4 rounded-full mx-auto bg-blue-400" />
+            <p className="text-sm text-blue-600">Speaking...</p>
           </div>
-        </div>
-      )}
-      {!isRecording && isPlaying && (
-        <div className="text-center space-y-2">
-          <div className="w-4 h-4 rounded-full mx-auto bg-blue-400 animate-bounce" />
-          <p className="text-sm text-blue-600">Get ready...</p>
-        </div>
-      )}
+        )}
+
+        {playerState === "listening" && (
+          <div>
+            <Mic className="w-4 h-4 text-green-500 mx-auto animate-pulse" />
+            <p className="text-sm text-green-600">
+              Your turn! Say: "{story.words[currentWordIndex]}"
+            </p>
+            <div className="border p-2 rounded-md">
+              <p className="text-xs">Dictation:</p>
+              <p>{dictation}</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
