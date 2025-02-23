@@ -19,6 +19,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [hasMicPermission, setHasMicPermission] = useState(false);
   const { toast } = useToast();
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
 
     return () => {
-      if (synthesisRef.current) {
+      if (synthesisRef.current && utteranceRef.current) {
         synthesisRef.current.cancel();
       }
     };
@@ -94,27 +95,53 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     interimResults: false,
   });
 
-  const speakWord = async (word: string) => {
+  const speakWord = (word: string) => {
     if (!synthesisRef.current) return;
 
-    // Stop any ongoing speech
-    synthesisRef.current.cancel();
+    // Cancel any ongoing speech and recording
     stopRecording();
+    if (utteranceRef.current) {
+      synthesisRef.current.cancel();
+    }
 
-    // Create and configure utterance
+    // Create new utterance
     const utterance = new SpeechSynthesisUtterance(word);
+    utteranceRef.current = utterance;
+
+    // Configure utterance
     utterance.rate = speed;
     utterance.lang = "en-US";
+    utterance.volume = 1;
 
-    // Start listening after speech ends
+    // Debug logs for speech synthesis events
+    utterance.onstart = () => {
+      console.log('Speech started:', word);
+    };
+
     utterance.onend = () => {
+      console.log('Speech ended:', word);
+      // Only start recording if we're still in playing mode
       if (isPlaying && hasMicPermission) {
-        // Small delay to ensure speech synthesis is fully complete
-        setTimeout(() => startRecording(), 100);
+        console.log('Starting recording after speech');
+        startRecording();
       }
     };
 
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event.error);
+      toast({
+        title: "Speech Error",
+        description: "Failed to speak the word",
+        variant: "destructive"
+      });
+    };
+
+    utterance.onpause = () => console.log('Speech paused');
+    utterance.onresume = () => console.log('Speech resumed');
+    utterance.onboundary = (event) => console.log('Speech boundary hit:', event.charIndex);
+
     try {
+      console.log('Starting speech for word:', word);
       synthesisRef.current.speak(utterance);
     } catch (error) {
       console.error('Speech synthesis failed:', error);
