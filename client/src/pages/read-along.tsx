@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import StoryPlayer from "@/components/StoryPlayer";
 import type { Story } from "@shared/schema";
 
 export default function ReadAlong() {
   const { id } = useParams();
+  const [location, setLocation] = useLocation();
   
   const { data: story, isLoading } = useQuery<Story>({
     queryKey: [`/api/stories/${id}`],
@@ -29,7 +31,14 @@ export default function ReadAlong() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <Card className="max-w-4xl mx-auto p-6">
+      <Card className="max-w-4xl mx-auto p-6 relative">
+        <Button
+          variant="outline"
+          className="absolute top-4 right-4"
+          onClick={() => setLocation('/')}
+        >
+          Return Home
+        </Button>
         <div className="aspect-video mb-6 rounded-lg overflow-hidden">
           <img
             src={story.imageUrl}
