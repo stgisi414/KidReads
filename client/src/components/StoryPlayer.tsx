@@ -21,7 +21,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const { toast } = useToast();
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
   const [dictation, setDictation] = useState("");
+  const [hasPermission, setHasPermission] = useState(false);
 
+  // Initialize speech synthesis
   useEffect(() => {
     if ("speechSynthesis" in window) {
       synthesisRef.current = window.speechSynthesis;
@@ -38,6 +40,28 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         synthesisRef.current.cancel();
       }
     };
+  }, []);
+
+  // Request microphone permission
+  useEffect(() => {
+    const requestMicrophonePermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setHasPermission(true);
+        // Clean up the stream
+        stream.getTracks().forEach(track => track.stop());
+      } catch (error) {
+        console.error('Microphone permission error:', error);
+        setHasPermission(false);
+        toast({
+          title: "Microphone Access Required",
+          description: "Please allow microphone access to use this feature",
+          variant: "destructive",
+        });
+      }
+    };
+
+    requestMicrophonePermission();
   }, []);
 
   const handleTranscription = (transcript: string) => {
@@ -98,7 +122,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     };
 
     utterance.onend = () => {
-      if (isPlaying) {
+      if (isPlaying && hasPermission) {
         setPlayerState("listening");
         startRecording();
       }
@@ -134,7 +158,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     if (currentWordIndex < story.words.length - 1) {
       setCurrentWordIndex((prev) => prev + 1);
       setPlayerState("speaking");
-      speakWord(story.words[currentWordIndex]);
+      speakWord(story.words[currentWordIndex + 1]); //Corrected index here
     } else {
       setIsPlaying(false);
       setPlayerState("idle");
@@ -146,6 +170,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   const togglePlayback = () => {
+    if (!hasPermission) {
+      toast({
+        title: "Microphone Access Required",
+        description: "Please allow microphone access to start reading",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!isPlaying) {
       setIsPlaying(true);
       setPlayerState("speaking");
@@ -212,6 +245,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       </div>
 
       <div className="text-center space-y-2">
+        {!hasPermission && (
+          <div className="text-yellow-600 bg-yellow-50 p-4 rounded-lg">
+            <p>Microphone access is required for interactive reading.</p>
+            <p className="text-sm">Please allow microphone access when prompted.</p>
+          </div>
+        )}
+
         {playerState === "speaking" && (
           <div className="animate-bounce">
             <div className="w-4 h-4 rounded-full mx-auto bg-blue-400" />
