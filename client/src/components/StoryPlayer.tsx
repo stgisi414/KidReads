@@ -19,7 +19,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     continuous: false,
     interimResults: false,
     onTranscriptionUpdate: (heard) => {
-      const expected = story.words[index].toLowerCase().trim();
+      // Get the current word we're expecting
+      const currentWord = story.words[index];
+      const expected = currentWord.toLowerCase().trim();
       heard = heard.toLowerCase().trim();
       setLastHeard(heard);
 
@@ -27,6 +29,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         expected,
         heard,
         wordIndex: index,
+        currentWord,
         totalWords: story.words.length
       });
 
@@ -36,7 +39,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       // Match more flexibly by checking if any heard word contains or matches the expected word
       const isMatch = heardWords.some(word => {
-        return (
+        const match = (
           word === cleanExpected ||
           word.includes(cleanExpected) ||
           cleanExpected.includes(word) ||
@@ -45,21 +48,30 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
            (word.includes(cleanExpected.slice(0, -1)) || 
             cleanExpected.includes(word.slice(0, -1))))
         );
+
+        console.log('Word matching comparison:', {
+          word,
+          cleanExpected,
+          match
+        });
+
+        return match;
       });
 
-      console.log('Word matching:', {
+      console.log('Final match result:', {
         heardWords,
         cleanExpected,
-        isMatch
+        isMatch,
+        currentIndex: index
       });
 
       if (isMatch) {
         if (index < story.words.length - 1) {
           toast({
             title: "Great job! 🌟",
-            description: `You correctly said "${story.words[index]}"!`,
+            description: `You correctly said "${currentWord}"!`,
           });
-          setIndex(index + 1);
+          setIndex(prev => prev + 1);
         } else {
           toast({
             title: "Congratulations! 🎉",
@@ -69,7 +81,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       } else {
         toast({
           title: "Almost there! 💪", 
-          description: `Try saying "${story.words[index]}" again.`,
+          description: `Try saying "${currentWord}" again.`,
         });
       }
       setIsActive(false);
