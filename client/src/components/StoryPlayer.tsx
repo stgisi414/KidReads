@@ -89,13 +89,25 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="p-8 text-center space-y-6">
-      <h1 className="text-6xl mb-8">{story.words[index]}</h1>
+      {/* Full story display */}
+      <div className="text-xl mb-8 leading-relaxed">
+        {story.words.map((word, i) => (
+          <span 
+            key={i}
+            className={`mx-1 ${i === index ? 'text-2xl font-semibold text-primary' : 'text-gray-600'}`}
+          >
+            {word}
+          </span>
+        ))}
+      </div>
+
+      <h1 className="text-5xl mb-8">{story.words[index]}</h1>
 
       <Button 
         size="lg" 
         onClick={readWord}
         disabled={isActive}
-        className={`w-full ${isActive ? "animate-pulse bg-green-500" : ""}`}
+        className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
       >
         <Play className="mr-2 h-4 w-4" />
         {isActive ? "Listening..." : "Read Word"}

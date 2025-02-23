@@ -8,7 +8,7 @@ import type { Story } from "@shared/schema";
 export default function ReadAlong() {
   const { id } = useParams();
   const [location, setLocation] = useLocation();
-  
+
   const { data: story, isLoading } = useQuery<Story>({
     queryKey: [`/api/stories/${id}`],
   });
@@ -31,7 +31,7 @@ export default function ReadAlong() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <Card className="max-w-4xl mx-auto p-6 relative">
+      <Card className="max-w-2xl mx-auto p-6 relative">
         <Button
           variant="outline"
           className="absolute top-4 right-4"
