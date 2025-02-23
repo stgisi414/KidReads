@@ -2,15 +2,53 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
+import { generateStory } from "./services/ai";
+import fal from "@fal-ai/serverless-client";
+
+if (!process.env.FAL_AI_API_KEY) {
+  throw new Error("FAL_AI_API_KEY is required");
+}
+
+fal.config({
+  credentials: process.env.FAL_AI_API_KEY,
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories", async (req, res) => {
     try {
-      const storyData = insertStorySchema.parse(req.body);
+      const { topic } = req.body;
+      console.log('Generating story for topic:', topic);
+
+      // Generate story content and words using Gemini
+      const { content, words } = await generateStory(topic);
+      console.log('Generated story:', { content, wordCount: words.length });
+
+      // Generate illustration using fal.ai
+      console.log('Generating illustration for topic:', topic);
+      const result = await fal.run('fast-lightning-sdxl', {
+        input: {
+          prompt: `A children's book illustration of ${topic}, cute, colorful, simple style`,
+          negative_prompt: "text, words, letters, scary, violent",
+        },
+      });
+
+      const imageUrl = result.images[0].url;
+      console.log('Generated illustration URL:', imageUrl);
+
+      // Create story in database
+      const storyData = {
+        topic,
+        content,
+        imageUrl,
+        words,
+      };
+
       const story = await storage.createStory(storyData);
+      console.log('Story created successfully:', story.id);
       res.json(story);
     } catch (error) {
-      res.status(400).json({ error: "Invalid story data" });
+      console.error('Error creating story:', error);
+      res.status(500).json({ error: "Failed to create story" });
     }
   });
 
