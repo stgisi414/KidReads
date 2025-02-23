@@ -1,4 +1,6 @@
-import { stories, type Story, type InsertStory } from "@shared/schema";
+import { stories, readingSessions, type Story, type InsertStory } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   getStory(id: number): Promise<Story | undefined>;
@@ -7,35 +9,30 @@ export interface IStorage {
   getAllStories(): Promise<Story[]>;
 }
 
-export class MemStorage implements IStorage {
-  private stories: Map<number, Story>;
-  currentId: number;
-
-  constructor() {
-    this.stories = new Map();
-    this.currentId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getStory(id: number): Promise<Story | undefined> {
-    return this.stories.get(id);
+    const [story] = await db.select().from(stories).where(eq(stories.id, id));
+    return story;
   }
 
   async getStoryByTopic(topic: string): Promise<Story | undefined> {
-    return Array.from(this.stories.values()).find(
-      (story) => story.topic.toLowerCase() === topic.toLowerCase(),
-    );
+    const [story] = await db
+      .select()
+      .from(stories)
+      .where(eq(stories.topic, topic))
+      .orderBy(desc(stories.createdAt))
+      .limit(1);
+    return story;
   }
 
   async createStory(insertStory: InsertStory): Promise<Story> {
-    const id = this.currentId++;
-    const story: Story = { ...insertStory, id };
-    this.stories.set(id, story);
+    const [story] = await db.insert(stories).values(insertStory).returning();
     return story;
   }
 
   async getAllStories(): Promise<Story[]> {
-    return Array.from(this.stories.values());
+    return db.select().from(stories).orderBy(desc(stories.createdAt));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
