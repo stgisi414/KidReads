@@ -90,18 +90,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   return (
     <div className="p-8 text-center space-y-6">
       {/* Full story display */}
-      <div className="text-xl mb-8 leading-relaxed">
+      <div className="text-xl mb-8 leading-relaxed text-wrap">
         {story.words.map((word, i) => (
           <span 
             key={i}
-            className={`mx-1 ${i === index ? 'text-2xl font-semibold text-primary' : 'text-gray-600'}`}
+            className={`mx-1 ${i === index ? 'text-2xl font-semibold text-primary' : 'text-gray-600'}`} 
           >
             {word}
           </span>
         ))}
       </div>
-
-      <h1 className="text-5xl mb-8">{story.words[index]}</h1>
 
       <Button 
         size="lg" 
