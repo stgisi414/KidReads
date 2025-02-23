@@ -128,6 +128,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         });
       }
     }
+
+    // Cleanup function
+    return () => {
+      if (synthesis) {
+        synthesis.cancel();
+      }
+      if (recognition) {
+        recognition.abort();
+      }
+    };
   }, []);
 
   const startListening = () => {
