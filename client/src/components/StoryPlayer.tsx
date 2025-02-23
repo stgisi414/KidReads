@@ -102,37 +102,31 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
             newRecognition.onresult = (event: any) => {
                 if (isComponentMounted.current) {
-                    // --- The "Gate" ---
                     if (event.results && event.results[0] && event.results[0][0]) {
                         const confidence = event.results[0][0].confidence;
-                        if (confidence < 0.7) { // Adjust this threshold as needed!
+                        if (confidence < 0.7) {
                             console.log("Low confidence result ignored:", event.results[0][0].transcript, "Confidence:", confidence);
-                            return; // Ignore low-confidence results
+                            return;
                         }
 
                         const spokenWord = event.results[0][0].transcript.toLowerCase().trim();
-                        const resultIndex = currentWordIndex;
-                        const currentWord = story.words[resultIndex].toLowerCase().trim();
+                        const currentWord = story.words[currentWordIndex].toLowerCase().trim();
                         const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, '');
                         const cleanCurrentWord = currentWord.replace(/[.,!?]/g, '');
                         const isMatch = cleanSpokenWord === cleanCurrentWord;
 
                         if (isMatch) {
                             toast({ description: "Great reading! ⭐", duration: 1000 });
-                            if (resultIndex === currentWordIndex) {
-                                handleNextWord();
-                            }
+                            handleNextWord();
                         } else {
                             toast({
                                 title: "Try Again",
                                 description: `You said: "${spokenWord}". Try: "${currentWord}"`,
                                 duration: 2500,
                             });
-                            setTimeout(() => {
-                                if (isPlaying && isComponentMounted.current) {
-                                    speakWord(currentWord);
-                                }
-                            }, 3000);
+                            if (isPlaying && isComponentMounted.current) {
+                                setTimeout(() => speakWord(currentWord), 2500);
+                            }
                         }
                     }
                 }
@@ -187,18 +181,25 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     // --- Control Functions ---
 
     const handleNextWord = () => {
-      if (isComponentMounted.current){
+      if (isComponentMounted.current) {
         if (currentWordIndex < story.words.length - 1) {
           const nextIndex = currentWordIndex + 1;
           setCurrentWordIndex(nextIndex);
           if (isPlaying) {
-            speakWord(story.words[nextIndex]);
+            setTimeout(() => {
+              speakWord(story.words[nextIndex]);
+              startListening();
+            }, 1000);
           }
         } else {
           setIsPlaying(false);
+          setIsListening(false);
+          if (recognitionRef.current) {
+            recognitionRef.current.stop();
+          }
           toast({ title: "Story Complete! 🎉", description: "Great job!" });
         }
-       }
+      }
     };
 
     const togglePlayback = () => {
