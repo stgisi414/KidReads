@@ -42,26 +42,21 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       const foundMatch = heardWords.some(heardWord => {
         const isExactMatch = heardWord === currentWord;
         const containsWord = heardWord.includes(currentWord) || currentWord.includes(heardWord);
-
-        // Log each word comparison
-        console.log('Word comparison:', {
-          heardWord,
-          currentWord,
-          isExactMatch,
-          containsWord,
-          currentWordIndex
-        });
-
         return isExactMatch || containsWord;
       });
 
-      // Log final match result
-      console.log('Match result:', {
-        heardWords,
-        currentWord,
-        foundMatch,
-        currentWordIndex
-      });
+      // Update state first, then log the result
+      if (foundMatch) {
+        if (currentWordIndex < story.words.length - 1) {
+          const nextIndex = currentWordIndex + 1;
+          setCurrentWordIndex(nextIndex);
+          
+          // Log with updated index
+          console.log('Match successful! Moving to next word:', {
+            previousWord: currentWord,
+            nextWord: story.words[nextIndex].toLowerCase().trim(),
+            newIndex: nextIndex
+          });
 
       if (foundMatch) {
         if (currentWordIndex < story.words.length - 1) {
