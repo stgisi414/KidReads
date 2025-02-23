@@ -17,8 +17,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [speed, setSpeed] = useState(0.8);
   const { toast } = useToast();
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
+  const [dictation, setDictation] = useState("");
 
-  // Initialize speech synthesis
   useEffect(() => {
     if ('speechSynthesis' in window) {
       synthesisRef.current = window.speechSynthesis;
@@ -40,16 +40,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const handleTranscription = (transcript: string) => {
     if (!transcript) return;
 
+    setDictation(transcript);
+
     const spokenWord = transcript.toLowerCase().trim();
     const currentWord = story.words[currentWordIndex].toLowerCase().trim();
 
     console.log('Spoken:', spokenWord, 'Expected:', currentWord);
 
-    // Clean up punctuation and extra spaces for comparison
     const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, '').replace(/\s+/g, ' ').trim();
     const cleanCurrentWord = currentWord.replace(/[.,!?]/g, '').trim();
 
-    // More flexible matching - check if spoken word contains or matches the current word
     if (cleanSpokenWord.includes(cleanCurrentWord) || cleanCurrentWord.includes(cleanSpokenWord)) {
       toast({
         description: "Great reading! ⭐",
@@ -73,7 +73,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [hasPermission, setHasPermission] = useState<boolean>(false);
 
   useEffect(() => {
-    // Request microphone permission when component mounts
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(() => setHasPermission(true))
       .catch(() => {
@@ -102,12 +101,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     utterance.onend = () => {
       if (isPlaying) {
-        // Short delay before starting recording
+        alert("About to call startRecording"); // Add this line
         setTimeout(() => {
           startRecording();
         }, 300);
       }
     };
+
 
     synthesisRef.current.speak(utterance);
   };
@@ -122,9 +122,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       }, 1000);
     } else {
       setIsPlaying(false);
-      toast({ 
-        title: "Story Complete! 🎉", 
-        description: "Great job!" 
+      toast({
+        title: "Story Complete! 🎉",
+        description: "Great job!"
       });
     }
   };
@@ -153,11 +153,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   return (
+    {alert("isRecording: " + isRecording);}
     <div className="space-y-8">
       <WordDisplay words={story.words} currentIndex={currentWordIndex} />
 
       <div className="space-y-6">
-        {/* Speed Control */}
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium">Reading Speed:</span>
           <Slider
@@ -171,7 +171,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           <span className="text-sm">{speed.toFixed(1)}x</span>
         </div>
 
-        {/* Controls */}
         <div className="flex justify-center gap-4">
           <Button size="lg" variant="outline" onClick={restart}>
             <RotateCcw className="mr-2 h-4 w-4" /> Restart
@@ -190,11 +189,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </div>
       </div>
 
-      {/* Status Indicators */}
+      {console.log("isRecording:", isRecording)}
       {isRecording && (
         <div className="text-center space-y-2">
           <Mic className="w-4 h-4 text-green-500 mx-auto animate-pulse" />
           <p className="text-sm text-green-600">Your turn! Say: "{story.words[currentWordIndex]}"</p>
+          <div className="border p-2 rounded-md">
+            <p className="text-xs">Dictation:</p>
+            <p>{dictation}</p>
+          </div>
         </div>
       )}
       {!isRecording && isPlaying && (
