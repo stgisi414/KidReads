@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import type { Story } from "@shared/schema";
 
 interface StoryPlayerProps {
@@ -10,6 +12,32 @@ interface StoryPlayerProps {
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [index, setIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
+  const { toast } = useToast();
+
+  const { startRecording, stopRecording } = useSpeechRecognition({
+    continuous: false,
+    interimResults: false,
+    onTranscriptionUpdate: (heard) => {
+      const expected = story.words[index].toLowerCase().trim();
+      heard = heard.toLowerCase().trim();
+
+      // Check if either word contains the other
+      const isMatch = heard.indexOf(expected) !== -1 || expected.indexOf(heard) !== -1;
+
+      if (isMatch) {
+        if (index < story.words.length - 1) {
+          setIndex(index + 1);
+        } else {
+          toast({
+            title: "Congratulations!",
+            description: "You've completed the story!",
+          });
+        }
+      }
+      setIsActive(false);
+      stopRecording();
+    }
+  });
 
   const readWord = () => {
     if (isActive) return;
@@ -20,25 +48,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     // Read the word
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.onend = () => {
-      // Listen for response
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onresult = (event) => {
-        const heard = event.results[0][0].transcript.toLowerCase();
-        const expected = word.toLowerCase();
-
-        if (heard.includes(expected) || expected.includes(heard)) {
-          if (index < story.words.length - 1) {
-            setIndex(index + 1);
-          }
-        }
-        setIsActive(false);
-      };
-
-      recognition.onerror = () => setIsActive(false);
-      recognition.start();
+      // Start listening for response
+      startRecording();
     };
 
     window.speechSynthesis.speak(utterance);
@@ -55,6 +66,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         <Play className="mr-2 h-4 w-4" />
         {isActive ? "Listening..." : "Read Word"}
       </Button>
+      {index === story.words.length - 1 && (
+        <p className="mt-4 text-green-600">Last word! Keep going!</p>
+      )}
     </div>
   );
 }

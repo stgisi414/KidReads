@@ -16,15 +16,22 @@ export function useSpeechRecognition({
 }: UseSpeechRecognitionProps = {}) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  useEffect(() => {
-    console.log('🎯 Initializing speech recognition...');
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Request microphone permission and initialize recognition
+  const initializeSpeechRecognition = async () => {
+    try {
+      // First, request microphone permission
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setHasPermission(true);
 
-    if (SpeechRecognition) {
-      console.log('✅ Speech Recognition API is available');
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        throw new Error('Speech Recognition API not available');
+      }
+
       const recognition = new SpeechRecognition();
       recognition.lang = language;
       recognition.continuous = continuous;
@@ -32,92 +39,64 @@ export function useSpeechRecognition({
 
       recognition.onstart = () => {
         console.log('🎤 Speech recognition started');
-        console.log('Current state:', { language, continuous, interimResults });
         setIsRecording(true);
       };
 
       recognition.onspeechstart = () => {
-        console.log('🗣️ Speech detected - user started speaking');
-      };
-
-      recognition.onspeechend = () => {
-        console.log('🔇 Speech ended - user stopped speaking');
-      };
-
-      recognition.onaudiostart = () => {
-        console.log('🎙️ Audio capturing started');
-      };
-
-      recognition.onaudioend = () => {
-        console.log('🎙️ Audio capturing ended');
-      };
-
-      recognition.onsoundstart = () => {
-        console.log('🔊 Sound detected');
-      };
-
-      recognition.onsoundend = () => {
-        console.log('🔈 Sound ended');
+        console.log('🗣️ Speech detected');
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        console.log('🎯 Speech recognition result event received');
-        console.log('Results:', event.results);
+        console.log('🎯 Speech recognition result received');
         let finalTranscript = '';
         let interimTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const transcript = result[0].transcript;
-          const confidence = result[0].confidence;
-
-          console.log(`Result ${i}:`, {
-            transcript,
-            confidence: (confidence * 100).toFixed(2) + '%',
-            isFinal: result.isFinal
-          });
 
           if (result.isFinal) {
-            console.log('📝 Final transcript:', transcript);
             finalTranscript += transcript;
           } else {
-            console.log('🔄 Interim transcript:', transcript);
             interimTranscript += transcript;
           }
         }
 
         const currentTranscript = finalTranscript || interimTranscript;
-        console.log('Current transcript state:', {
-          final: finalTranscript,
-          interim: interimTranscript,
-          current: currentTranscript
-        });
-
         setTranscript(currentTranscript);
 
         if (onTranscriptionUpdate && (finalTranscript || !interimResults)) {
-          console.log('🔄 Calling transcription update callback with:', currentTranscript);
           onTranscriptionUpdate(currentTranscript);
         }
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('❌ Speech recognition error:', event.error);
-        console.error('Error details:', event);
-        if (event.error === 'not-allowed') {
-          toast({ 
-            title: "Microphone Access Required",
-            description: "Please allow microphone access to continue reading.",
-            variant: "destructive" 
-          });
-        } else {
-          toast({ 
-            title: "Speech Recognition Error", 
-            description: event.error,
-            variant: "destructive" 
-          });
-        }
         setIsRecording(false);
+
+        switch (event.error) {
+          case 'not-allowed':
+            setHasPermission(false);
+            toast({
+              title: "Microphone Access Required",
+              description: "Please allow microphone access in your browser settings to continue.",
+              variant: "destructive"
+            });
+            break;
+          case 'no-speech':
+            toast({
+              title: "No Speech Detected",
+              description: "Please try speaking again.",
+              variant: "destructive"
+            });
+            break;
+          default:
+            toast({
+              title: "Speech Recognition Error",
+              description: `Error: ${event.error}. Please try again.`,
+              variant: "destructive"
+            });
+        }
       };
 
       recognition.onend = () => {
@@ -126,57 +105,69 @@ export function useSpeechRecognition({
       };
 
       recognitionRef.current = recognition;
-    } else {
-      console.error('❌ Speech Recognition API not available');
-      toast({ 
-        title: "Speech Recognition Not Available",
-        description: "Your browser doesn't support speech recognition.",
-        variant: "destructive" 
-      });
-    }
 
+    } catch (error) {
+      console.error('Failed to initialize speech recognition:', error);
+      setHasPermission(false);
+
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          toast({
+            title: "Microphone Access Denied",
+            description: "Please grant microphone access in your browser settings.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Speech Recognition Error",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    initializeSpeechRecognition();
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
     };
-  }, [language, onTranscriptionUpdate, continuous, interimResults, toast]);
+  }, [language, onTranscriptionUpdate, continuous, interimResults]);
 
-  const startRecording = () => {
-    console.log('🎬 Attempting to start recording...');
-    if (recognitionRef.current) {
+  const startRecording = async () => {
+    if (!hasPermission) {
+      await initializeSpeechRecognition();
+      return;
+    }
+
+    if (recognitionRef.current && !isRecording) {
       try {
-        console.log('🎤 Starting speech recognition...');
-        recognitionRef.current.start();
-        console.log('✅ Speech recognition start command issued');
-        setIsRecording(true);
+        await recognitionRef.current.start();
       } catch (error) {
-        console.error('❌ Failed to start recording:', error);
-        setIsRecording(false);
+        console.error('Failed to start recording:', error);
         toast({
           title: "Recognition Error",
-          description: "Failed to start speech recognition",
+          description: "Failed to start speech recognition. Please try again.",
           variant: "destructive"
         });
       }
-    } else {
-      console.error('❌ Speech recognition not initialized');
-      toast({
-        title: "Recognition Error",
-        description: "Speech recognition not initialized",
-        variant: "destructive"
-      });
     }
   };
 
   const stopRecording = () => {
-    console.log('⏹️ Attempting to stop recording...');
-    if (recognitionRef.current) {
-      console.log('🛑 Stopping speech recognition...');
+    if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
-      setIsRecording(false);
     }
   };
 
-  return { isRecording, transcript, startRecording, stopRecording };
+  return { 
+    isRecording, 
+    transcript, 
+    startRecording, 
+    stopRecording,
+    hasPermission 
+  };
 }
