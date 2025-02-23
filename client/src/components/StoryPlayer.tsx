@@ -70,6 +70,21 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   };
 
+  const [hasPermission, setHasPermission] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Request microphone permission when component mounts
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => setHasPermission(true))
+      .catch(() => {
+        toast({
+          title: "Microphone Access Required",
+          description: "Please allow microphone access to use this feature",
+          variant: "destructive"
+        });
+      });
+  }, []);
+
   const { isRecording, startRecording, stopRecording } = useSpeechRecognition({
     language: 'en-US',
     onTranscriptionUpdate: handleTranscription,
