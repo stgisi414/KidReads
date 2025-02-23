@@ -20,10 +20,12 @@ export function useSpeechRecognition({
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
+    console.log('🎯 Initializing speech recognition...');
     // Check for both standard and webkit prefixed versions
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
+      console.log('✅ Speech Recognition API is available');
       const recognition = new SpeechRecognition();
       recognition.lang = language;
       recognition.continuous = continuous;
@@ -31,6 +33,7 @@ export function useSpeechRecognition({
 
       recognition.onstart = () => {
         console.log('🎤 Speech recognition started');
+        console.log('Current state:', { language, continuous, interimResults });
         setIsRecording(true);
       };
 
@@ -43,22 +46,19 @@ export function useSpeechRecognition({
           const result = event.results[i];
           const transcript = result[0].transcript;
 
-          console.log(`🗣️ Recognition [${result.isFinal ? 'Final' : 'Interim'}]:`, transcript);
-          console.log(`📊 Confidence: ${(result[0].confidence * 100).toFixed(2)}%`);
-
           if (result.isFinal) {
+            console.log('📝 Final transcript:', transcript);
             finalTranscript += transcript;
           } else {
+            console.log('🔄 Interim transcript:', transcript);
             interimTranscript += transcript;
           }
         }
 
         const currentTranscript = finalTranscript || interimTranscript;
-        console.log('📝 Current Transcript:', currentTranscript);
         setTranscript(currentTranscript);
 
         if (onTranscriptionUpdate && (finalTranscript || !interimResults)) {
-          console.log('🔄 Sending transcript to callback:', currentTranscript);
           onTranscriptionUpdate(currentTranscript);
         }
       };
@@ -105,21 +105,36 @@ export function useSpeechRecognition({
   }, [language, onTranscriptionUpdate, continuous, interimResults, toast]);
 
   const startRecording = () => {
+    console.log('🎬 Attempting to start recording...');
     if (recognitionRef.current) {
       try {
-        console.log('🎬 Attempting to start speech recognition...');
+        console.log('🎤 Starting speech recognition...');
         recognitionRef.current.start();
+        console.log('✅ Speech recognition start command issued');
         setIsRecording(true);
       } catch (error) {
         console.error('❌ Failed to start recording:', error);
         setIsRecording(false);
+        toast({
+          title: "Recognition Error",
+          description: "Failed to start speech recognition",
+          variant: "destructive"
+        });
       }
+    } else {
+      console.error('❌ Speech recognition not initialized');
+      toast({
+        title: "Recognition Error",
+        description: "Speech recognition not initialized",
+        variant: "destructive"
+      });
     }
   };
 
   const stopRecording = () => {
+    console.log('⏹️ Attempting to stop recording...');
     if (recognitionRef.current) {
-      console.log('⏹️ Stopping speech recognition...');
+      console.log('🛑 Stopping speech recognition...');
       recognitionRef.current.stop();
       setIsRecording(false);
     }
