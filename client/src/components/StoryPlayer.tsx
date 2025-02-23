@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,84 +10,80 @@ interface StoryPlayerProps {
 }
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
-  const [index, setIndex] = useState(0);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
   const { toast } = useToast();
 
-  // Store the current word we're looking for
-  const currentWord = story.words[index];
+  // Get the current word we're expecting the user to say
+  const currentWord = story.words[currentWordIndex].toLowerCase().trim();
 
   const { startRecording, stopRecording } = useSpeechRecognition({
     continuous: false,
     interimResults: false,
-    onTranscriptionUpdate: (heard) => {
-      // Always work with the current word based on the current index
-      const expected = currentWord.toLowerCase().trim();
-      heard = heard.toLowerCase().trim();
-      setLastHeard(heard);
+    onTranscriptionUpdate: (transcript) => {
+      // Clean and normalize the heard transcript
+      const heardText = transcript.toLowerCase().trim();
+      setLastHeard(heardText);
 
-      console.log('📝 Speech Recognition Results:', {
-        expected,
-        heard,
-        wordIndex: index,
-        currentWord,
-        totalWords: story.words.length
+      // Log exact match attempt
+      console.log('Speech Recognition Results:', {
+        heard: heardText,
+        expecting: currentWord,
+        wordIndex: currentWordIndex
       });
 
-      // Split heard text into individual words and clean them
-      const heardWords = heard.split(/\s+/).map(w => w.replace(/[.,!?]$/, '').trim().toLowerCase());
-      const cleanExpected = expected.replace(/[.,!?]$/, '').toLowerCase();
+      // Split heard text into words and clean each word
+      const heardWords = heardText.split(/\s+/).map(word => 
+        word.replace(/[.,!?]$/, '').trim().toLowerCase()
+      );
 
-      // Match more flexibly by checking if any heard word contains or matches the expected word
-      const isMatch = heardWords.some(word => {
-        const match = (
-          word === cleanExpected ||
-          word.includes(cleanExpected) ||
-          cleanExpected.includes(word) ||
-          // Allow for slight variations
-          (word.length > 3 && cleanExpected.length > 3 && 
-           (word.includes(cleanExpected.slice(0, -1)) || 
-            cleanExpected.includes(word.slice(0, -1))))
-        );
+      // Check if any of the heard words match our expected word
+      const foundMatch = heardWords.some(heardWord => {
+        const isExactMatch = heardWord === currentWord;
+        const containsWord = heardWord.includes(currentWord) || currentWord.includes(heardWord);
 
-        console.log('Word matching comparison:', {
-          word,
-          cleanExpected,
-          match,
-          currentIndex: index
+        // Log each word comparison
+        console.log('Word comparison:', {
+          heardWord,
+          currentWord,
+          isExactMatch,
+          containsWord,
+          currentWordIndex
         });
 
-        return match;
+        return isExactMatch || containsWord;
       });
 
-      console.log('Final match result:', {
+      // Log final match result
+      console.log('Match result:', {
         heardWords,
-        cleanExpected,
-        isMatch,
-        currentIndex: index,
-        currentWord
+        currentWord,
+        foundMatch,
+        currentWordIndex
       });
 
-      if (isMatch) {
-        if (index < story.words.length - 1) {
+      if (foundMatch) {
+        if (currentWordIndex < story.words.length - 1) {
           toast({
             title: "Great job! 🌟",
-            description: `You correctly said "${currentWord}"!`,
+            description: `You correctly said "${story.words[currentWordIndex]}"!`
           });
-          setIndex(index => index + 1);
+          // Move to next word
+          setCurrentWordIndex(prevIndex => prevIndex + 1);
         } else {
           toast({
             title: "Congratulations! 🎉",
-            description: "You've completed the story!",
+            description: "You've completed the story!"
           });
         }
       } else {
         toast({
-          title: "Almost there! 💪", 
-          description: `Try saying "${currentWord}" again.`,
+          title: "Almost there! 💪",
+          description: `Try saying "${story.words[currentWordIndex]}" again.`
         });
       }
+
       setIsActive(false);
       stopRecording();
     }
@@ -96,11 +92,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const readWord = () => {
     if (isActive) return;
 
-    const word = story.words[index];
+    const wordToRead = story.words[currentWordIndex];
     setIsActive(true);
     setLastHeard("");
 
-    const utterance = new SpeechSynthesisUtterance(word);
+    const utterance = new SpeechSynthesisUtterance(wordToRead);
     utterance.onend = () => {
       startRecording();
     };
@@ -110,12 +106,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="p-8 text-center space-y-6">
-      {/* Full story display */}
+      {/* Story display */}
       <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
         {story.words.map((word, i) => (
           <span 
             key={i}
-            className={`inline-block mx-1 ${i === index ? 'text-2xl font-semibold text-primary' : 'text-gray-600'}`} 
+            className={`inline-block mx-1 ${i === currentWordIndex ? 'text-2xl font-semibold text-primary' : 'text-gray-600'}`} 
           >
             {word}
           </span>
@@ -138,7 +134,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </div>
       )}
 
-      {index === story.words.length - 1 && (
+      {currentWordIndex === story.words.length - 1 && (
         <p className="mt-4 text-green-600">Last word! Keep going!</p>
       )}
     </div>
