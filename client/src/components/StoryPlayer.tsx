@@ -101,6 +101,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         ))}
       </div>
 
+      <h1 className="text-5xl mb-8">{story.words[index]}</h1>
+
       <Button 
         size="lg" 
         onClick={readWord}
