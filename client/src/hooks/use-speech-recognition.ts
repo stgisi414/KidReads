@@ -30,18 +30,21 @@ export function useSpeechRecognition({
       recognition.interimResults = interimResults;
 
       recognition.onstart = () => {
-        console.log('Speech recognition started');
+        console.log('🎤 Speech recognition started');
         setIsRecording(true);
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        console.log('Speech recognition result received');
+        console.log('🎯 Speech recognition result event received');
         let finalTranscript = '';
         let interimTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const transcript = result[0].transcript;
+
+          console.log(`🗣️ Recognition [${result.isFinal ? 'Final' : 'Interim'}]:`, transcript);
+          console.log(`📊 Confidence: ${(result[0].confidence * 100).toFixed(2)}%`);
 
           if (result.isFinal) {
             finalTranscript += transcript;
@@ -51,16 +54,18 @@ export function useSpeechRecognition({
         }
 
         const currentTranscript = finalTranscript || interimTranscript;
-        console.log('Transcription:', currentTranscript);
+        console.log('📝 Current Transcript:', currentTranscript);
         setTranscript(currentTranscript);
 
         if (onTranscriptionUpdate && (finalTranscript || !interimResults)) {
+          console.log('🔄 Sending transcript to callback:', currentTranscript);
           onTranscriptionUpdate(currentTranscript);
         }
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error', event.error);
+        console.error('❌ Speech recognition error:', event.error);
+        console.error('Error details:', event);
         if (event.error === 'not-allowed') {
           toast({ 
             title: "Microphone Access Required",
@@ -78,12 +83,13 @@ export function useSpeechRecognition({
       };
 
       recognition.onend = () => {
-        console.log('Speech recognition ended');
+        console.log('🛑 Speech recognition ended');
         setIsRecording(false);
       };
 
       recognitionRef.current = recognition;
     } else {
+      console.error('❌ Speech Recognition API not available');
       toast({ 
         title: "Speech Recognition Not Available",
         description: "Your browser doesn't support speech recognition.",
@@ -101,11 +107,11 @@ export function useSpeechRecognition({
   const startRecording = () => {
     if (recognitionRef.current) {
       try {
-        console.log('Starting speech recognition...');
-        setIsRecording(true);
+        console.log('🎬 Attempting to start speech recognition...');
         recognitionRef.current.start();
+        setIsRecording(true);
       } catch (error) {
-        console.error('Failed to start recording:', error);
+        console.error('❌ Failed to start recording:', error);
         setIsRecording(false);
       }
     }
@@ -113,9 +119,9 @@ export function useSpeechRecognition({
 
   const stopRecording = () => {
     if (recognitionRef.current) {
-      console.log('Stopping speech recognition...');
-      setIsRecording(false);
+      console.log('⏹️ Stopping speech recognition...');
       recognitionRef.current.stop();
+      setIsRecording(false);
     }
   };
 

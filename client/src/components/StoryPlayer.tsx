@@ -61,28 +61,40 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   }, []);
 
   const handleTranscription = (transcript: string) => {
-    console.log('Received transcription:', transcript);
-    if (!transcript) return;
+    console.log('📥 Received transcription:', transcript);
+    if (!transcript) {
+      console.log('❌ Empty transcript received, ignoring');
+      return;
+    }
 
     setDictation(transcript);
     const spokenWord = transcript.toLowerCase().trim();
     const currentWord = story.words[currentWordIndex].toLowerCase().trim();
 
-    console.log('Comparing words:', { spokenWord, currentWord });
+    console.log('🔍 Word Comparison:', {
+      spoken: spokenWord,
+      expected: currentWord,
+      currentIndex: currentWordIndex
+    });
 
     // Simple word comparison without punctuation
     const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, "").trim();
     const cleanCurrentWord = currentWord.replace(/[.,!?]/g, "").trim();
 
+    console.log('🧹 Cleaned Words:', {
+      cleaned_spoken: cleanSpokenWord,
+      cleaned_expected: cleanCurrentWord
+    });
+
     if (cleanSpokenWord.includes(cleanCurrentWord) || cleanCurrentWord.includes(cleanSpokenWord)) {
-      console.log('Word matched! Moving to next word');
+      console.log('✅ Word matched! Moving to next word');
       toast({
         description: "Great reading! ⭐",
         duration: 1000,
       });
       handleNextWord();
     } else {
-      console.log('Word did not match, trying again');
+      console.log('❌ Word did not match, trying again');
       toast({
         title: "Try Again",
         description: `Let's try reading: "${story.words[currentWordIndex]}"`,
@@ -271,8 +283,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
               Your turn! Say: "{story.words[currentWordIndex]}"
             </p>
             <div className="border p-2 rounded-md mt-2">
-              <p className="text-xs">Dictation:</p>
-              <p>{dictation}</p>
+              <p className="text-xs">Live Dictation:</p>
+              <pre className="text-xs bg-gray-50 p-2 rounded">
+                {dictation || 'Listening...'}
+              </pre>
             </div>
           </div>
         )}
