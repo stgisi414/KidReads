@@ -116,8 +116,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     console.log('Starting to speak word:', word);
     if (!synthesisRef.current) return;
 
-    // Cancel any ongoing speech and recording
-    stopRecording();
+    // Only cancel ongoing speech synthesis
     if (utteranceRef.current) {
       synthesisRef.current.cancel();
     }
