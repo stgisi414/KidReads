@@ -35,9 +35,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       // Match if any heard word matches exactly OR contains/is contained by the expected word
       const isMatch = heardWords.some(word => {
-        return word === expected || 
-               word.indexOf(expected) >= 0 || 
-               expected.indexOf(word) >= 0;
+        // First try exact match
+        if (word === expected) return true;
+        
+        // Then try without punctuation
+        const cleanWord = word.replace(/[.,!?]$/, '');
+        const cleanExpected = expected.replace(/[.,!?]$/, '');
+        return cleanWord === cleanExpected;
       });
 
       console.log('🎯 Word Match Check:', {
