@@ -10,126 +10,105 @@ interface StoryPlayerProps {
   story: Story;
 }
 
-interface IWindow extends Window {
-  SpeechRecognition: new () => SpeechRecognition;
-  webkitSpeechRecognition: new () => SpeechRecognition;
-}
-
-declare global {
-  interface SpeechRecognitionErrorEvent extends Event {
-    error: string;
-    message?: string;
-  }
-}
+declare var webkitSpeechRecognition: any;
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [recognition, setRecognition] = useState<any>(null);
   const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [speed, setSpeed] = useState(0.8);
   const { toast } = useToast();
 
-  // Initialize speech recognition and synthesis on component mount
+  // Initialize speech synthesis and recognition
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Initialize speech synthesis
-      const synth = window.speechSynthesis;
-      setSynthesis(synth);
+    // Initialize speech synthesis
+    if ('speechSynthesis' in window) {
+      setSynthesis(window.speechSynthesis);
+    } else {
+      toast({
+        title: "Speech Synthesis Not Available",
+        description: "Your browser doesn't support text-to-speech.",
+        variant: "destructive",
+      });
+    }
 
-      // Initialize speech recognition
-      try {
-        const SpeechRecognition = (window as unknown as IWindow).SpeechRecognition || 
-                                 (window as unknown as IWindow).webkitSpeechRecognition;
-        if (SpeechRecognition) {
-          const newRecognition = new SpeechRecognition();
-          newRecognition.continuous = false;
-          newRecognition.interimResults = false;
-          newRecognition.lang = 'en-US';
+    // Initialize speech recognition
+    if ('webkitSpeechRecognition' in window) {
+      const newRecognition = new webkitSpeechRecognition();
+      newRecognition.continuous = false;
+      newRecognition.interimResults = false;
+      newRecognition.lang = 'en-US';
 
-          // Set up recognition handlers
-          newRecognition.onstart = () => {
-            console.log('Speech recognition started');
-            setIsListening(true);
-          };
+      newRecognition.onstart = () => {
+        console.log('Recognition started');
+        setIsListening(true);
+      };
 
-          newRecognition.onend = () => {
-            console.log('Speech recognition ended');
-            setIsListening(false);
-          };
+      newRecognition.onend = () => {
+        console.log('Recognition ended');
+        setIsListening(false);
+        if (isPlaying) {
+          // If we're still playing, restart recognition after a short delay
+          setTimeout(startListening, 500);
+        }
+      };
 
-          newRecognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-            console.error('Speech recognition error:', event.error);
-            setIsListening(false);
+      newRecognition.onerror = (event: any) => {
+        console.error('Recognition error:', event.error);
+        setIsListening(false);
 
-            // Show specific error messages based on the error type
-            let errorMessage = "There was an error with speech recognition. Please try again.";
-            if (event.error === 'no-speech') {
-              errorMessage = "No speech was detected. Please try speaking again.";
-            } else if (event.error === 'not-allowed') {
-              errorMessage = "Please allow microphone access to use speech recognition.";
-            }
-
-            toast({
-              title: "Speech Recognition Error",
-              description: errorMessage,
-              variant: "destructive",
-            });
-
-            // Retry recognition after error
-            if (isPlaying) {
-              setTimeout(() => {
-                startListening();
-              }, 1000);
-            }
-          };
-
-          newRecognition.onresult = (event: SpeechRecognitionEvent) => {
-            console.log('Speech recognition result received');
-            const spokenWord = event.results[0][0].transcript.toLowerCase().trim();
-            const currentWord = story.words[currentWordIndex].toLowerCase().trim();
-            console.log('Spoken word:', spokenWord, 'Current word:', currentWord);
-
-            // Compare spoken word with current word
-            if (spokenWord.includes(currentWord) || currentWord.includes(spokenWord)) {
-              toast({
-                description: "Great reading! ⭐",
-                duration: 1000,
-              });
-              handleNextWord();
-            } else {
-              toast({
-                title: "Try Again",
-                description: `Let's try reading: "${story.words[currentWordIndex]}"`,
-                duration: 2000,
-              });
-              // Repeat the current word after a short delay
-              setTimeout(() => {
-                speakWord(story.words[currentWordIndex]);
-              }, 1500);
-            }
-          };
-
-          setRecognition(newRecognition);
+        if (event.error === 'not-allowed') {
+          toast({
+            title: "Microphone Access Required",
+            description: "Please allow microphone access to use the reading feature.",
+            variant: "destructive",
+          });
+          setIsPlaying(false);
         } else {
           toast({
-            title: "Speech Recognition Not Available",
-            description: "Your browser doesn't support speech recognition.",
+            title: "Speech Recognition Error",
+            description: "There was an error with speech recognition. Please try again.",
             variant: "destructive",
           });
         }
-      } catch (error) {
-        console.error("Failed to initialize speech recognition:", error);
-        toast({
-          title: "Speech Recognition Error",
-          description: "There was an error setting up speech recognition.",
-          variant: "destructive",
-        });
-      }
+      };
+
+      newRecognition.onresult = (event: any) => {
+        const spokenWord = event.results[0][0].transcript.toLowerCase().trim();
+        const currentWord = story.words[currentWordIndex].toLowerCase().trim();
+        console.log('Spoken:', spokenWord, 'Expected:', currentWord);
+
+        if (spokenWord.includes(currentWord) || currentWord.includes(spokenWord)) {
+          toast({
+            description: "Great reading! ⭐",
+            duration: 1000,
+          });
+          handleNextWord();
+        } else {
+          toast({
+            title: "Try Again",
+            description: `Let's try reading: "${story.words[currentWordIndex]}"`,
+            duration: 2000,
+          });
+          // Repeat the word after a short delay
+          setTimeout(() => {
+            speakWord(story.words[currentWordIndex]);
+          }, 1500);
+        }
+      };
+
+      setRecognition(newRecognition);
+    } else {
+      toast({
+        title: "Speech Recognition Not Available",
+        description: "Your browser doesn't support speech recognition.",
+        variant: "destructive",
+      });
     }
 
-    // Cleanup function
+    // Cleanup
     return () => {
       if (synthesis) {
         synthesis.cancel();
@@ -143,54 +122,41 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const startListening = () => {
     if (recognition && !isListening) {
       try {
-        console.log('Starting speech recognition');
         recognition.start();
+        console.log('Starting recognition');
       } catch (error) {
-        console.error('Failed to start speech recognition:', error);
-        toast({
-          title: "Speech Recognition Error",
-          description: "Failed to start listening. Please try again.",
-          variant: "destructive",
-        });
-        // Reset state and try again
+        console.error('Failed to start recognition:', error);
         setIsListening(false);
-        setTimeout(() => {
-          startListening();
-        }, 1000);
       }
     }
   };
 
   const speakWord = (word: string) => {
-    if (synthesis) {
-      // Cancel any ongoing speech
-      synthesis.cancel();
+    if (!synthesis) return;
 
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.rate = speed;
-      utterance.onstart = () => {
-        console.log('Speaking word:', word);
-      };
+    synthesis.cancel(); // Cancel any ongoing speech
 
-      // Add a delay after speaking to allow for user response
-      utterance.onend = () => {
-        console.log('Finished speaking word:', word);
-        if (isPlaying) {
-          setTimeout(() => {
-            startListening();
-          }, 1000); // Longer delay before starting recognition
-        }
-      };
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.rate = speed;
 
-      synthesis.speak(utterance);
-    }
+    utterance.onend = () => {
+      console.log('Finished speaking:', word);
+      if (isPlaying) {
+        setTimeout(() => {
+          startListening();
+        }, 500);
+      }
+    };
+
+    console.log('Speaking word:', word);
+    synthesis.speak(utterance);
   };
 
   const handleNextWord = () => {
     if (currentWordIndex < story.words.length - 1) {
       setCurrentWordIndex(prev => prev + 1);
       if (recognition) {
-        recognition.abort(); // Stop current recognition
+        recognition.abort();
       }
       setTimeout(() => {
         speakWord(story.words[currentWordIndex + 1]);
