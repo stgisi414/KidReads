@@ -30,31 +30,17 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         totalWords: story.words.length
       });
 
-      // For short words (3 chars or less), use exact matching
-      // For longer words, use more forgiving matching
-      const isShortWord = expected.length <= 3;
+      // Split heard text into individual words
+      const heardWords = heard.split(/\s+/);
 
-      let isMatch = false;
-      if (isShortWord) {
-        // For short words, split heard text into words and check each one
-        const heardWords = heard.split(/\s+/);
-        isMatch = heardWords.some(word => word === expected);
-        console.log('🔍 Short word matching:', {
-          expected,
-          heardWords,
-          isMatch
-        });
-      } else {
-        // For longer words, use contains matching in both directions
-        const matchForward = heard.includes(expected);
-        const matchBackward = expected.includes(heard);
-        isMatch = matchForward || matchBackward;
-        console.log('🎯 Match Analysis:', {
-          matchForward: matchForward ? '✅' : '❌',
-          matchBackward: matchBackward ? '✅' : '❌',
-          finalResult: isMatch ? '✅ Match!' : '❌ No match'
-        });
-      }
+      // Check if any of the heard words exactly match the expected word
+      const isMatch = heardWords.some(word => word === expected);
+
+      console.log('🎯 Word Match Check:', {
+        heardWords,
+        expected,
+        isMatch: isMatch ? '✅ Match!' : '❌ No match'
+      });
 
       if (isMatch) {
         if (index < story.words.length - 1) {
