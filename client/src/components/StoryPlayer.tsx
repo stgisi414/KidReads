@@ -12,6 +12,7 @@ interface StoryPlayerProps {
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [index, setIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
+  const [lastHeard, setLastHeard] = useState<string>("");
   const { toast } = useToast();
 
   const { startRecording, stopRecording } = useSpeechRecognition({
@@ -20,23 +21,43 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     onTranscriptionUpdate: (heard) => {
       const expected = story.words[index].toLowerCase().trim();
       heard = heard.toLowerCase().trim();
+      setLastHeard(heard);
 
-      // Check if either word contains the other
-      const isMatch = heard.indexOf(expected) !== -1 || expected.indexOf(heard) !== -1;
+      console.log('📝 Speech Recognition Results:', {
+        expected,
+        heard,
+        wordIndex: index,
+        totalWords: story.words.length
+      });
+
+      // Check if either word contains the other (in either direction)
+      const matchForward = heard.includes(expected);
+      const matchBackward = expected.includes(heard);
+      const isMatch = matchForward || matchBackward;
+
+      console.log('🎯 Match Analysis:', {
+        matchForward: matchForward ? '✅' : '❌',
+        matchBackward: matchBackward ? '✅' : '❌',
+        finalResult: isMatch ? '✅ Match!' : '❌ No match'
+      });
 
       if (isMatch) {
         if (index < story.words.length - 1) {
+          toast({
+            title: "Great job! 🌟",
+            description: `You correctly said "${expected}"!`,
+          });
           setIndex(index + 1);
         } else {
           toast({
-            title: "Congratulations!",
+            title: "Congratulations! 🎉",
             description: "You've completed the story!",
           });
         }
       } else {
         toast({
-          title: "Try Again",
-          description: `Almost! Try saying "${story.words[index]}" again.`,
+          title: "Almost there! 💪",
+          description: `I heard "${heard}". Try saying "${story.words[index]}" again.`,
         });
       }
       setIsActive(false);
@@ -49,6 +70,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     const word = story.words[index];
     setIsActive(true);
+    setLastHeard("");
 
     // Read the word
     const utterance = new SpeechSynthesisUtterance(word);
@@ -61,17 +83,25 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   return (
-    <div className="p-8 text-center">
+    <div className="p-8 text-center space-y-6">
       <h1 className="text-6xl mb-8">{story.words[index]}</h1>
+
       <Button 
         size="lg" 
         onClick={readWord}
         disabled={isActive}
-        className={isActive ? "animate-pulse" : ""}
+        className={`w-full ${isActive ? "animate-pulse bg-green-500" : ""}`}
       >
         <Play className="mr-2 h-4 w-4" />
         {isActive ? "Listening..." : "Read Word"}
       </Button>
+
+      {lastHeard && (
+        <div className="text-sm text-gray-600">
+          Last heard: "{lastHeard}"
+        </div>
+      )}
+
       {index === story.words.length - 1 && (
         <p className="mt-4 text-green-600">Last word! Keep going!</p>
       )}
