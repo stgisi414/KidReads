@@ -13,6 +13,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [synthesis, setSynthesis] = useState<SpeechSynthesis | null>(null);
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
