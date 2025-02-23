@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import WordDisplay from "@/components/WordDisplay";
-import { Play, Pause, RotateCcw, Mic, MicOff } from "lucide-react";
+import { Play, Pause, RotateCcw, Mic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Slider } from "@/components/ui/slider";
 import type { Story } from "@shared/schema";
@@ -11,17 +11,14 @@ interface StoryPlayerProps {
   story: Story;
 }
 
-type PlayerState = "idle" | "speaking" | "listening" | "transitioning";
-
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(0.8);
-  const [playerState, setPlayerState] = useState<PlayerState>("idle");
+  const [dictation, setDictation] = useState("");
+  const [hasMicPermission, setHasMicPermission] = useState(false);
   const { toast } = useToast();
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
-  const [dictation, setDictation] = useState("");
-  const [hasPermission, setHasPermission] = useState(false);
 
   // Initialize speech synthesis
   useEffect(() => {
@@ -42,45 +39,38 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     };
   }, []);
 
-  // Request microphone permission
+  // Request microphone permission on mount
   useEffect(() => {
-    const requestMicrophonePermission = async () => {
+    const requestMicPermission = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        setHasPermission(true);
-        // Clean up the stream
         stream.getTracks().forEach(track => track.stop());
+        setHasMicPermission(true);
       } catch (error) {
-        console.error('Microphone permission error:', error);
-        setHasPermission(false);
+        console.error('Failed to get microphone permission:', error);
+        setHasMicPermission(false);
         toast({
           title: "Microphone Access Required",
           description: "Please allow microphone access to use this feature",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     };
-
-    requestMicrophonePermission();
+    requestMicPermission();
   }, []);
 
   const handleTranscription = (transcript: string) => {
-    if (!transcript || playerState !== "listening") return;
+    if (!transcript) return;
 
     setDictation(transcript);
     const spokenWord = transcript.toLowerCase().trim();
     const currentWord = story.words[currentWordIndex].toLowerCase().trim();
 
-    const cleanSpokenWord = spokenWord
-      .replace(/[.,!?]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
+    // Compare words after removing punctuation
+    const cleanSpokenWord = spokenWord.replace(/[.,!?]/g, "").trim();
     const cleanCurrentWord = currentWord.replace(/[.,!?]/g, "").trim();
 
-    if (
-      cleanSpokenWord.includes(cleanCurrentWord) ||
-      cleanCurrentWord.includes(cleanSpokenWord)
-    ) {
+    if (cleanSpokenWord.includes(cleanCurrentWord) || cleanCurrentWord.includes(cleanSpokenWord)) {
       toast({
         description: "Great reading! ⭐",
         duration: 1000,
@@ -92,10 +82,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         description: `Let's try reading: "${story.words[currentWordIndex]}"`,
         duration: 2000,
       });
-      if (isPlaying) {
-        setPlayerState("speaking");
-        speakWord(story.words[currentWordIndex]);
-      }
+      // Repeat the word after a short delay
+      setTimeout(() => speakWord(story.words[currentWordIndex]), 1000);
     }
   };
 
@@ -106,86 +94,69 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     interimResults: false,
   });
 
-  const speakWord = (word: string) => {
-    if (!synthesisRef.current) {
-      console.error("Speech synthesis not available");
-      return;
-    }
+  const speakWord = async (word: string) => {
+    if (!synthesisRef.current) return;
 
+    // Stop any ongoing speech
     synthesisRef.current.cancel();
+    stopRecording();
+
+    // Create and configure utterance
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = speed;
     utterance.lang = "en-US";
 
-    utterance.onstart = () => {
-      setPlayerState("speaking");
-    };
-
+    // Start listening after speech ends
     utterance.onend = () => {
-      if (isPlaying && hasPermission) {
-        setPlayerState("listening");
-        startRecording();
+      if (isPlaying && hasMicPermission) {
+        // Small delay to ensure speech synthesis is fully complete
+        setTimeout(() => startRecording(), 100);
       }
-    };
-
-    utterance.onerror = (event) => {
-      console.error("Speech synthesis error:", event.error);
-      toast({
-        title: "Speech Error",
-        description: `Failed to speak: ${event.error}`,
-        variant: "destructive",
-      });
-      setPlayerState("idle");
     };
 
     try {
       synthesisRef.current.speak(utterance);
     } catch (error) {
-      console.error("Failed to start speech:", error);
-      setPlayerState("idle");
+      console.error('Speech synthesis failed:', error);
       toast({
         title: "Speech Error",
-        description: "Failed to start speaking",
-        variant: "destructive",
+        description: "Failed to speak the word",
+        variant: "destructive"
       });
     }
   };
 
   const handleNextWord = () => {
     stopRecording();
-    setPlayerState("transitioning");
-
     if (currentWordIndex < story.words.length - 1) {
-      setCurrentWordIndex((prev) => prev + 1);
-      setPlayerState("speaking");
-      speakWord(story.words[currentWordIndex + 1]); //Corrected index here
+      const nextIndex = currentWordIndex + 1;
+      setCurrentWordIndex(nextIndex);
+      // Small delay before speaking next word
+      setTimeout(() => speakWord(story.words[nextIndex]), 500);
     } else {
       setIsPlaying(false);
-      setPlayerState("idle");
       toast({
         title: "Story Complete! 🎉",
-        description: "Great job!",
+        description: "Great job reading!",
       });
     }
   };
 
   const togglePlayback = () => {
-    if (!hasPermission) {
+    if (!hasMicPermission) {
       toast({
-        title: "Microphone Access Required",
+        title: "Microphone Required",
         description: "Please allow microphone access to start reading",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
 
     if (!isPlaying) {
       setIsPlaying(true);
-      setPlayerState("speaking");
       speakWord(story.words[currentWordIndex]);
     } else {
       setIsPlaying(false);
-      setPlayerState("idle");
       stopRecording();
       if (synthesisRef.current) {
         synthesisRef.current.cancel();
@@ -196,7 +167,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const restart = () => {
     setCurrentWordIndex(0);
     setIsPlaying(false);
-    setPlayerState("idle");
     stopRecording();
     if (synthesisRef.current) {
       synthesisRef.current.cancel();
@@ -245,27 +215,20 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       </div>
 
       <div className="text-center space-y-2">
-        {!hasPermission && (
+        {!hasMicPermission && (
           <div className="text-yellow-600 bg-yellow-50 p-4 rounded-lg">
             <p>Microphone access is required for interactive reading.</p>
             <p className="text-sm">Please allow microphone access when prompted.</p>
           </div>
         )}
 
-        {playerState === "speaking" && (
-          <div className="animate-bounce">
-            <div className="w-4 h-4 rounded-full mx-auto bg-blue-400" />
-            <p className="text-sm text-blue-600">Speaking...</p>
-          </div>
-        )}
-
-        {playerState === "listening" && (
+        {isRecording && (
           <div>
             <Mic className="w-4 h-4 text-green-500 mx-auto animate-pulse" />
             <p className="text-sm text-green-600">
               Your turn! Say: "{story.words[currentWordIndex]}"
             </p>
-            <div className="border p-2 rounded-md">
+            <div className="border p-2 rounded-md mt-2">
               <p className="text-xs">Dictation:</p>
               <p>{dictation}</p>
             </div>
