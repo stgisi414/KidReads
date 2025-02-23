@@ -1,0 +1,44 @@
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "wouter";
+import { Card } from "@/components/ui/card";
+import StoryPlayer from "@/components/StoryPlayer";
+import type { Story } from "@shared/schema";
+
+export default function ReadAlong() {
+  const { id } = useParams();
+  
+  const { data: story, isLoading } = useQuery<Story>({
+    queryKey: [`/api/stories/${id}`],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!story) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Story not found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background p-4">
+      <Card className="max-w-4xl mx-auto p-6">
+        <div className="aspect-video mb-6 rounded-lg overflow-hidden">
+          <img
+            src={story.imageUrl}
+            alt={story.topic}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <StoryPlayer story={story} />
+      </Card>
+    </div>
+  );
+}
