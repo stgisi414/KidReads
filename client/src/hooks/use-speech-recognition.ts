@@ -21,7 +21,6 @@ export function useSpeechRecognition({
 
   useEffect(() => {
     console.log('🎯 Initializing speech recognition...');
-    // Check for both standard and webkit prefixed versions
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
@@ -37,14 +36,46 @@ export function useSpeechRecognition({
         setIsRecording(true);
       };
 
+      recognition.onspeechstart = () => {
+        console.log('🗣️ Speech detected - user started speaking');
+      };
+
+      recognition.onspeechend = () => {
+        console.log('🔇 Speech ended - user stopped speaking');
+      };
+
+      recognition.onaudiostart = () => {
+        console.log('🎙️ Audio capturing started');
+      };
+
+      recognition.onaudioend = () => {
+        console.log('🎙️ Audio capturing ended');
+      };
+
+      recognition.onsoundstart = () => {
+        console.log('🔊 Sound detected');
+      };
+
+      recognition.onsoundend = () => {
+        console.log('🔈 Sound ended');
+      };
+
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         console.log('🎯 Speech recognition result event received');
+        console.log('Results:', event.results);
         let finalTranscript = '';
         let interimTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const transcript = result[0].transcript;
+          const confidence = result[0].confidence;
+
+          console.log(`Result ${i}:`, {
+            transcript,
+            confidence: (confidence * 100).toFixed(2) + '%',
+            isFinal: result.isFinal
+          });
 
           if (result.isFinal) {
             console.log('📝 Final transcript:', transcript);
@@ -56,9 +87,16 @@ export function useSpeechRecognition({
         }
 
         const currentTranscript = finalTranscript || interimTranscript;
+        console.log('Current transcript state:', {
+          final: finalTranscript,
+          interim: interimTranscript,
+          current: currentTranscript
+        });
+
         setTranscript(currentTranscript);
 
         if (onTranscriptionUpdate && (finalTranscript || !interimResults)) {
+          console.log('🔄 Calling transcription update callback with:', currentTranscript);
           onTranscriptionUpdate(currentTranscript);
         }
       };
