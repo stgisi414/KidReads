@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import VoiceInput from "@/components/VoiceInput";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Logo } from "@/components/ui/logo";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
@@ -38,12 +37,9 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-lg p-8 shadow-xl bg-white/90 backdrop-blur">
         <div className="text-center space-y-6">
-          <div className="flex items-center justify-center gap-4">
-            <Logo className="text-4xl" />
-            <h1 className="text-5xl font-bold text-primary animate-bounce">
-              Reading Adventure!
-            </h1>
-          </div>
+          <h1 className="text-5xl font-bold text-primary animate-bounce">
+            Reading Adventure!
+          </h1>
           <p className="text-2xl text-gray-600">
             Tell me what you want to read about!
           </p>
