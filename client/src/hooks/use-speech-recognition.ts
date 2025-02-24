@@ -1,21 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface UseSpeechRecognitionProps {
   language?: string;
   onTranscriptionUpdate?: (transcript: string) => void;
+  onRecognitionEnd?: () => void; // Add new callback for recognition end
   continuous?: boolean;
   interimResults?: boolean;
 }
 
-export function useSpeechRecognition({ 
-  language = 'en-US', 
+export function useSpeechRecognition({
+  language = "en-US",
   onTranscriptionUpdate,
+  onRecognitionEnd, // Include new callback in parameters
   continuous = false,
-  interimResults = true
+  interimResults = true,
 }: UseSpeechRecognitionProps = {}) {
   const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [transcript, setTranscript] = useState("");
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -26,19 +28,24 @@ export function useSpeechRecognition({
     try {
       // Check for available audio input devices first
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const audioInputs = devices.filter(device => device.kind === 'audioinput');
+      const audioInputs = devices.filter(
+        (device) => device.kind === "audioinput",
+      );
 
       if (audioInputs.length === 0) {
-        throw new Error('No microphone found. Please connect a microphone and try again.');
+        throw new Error(
+          "No microphone found. Please connect a microphone and try again.",
+        );
       }
 
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
       setHasPermission(true);
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        throw new Error('Speech Recognition API not available');
+        throw new Error("Speech Recognition API not available");
       }
 
       const recognition = new SpeechRecognition();
@@ -47,7 +54,7 @@ export function useSpeechRecognition({
       recognition.interimResults = interimResults;
 
       recognition.onstart = () => {
-        console.log('🎤 Speech recognition started');
+        console.log("🎤 Speech recognition started");
         setIsRecording(true);
 
         // Set a minimum listening time of 3 seconds
@@ -63,13 +70,13 @@ export function useSpeechRecognition({
       };
 
       recognition.onspeechstart = () => {
-        console.log('🗣️ Speech detected');
+        console.log("🗣️ Speech detected");
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        console.log('🎯 Speech recognition result received');
-        let finalTranscript = '';
-        let interimTranscript = '';
+        console.log("🎯 Speech recognition result received");
+        let finalTranscript = "";
+        let interimTranscript = "";
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
@@ -91,7 +98,7 @@ export function useSpeechRecognition({
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('❌ Speech recognition error:', event.error);
+        console.error("❌ Speech recognition error:", event.error);
 
         // Don't stop if we're still in minimum listen time
         if (minListenTimeoutRef.current) {
@@ -101,15 +108,16 @@ export function useSpeechRecognition({
         setIsRecording(false);
 
         switch (event.error) {
-          case 'not-allowed':
+          case "not-allowed":
             setHasPermission(false);
             toast({
               title: "Microphone Access Required",
-              description: "Please allow microphone access in your browser settings to continue.",
-              variant: "destructive"
+              description:
+                "Please allow microphone access in your browser settings to continue.",
+              variant: "destructive",
             });
             break;
-          case 'no-speech':
+          case "no-speech":
             // Restart recognition if no speech detected
             if (isRecording) {
               recognition.stop();
@@ -122,59 +130,60 @@ export function useSpeechRecognition({
               }, 100);
             }
             break;
-          case 'audio-capture':
+          case "audio-capture":
             toast({
               title: "Microphone Error",
-              description: "No microphone detected or microphone is not working. Please check your device settings.",
-              variant: "destructive"
+              description:
+                "No microphone detected or microphone is not working. Please check your device settings.",
+              variant: "destructive",
             });
             break;
-          case 'not-found':
+          case "not-found":
             toast({
               title: "Microphone Not Found",
               description: "Please connect a microphone and try again.",
-              variant: "destructive"
+              variant: "destructive",
             });
             break;
           default:
             toast({
               title: "Speech Recognition Error",
               description: `Error: ${event.error}. Please try again.`,
-              variant: "destructive"
+              variant: "destructive",
             });
         }
       };
 
       recognition.onend = () => {
-        console.log('🛑 Speech recognition ended');
+        console.log("🛑 Speech recognition ended");
+        setIsRecording(false); // Ensure isRecording is set to false here as well
+        onRecognitionEnd?.(); // Call the new callback function
 
-        // Don't stop if we're still in minimum listen time
+        // Don't auto-restart on end anymore
         if (minListenTimeoutRef.current) {
-          recognition.start();
-          return;
+          clearTimeout(minListenTimeoutRef.current);
+          minListenTimeoutRef.current = null;
         }
-
-        setIsRecording(false);
       };
 
       recognitionRef.current = recognition;
-
     } catch (error) {
-      console.error('Failed to initialize speech recognition:', error);
+      console.error("Failed to initialize speech recognition:", error);
       setHasPermission(false);
 
       if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
+        if (error.name === "NotAllowedError") {
           toast({
             title: "Microphone Access Denied",
-            description: "Please grant microphone access in your browser settings.",
-            variant: "destructive"
+            description:
+              "Please grant microphone access in your browser settings.",
+            variant: "destructive",
           });
         } else {
           toast({
             title: "Speech Recognition Error",
             description: error.message,
-            variant: "destructive"
+            variant: "destructive",
           });
         }
       }
@@ -191,7 +200,13 @@ export function useSpeechRecognition({
         clearTimeout(minListenTimeoutRef.current);
       }
     };
-  }, [language, onTranscriptionUpdate, continuous, interimResults]);
+  }, [
+    language,
+    onTranscriptionUpdate,
+    continuous,
+    interimResults,
+    onRecognitionEnd,
+  ]); // Add onRecognitionEnd to dependencies
 
   const startRecording = async () => {
     if (!hasPermission) {
@@ -203,11 +218,11 @@ export function useSpeechRecognition({
       try {
         await recognitionRef.current.start();
       } catch (error) {
-        console.error('Failed to start recording:', error);
+        console.error("Failed to start recording:", error);
         toast({
           title: "Recognition Error",
           description: "Failed to start speech recognition. Please try again.",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     }
@@ -223,11 +238,11 @@ export function useSpeechRecognition({
     }
   };
 
-  return { 
-    isRecording, 
-    transcript, 
-    startRecording, 
+  return {
+    isRecording,
+    transcript,
+    startRecording,
     stopRecording,
-    hasPermission 
+    hasPermission,
   };
 }
