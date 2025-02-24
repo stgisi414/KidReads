@@ -83,19 +83,21 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     return matches / longer.length;
   };
 
-  const readWord = () => {
+  const readWord = async () => {
     if (isActive) return;
 
     const wordToRead = story.words[currentWordIndex];
     setIsActive(true);
     setLastHeard("");
 
-    const utterance = new SpeechSynthesisUtterance(wordToRead);
-    utterance.onend = async () => {
-      await startRecording();
-    };
-
-    window.speechSynthesis.speak(utterance);
+    return new Promise<void>((resolve) => {
+      const utterance = new SpeechSynthesisUtterance(wordToRead);
+      utterance.onend = async () => {
+        await startRecording();
+        resolve();
+      };
+      window.speechSynthesis.speak(utterance);
+    });
   };
 
   useEffect(() => {

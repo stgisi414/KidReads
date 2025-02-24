@@ -224,9 +224,6 @@ export function useSpeechRecognition({
   };
 
   useEffect(() => {
-    if (props.initializeOnMount !== false) {
-      initializeSpeechRecognition();
-    }
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
@@ -235,7 +232,7 @@ export function useSpeechRecognition({
         clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, [language, onTranscriptionUpdate, continuous, interimResults, onRecognitionEnd]);
+  }, []);
 
   const startRecording = async () => {
     if (!hasPermission) {
