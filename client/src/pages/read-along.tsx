@@ -9,9 +9,24 @@ export default function ReadAlong() {
   const { id } = useParams();
   const [location, setLocation] = useLocation();
 
-  const { data: story, isLoading } = useQuery<Story>({
+  const { data: story, isLoading, error } = useQuery<Story>({
     queryKey: [`/api/stories/${id}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/stories/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to load story');
+      }
+      return response.json();
+    }
   });
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-red-500">Error loading story. Please try again.</p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
