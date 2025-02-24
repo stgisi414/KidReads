@@ -7,6 +7,7 @@ interface UseSpeechRecognitionProps {
   onRecognitionEnd?: () => void;
   continuous?: boolean;
   interimResults?: boolean;
+  initializeOnMount?: boolean;
 }
 
 export function useSpeechRecognition({
@@ -223,7 +224,9 @@ export function useSpeechRecognition({
   };
 
   useEffect(() => {
-    initializeSpeechRecognition();
+    if (props.initializeOnMount !== false) {
+      initializeSpeechRecognition();
+    }
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
