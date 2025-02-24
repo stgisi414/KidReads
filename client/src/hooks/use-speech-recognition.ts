@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 interface UseSpeechRecognitionProps {
   language?: string;
   onTranscriptionUpdate?: (transcript: string) => void;
-  onRecognitionEnd?: () => void; // Add new callback for recognition end
+  onRecognitionEnd?: () => void;
   continuous?: boolean;
   interimResults?: boolean;
 }
@@ -12,7 +12,7 @@ interface UseSpeechRecognitionProps {
 export function useSpeechRecognition({
   language = "en-US",
   onTranscriptionUpdate,
-  onRecognitionEnd, // Include new callback in parameters
+  onRecognitionEnd,
   continuous = false,
   interimResults = true,
 }: UseSpeechRecognitionProps = {}) {
@@ -21,7 +21,10 @@ export function useSpeechRecognition({
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const minListenTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxRetries = 3;
+  const retryCount = useRef(0);
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // Request microphone permission and initialize recognition
   const initializeSpeechRecognition = async () => {
@@ -50,19 +53,14 @@ export function useSpeechRecognition({
 
       const recognition = new SpeechRecognition();
       recognition.lang = language;
-      recognition.continuous = continuous;
-      recognition.interimResults = interimResults;
+      recognition.continuous = continuous || isMobileDevice; // Force continuous on mobile
+      recognition.interimResults = interimResults && !isMobileDevice; // Disable interim results on mobile
 
       recognition.onstart = () => {
         console.log("🎤 Speech recognition started");
         setIsRecording(true);
+        retryCount.current = 0; // Reset retry count on successful start
 
-        // Set a minimum listening time of 3 seconds
-        minListenTimeoutRef.current = setTimeout(() => {
-          minListenTimeoutRef.current = null;
-        }, 3000);
-
-        // Show toast to indicate listening started
         toast({
           title: "Listening",
           description: "Speak now...",
@@ -84,6 +82,8 @@ export function useSpeechRecognition({
 
           if (result.isFinal) {
             finalTranscript += transcript;
+            // Reset retry count on successful result
+            retryCount.current = 0;
           } else {
             interimTranscript += transcript;
           }
@@ -100,16 +100,39 @@ export function useSpeechRecognition({
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error("❌ Speech recognition error:", event.error);
 
-        // Don't stop if we're still in minimum listen time
-        if (minListenTimeoutRef.current) {
-          return;
-        }
+        const handleRetry = () => {
+          if (retryCount.current < maxRetries && isRecording) {
+            retryCount.current++;
+            console.log(`Retrying recognition (attempt ${retryCount.current}/${maxRetries})`);
 
-        setIsRecording(false);
+            // Clear any existing retry timeout
+            if (retryTimeoutRef.current) {
+              clearTimeout(retryTimeoutRef.current);
+            }
+
+            retryTimeoutRef.current = setTimeout(() => {
+              if (recognitionRef.current) {
+                try {
+                  recognitionRef.current.start();
+                } catch (error) {
+                  console.error("Failed to restart recognition:", error);
+                }
+              }
+            }, 1000);
+          } else if (retryCount.current >= maxRetries) {
+            setIsRecording(false);
+            toast({
+              title: "Recognition Error",
+              description: "Maximum retry attempts reached. Please try again.",
+              variant: "destructive",
+            });
+          }
+        };
 
         switch (event.error) {
           case "not-allowed":
             setHasPermission(false);
+            setIsRecording(false);
             toast({
               title: "Microphone Access Required",
               description:
@@ -118,16 +141,21 @@ export function useSpeechRecognition({
             });
             break;
           case "no-speech":
-            // Restart recognition if no speech detected
-            if (isRecording) {
-              recognition.stop();
-              setTimeout(() => {
-                recognition.start();
-                toast({
-                  title: "No Speech Detected",
-                  description: "Please try speaking again...",
-                });
-              }, 100);
+            if (isMobileDevice) {
+              handleRetry();
+            } else {
+              toast({
+                title: "No Speech Detected",
+                description: "Please speak louder or check your microphone",
+              });
+            }
+            break;
+          case "network":
+            handleRetry();
+            break;
+          case "aborted":
+            if (isMobileDevice) {
+              handleRetry();
             }
             break;
           case "audio-capture":
@@ -138,31 +166,35 @@ export function useSpeechRecognition({
               variant: "destructive",
             });
             break;
-          case "not-found":
-            toast({
-              title: "Microphone Not Found",
-              description: "Please connect a microphone and try again.",
-              variant: "destructive",
-            });
-            break;
           default:
-            toast({
-              title: "Speech Recognition Error",
-              description: `Error: ${event.error}. Please try again.`,
-              variant: "destructive",
-            });
+            if (isMobileDevice) {
+              handleRetry();
+            } else {
+              toast({
+                title: "Speech Recognition Error",
+                description: `Error: ${event.error}. Please try again.`,
+                variant: "destructive",
+              });
+            }
         }
       };
 
       recognition.onend = () => {
         console.log("🛑 Speech recognition ended");
-        setIsRecording(false); // Ensure isRecording is set to false here as well
-        onRecognitionEnd?.(); // Call the new callback function
 
-        // Don't auto-restart on end anymore
-        if (minListenTimeoutRef.current) {
-          clearTimeout(minListenTimeoutRef.current);
-          minListenTimeoutRef.current = null;
+        // If we're still supposed to be recording and haven't hit max retries
+        if (isRecording && retryCount.current < maxRetries) {
+          console.log("Attempting to restart recognition...");
+          try {
+            recognition.start();
+          } catch (error) {
+            console.error("Failed to restart recognition:", error);
+            setIsRecording(false);
+            onRecognitionEnd?.();
+          }
+        } else {
+          setIsRecording(false);
+          onRecognitionEnd?.();
         }
       };
 
@@ -196,17 +228,11 @@ export function useSpeechRecognition({
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (minListenTimeoutRef.current) {
-        clearTimeout(minListenTimeoutRef.current);
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
       }
     };
-  }, [
-    language,
-    onTranscriptionUpdate,
-    continuous,
-    interimResults,
-    onRecognitionEnd,
-  ]); // Add onRecognitionEnd to dependencies
+  }, [language, onTranscriptionUpdate, continuous, interimResults, onRecognitionEnd]);
 
   const startRecording = async () => {
     if (!hasPermission) {
@@ -216,6 +242,7 @@ export function useSpeechRecognition({
 
     if (recognitionRef.current && !isRecording) {
       try {
+        retryCount.current = 0; // Reset retry count
         await recognitionRef.current.start();
       } catch (error) {
         console.error("Failed to start recording:", error);
@@ -230,11 +257,12 @@ export function useSpeechRecognition({
 
   const stopRecording = () => {
     if (recognitionRef.current && isRecording) {
-      if (minListenTimeoutRef.current) {
-        clearTimeout(minListenTimeoutRef.current);
-        minListenTimeoutRef.current = null;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
       }
       recognitionRef.current.stop();
+      retryCount.current = maxRetries; // Prevent auto-restart
     }
   };
 

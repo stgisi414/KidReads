@@ -14,48 +14,66 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
   const [isRecognitionInitialized, setIsRecognitionInitialized] = useState(false);
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const { toast } = useToast();
 
+  // Function to calculate word similarity (more lenient on mobile)
+  const calculateWordSimilarity = (word1: string, word2: string): number => {
+    word1 = word1.toLowerCase().trim();
+    word2 = word2.toLowerCase().trim();
+
+    if (word1 === word2) return 1;
+
+    // Check if one word contains the other
+    if (word1.includes(word2) || word2.includes(word1)) return 0.9;
+
+    // Count matching characters
+    let matches = 0;
+    const longer = word1.length > word2.length ? word1 : word2;
+    const shorter = word1.length > word2.length ? word2 : word1;
+
+    for (let i = 0; i < shorter.length; i++) {
+      if (longer.includes(shorter[i])) matches++;
+    }
+
+    return matches / longer.length;
+  };
+
   const onTranscriptionUpdate = useCallback((transcript) => {
-    // Clean and normalize the heard transcript
     const heardText = transcript.toLowerCase().trim();
     setLastHeard(heardText);
 
-    // Use functional update for setCurrentWordIndex to get the latest index
     setCurrentWordIndex(prevIndex => {
       const currentWord = story.words[prevIndex]?.toLowerCase().trim() || "";
 
-      // Log exact match attempt
       console.log('Speech Recognition Results:', {
         heard: heardText,
         expecting: currentWord,
-        wordIndex: prevIndex
+        wordIndex: prevIndex,
+        isMobile: isMobileDevice
       });
 
-      // Split heard text into words and clean each word
       const heardWords = heardText.split(/\s+/).map(word =>
         word.replace(/[.,!?]$/, '').trim().toLowerCase()
       );
 
-      // Check if any of the heard words match our expected word
+      // Use more lenient matching for mobile devices
+      const similarityThreshold = isMobileDevice ? 0.7 : 0.9;
       const foundMatch = heardWords.some(heardWord => {
-        const isExactMatch = heardWord === currentWord;
-        const containsWord = heardWord.includes(currentWord) || currentWord.includes(heardWord);
+        const similarity = calculateWordSimilarity(heardWord, currentWord);
 
-        // Log each word comparison
         console.log('Word comparison:', {
           heardWord,
           currentWord,
-          isExactMatch,
-          containsWord,
-          currentWordIndex: prevIndex
+          similarity,
+          threshold: similarityThreshold,
+          isMobile: isMobileDevice
         });
 
-        return isExactMatch || containsWord;
+        return similarity >= similarityThreshold;
       });
 
-      // Log final match result
       console.log('Match result:', {
         heardWords,
         currentWord,
@@ -91,22 +109,21 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         return prevIndex;
       }
     });
-  }, [story, toast]);
+  }, [story, toast, isMobileDevice]);
 
   const { startRecording, stopRecording, isRecording: hookIsRecording } = useSpeechRecognition({
     continuous: false,
-    interimResults: false,
+    interimResults: !isMobileDevice, // Disable interim results on mobile
     onTranscriptionUpdate: onTranscriptionUpdate,
     onRecognitionEnd: () => {
-      console.log("Speech recognition ended callback received in StoryPlayer, resetting isActive to false");
+      console.log("Speech recognition ended callback received in StoryPlayer");
       setIsActive(false);
-      setIsRecognitionInitialized(false); // Reset recognition state when it ends
+      setIsRecognitionInitialized(false);
     }
   });
 
   useEffect(() => {
     setIsActive(hookIsRecording);
-    console.log("isActive in StoryPlayer updated to:", hookIsRecording);
   }, [hookIsRecording]);
 
   const readWord = () => {
@@ -115,7 +132,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     const wordToRead = story.words[currentWordIndex];
     setIsActive(true);
     setLastHeard("");
-    setIsRecognitionInitialized(true); // Set recognition as initialized when starting
+    setIsRecognitionInitialized(true);
 
     const utterance = new SpeechSynthesisUtterance(wordToRead);
     utterance.onend = () => {
@@ -125,7 +142,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Cleanup effect
   useEffect(() => {
     return () => {
       if (isRecognitionInitialized) {
@@ -137,7 +153,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="p-8 text-center space-y-6">
-      {/* Story display */}
       <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
         {story.words.map((word, i) => (
           <span
