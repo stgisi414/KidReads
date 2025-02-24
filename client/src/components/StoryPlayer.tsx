@@ -60,7 +60,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, [story, currentWordIndex, toast, isMobileDevice]);
 
-  const { startRecording, stopRecording, isRecording } = useSpeechRecognition({
+  const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
     language: "en-US",
     onTranscriptionUpdate,
     continuous: false,
@@ -151,8 +151,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
         <p className="text-gray-600 min-h-[2rem] transition-all">
           {isActive ? (
-            lastHeard ? 
-              <span className="animate-pulse">{lastHeard}</span> : 
+            transcript ? 
+              <span className="animate-pulse">{transcript}</span> : 
               <span className="animate-pulse">Listening...</span>
           ) : (
             "Click 'Read Word' to start"
