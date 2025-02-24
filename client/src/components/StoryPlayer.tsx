@@ -28,10 +28,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     const similarityThreshold = 0.4;
     const foundMatch = heardWords.some(heardWord => {
-      heardWord = heardWord.toLowerCase().trim();
-      currentWord = currentWord.toLowerCase().trim();
-      const similarity = calculateWordSimilarity(heardWord, currentWord);
-      console.log("Comparing:", heardWord, currentWord, similarity);
+      const normalizedHeard = heardWord.toLowerCase().trim();
+      const normalizedTarget = story.words[currentWordIndex].toLowerCase().trim();
+      const similarity = calculateWordSimilarity(normalizedHeard, normalizedTarget);
+      console.log("Comparing:", normalizedHeard, normalizedTarget, similarity);
       return similarity >= similarityThreshold || 
              heardWord === currentWord ||
              heardWord.includes(currentWord) ||
