@@ -73,28 +73,20 @@ export function useSpeechRecognition({
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        console.log("🎯 Speech recognition result received");
-        let finalTranscript = "";
-        let interimTranscript = "";
+        console.log("🎯 Recognition results:", event.results);
+        let transcript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = 0; i < event.results.length; i++) {
           const result = event.results[i];
-          const transcript = result[0].transcript;
-
-          if (result.isFinal) {
-            finalTranscript += transcript;
-            // Reset retry count on successful result
-            retryCount.current = 0;
-          } else {
-            interimTranscript += transcript;
+          if (result[0]) {
+            transcript = result[0].transcript;
+            if (result.isFinal) {
+              console.log("✅ Final transcript:", transcript);
+              onTranscriptionUpdate?.(transcript);
+            } else if (interimResults) {
+              onTranscriptionUpdate?.(transcript);
+            }
           }
-        }
-
-        const currentTranscript = finalTranscript || interimTranscript;
-        setTranscript(currentTranscript);
-
-        if (onTranscriptionUpdate && (finalTranscript || !interimResults)) {
-          onTranscriptionUpdate(currentTranscript);
         }
       };
 

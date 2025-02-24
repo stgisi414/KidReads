@@ -26,10 +26,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       word.replace(/[.,!?]$/, '').trim().toLowerCase()
     );
 
-    const similarityThreshold = isMobileDevice ? 0.7 : 0.9;
+    const similarityThreshold = 0.6;
     const foundMatch = heardWords.some(heardWord => {
       const similarity = calculateWordSimilarity(heardWord, currentWord);
-      return similarity >= similarityThreshold;
+      console.log("Comparing:", heardWord, currentWord, similarity);
+      return similarity >= similarityThreshold || heardWord === currentWord;
     });
 
     if (foundMatch) {
