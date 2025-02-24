@@ -74,20 +74,28 @@ export function useSpeechRecognition({
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         console.log("🎯 Recognition results:", event.results);
-        let transcript = '';
+        let finalTranscript = '';
+        let interimTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result[0]) {
-            transcript = result[0].transcript.trim().toLowerCase();
-            console.log("Heard word:", transcript);
-            
-            if (result.isFinal || !interimResults) {
+            const transcript = result[0].transcript.trim();
+            if (result.isFinal) {
+              finalTranscript += transcript;
               console.log("✅ Final transcript:", transcript);
-              onTranscriptionUpdate?.(transcript);
-              break; // Process one word at a time
+            } else {
+              interimTranscript += transcript;
+              console.log("⏳ Interim transcript:", transcript);
             }
           }
+        }
+
+        const currentTranscript = finalTranscript || interimTranscript;
+        setTranscript(currentTranscript);
+        
+        if (currentTranscript) {
+          onTranscriptionUpdate?.(currentTranscript);
         }
       };
 

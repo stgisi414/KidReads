@@ -149,8 +149,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       <div className="mt-6 p-4 bg-gray-100 rounded-lg">
         <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
-        <p className="text-gray-600 min-h-[2rem]">
-          {isActive ? (lastHeard || "Listening...") : "Click 'Read Word' to start"}
+        <p className="text-gray-600 min-h-[2rem] transition-all">
+          {isActive ? (
+            lastHeard ? 
+              <span className="animate-pulse">{lastHeard}</span> : 
+              <span className="animate-pulse">Listening...</span>
+          ) : (
+            "Click 'Read Word' to start"
+          )}
         </p>
       </div>
     </div>
