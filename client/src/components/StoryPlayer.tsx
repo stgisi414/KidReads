@@ -146,6 +146,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       {currentWordIndex === story.words.length - 1 && (
         <p className="mt-4 text-green-600">Last word! Keep going!</p>
       )}
+
+      <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
+        <p className="text-gray-600 min-h-[2rem]">
+          {isActive ? (lastHeard || "Listening...") : "Click 'Read Word' to start"}
+        </p>
+      </div>
     </div>
   );
 }
