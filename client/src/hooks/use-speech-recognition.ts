@@ -76,15 +76,16 @@ export function useSpeechRecognition({
         console.log("🎯 Recognition results:", event.results);
         let transcript = '';
 
-        for (let i = 0; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result[0]) {
-            transcript = result[0].transcript;
-            if (result.isFinal) {
+            transcript = result[0].transcript.trim().toLowerCase();
+            console.log("Heard word:", transcript);
+            
+            if (result.isFinal || !interimResults) {
               console.log("✅ Final transcript:", transcript);
               onTranscriptionUpdate?.(transcript);
-            } else if (interimResults) {
-              onTranscriptionUpdate?.(transcript);
+              break; // Process one word at a time
             }
           }
         }
