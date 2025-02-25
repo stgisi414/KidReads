@@ -3,23 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { useElevenLabs } from "@/hooks/use-elevenlabs";
 import type { Story } from "@shared/schema";
 
 interface StoryPlayerProps {
   story: Story;
 }
 
-const elevenLabsVoiceId = "pNInz6obpgDQGcFmaJgB"; // Using "Adam" voice, feel free to change
-
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const { toast } = useToast();
+  const { speak, isLoading: isSpeaking } = useElevenLabs();
 
   const onTranscriptionUpdate = useCallback((transcript: string) => {
     const heardText = transcript.toLowerCase().trim();
@@ -93,85 +91,36 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     return matches / longer.length;
   };
 
-  const generateSpeech = async (text: string) => {
-    try {
-      console.log('Generating speech for text:', text);
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          voiceId: elevenLabsVoiceId
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate speech');
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      return url;
-    } catch (error) {
-      console.error('Error generating speech:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate speech. Please try again.",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
-
   const readWord = async () => {
-    if (isActive) return;
+    if (isActive || isSpeaking) return;
 
     const wordToRead = story.words[currentWordIndex];
     setIsActive(true);
     setLastHeard("");
 
-    // Generate speech using ElevenLabs
-    const url = await generateSpeech(wordToRead);
-    if (!url) {
-      setIsActive(false);
-      return;
-    }
-
-    // Create and play audio
-    const audio = new Audio(url);
-    setAudioElement(audio);
-    setAudioUrl(url);
-
-    audio.onended = async () => {
-      // Clean up the audio URL
-      URL.revokeObjectURL(url);
-      setAudioUrl(null);
-      setAudioElement(null);
-      // Start recording after audio finishes
+    try {
+      await speak(wordToRead, {
+        voiceId: "pNInz6obpgDQGcFmaJgB" // Adam voice
+      });
       await startRecording();
-    };
-
-    await audio.play();
+    } catch (error) {
+      console.error('Error in readWord:', error);
+      setIsActive(false);
+      toast({
+        title: "Error",
+        description: "Failed to read the word. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  // Cleanup audio resources when component unmounts
   useEffect(() => {
     return () => {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.src = "";
-      }
       if (isRecording) {
         stopRecording();
       }
     };
-  }, [isRecording, stopRecording, audioUrl, audioElement]);
+  }, [isRecording, stopRecording]);
 
   return (
     <div className="p-8 text-center space-y-6">
@@ -189,11 +138,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       <Button
         size="lg"
         onClick={readWord}
-        disabled={isActive}
+        disabled={isActive || isSpeaking}
         className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
       >
         <Play className="mr-2 h-4 w-4" />
-        {isActive ? "Listening..." : "Read Word"}
+        {isActive ? "Listening..." : isSpeaking ? "Speaking..." : "Read Word"}
       </Button>
 
       {lastHeard && (
