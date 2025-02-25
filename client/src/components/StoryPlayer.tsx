@@ -22,10 +22,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [lastHeard, setLastHeard] = useState<string>("");
   const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].id);
 
+  const { speak, isLoading: isSpeaking } = useElevenLabs();
+
   const playWelcomeMessage = useCallback(async (voiceId: string) => {
     const voice = VOICE_OPTIONS.find(v => v.id === voiceId);
     if (!voice) return;
-    
+
     const welcomeMessages = {
       "pNInz6obpgDQGcFmaJgB": "Hi, I'm Adam! Let's read together and have fun!", // Adam
       "ErXwobaYiN019PkySvjV": "Hi, I'm Josh! I'm ready to help you read!", // Josh
@@ -44,7 +46,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const { toast } = useToast();
-  const { speak, isLoading: isSpeaking } = useElevenLabs();
 
   const onTranscriptionUpdate = useCallback((transcript: string) => {
     const heardText = transcript.toLowerCase().trim();
@@ -60,15 +61,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     const similarityThreshold = 0.4;
     const similarity = calculateWordSimilarity(lastHeardWord, currentWord);
-    
+
     if (similarity >= similarityThreshold || 
         lastHeardWord === currentWord || 
         lastHeardWord.includes(currentWord) || 
         currentWord.includes(lastHeardWord)) {
-      
+
       stopRecording();
       setIsActive(false);
-      
+
       if (currentWordIndex < story.words.length - 1) {
         toast({
           title: "Great job! 🌟",
