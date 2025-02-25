@@ -44,17 +44,19 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       currentWord.includes(lastHeardWord);
 
     if (foundMatch) {
-      stopRecording();
-      setIsActive(false);
-      
       if (currentWordIndex < story.words.length - 1) {
         toast({
           title: "Great job! 🌟",
           description: `You correctly said "${story.words[currentWordIndex]}"!`
         });
-        setTimeout(() => {
+        
+        stopRecording();
+        setIsActive(false);
+        
+        // Wait for recognition to fully stop before moving to next word
+        recognitionRef?.current?.addEventListener('end', () => {
           setCurrentWordIndex(prev => prev + 1);
-        }, 500);
+        }, { once: true });
       } else {
         toast({
           title: "Congratulations! 🎉",
