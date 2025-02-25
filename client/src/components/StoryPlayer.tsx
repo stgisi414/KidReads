@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Play, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useElevenLabs } from "@/hooks/use-elevenlabs";
@@ -31,6 +31,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [lastHeard, setLastHeard] = useState<string>("");
   const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(VOICE_OPTIONS[0].id);
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const { speak, isLoading: isSpeaking } = useElevenLabs();
 
@@ -67,6 +68,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     console.log('Created word groups:', groups);
     setWordGroups(groups);
   }, [story.words]);
+
+  const resetStory = () => {
+    setCurrentGroupIndex(0);
+    setShowCelebration(false);
+    setLastHeard("");
+    setIsActive(false);
+  };
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
@@ -117,6 +125,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         });
         setCurrentGroupIndex(prev => prev + 1);
       } else {
+        setShowCelebration(true);
         toast({
           title: "Congratulations! 🎉",
           description: "You've completed the story!"
@@ -196,7 +205,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   }, [isRecording, stopRecording]);
 
   return (
-    <div className="p-8 text-center space-y-6">
+    <div className="p-8 text-center space-y-6 relative">
       <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
         {wordGroups.map((group, groupIndex) => (
           <span
@@ -262,6 +271,24 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           </p>
         </div>
       </div>
+
+      {/* Celebration Overlay */}
+      {showCelebration && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 animate-fade-in">
+          <div className="text-center">
+            <div className="text-[7rem] animate-bounce mb-8">🎉</div>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={resetStory}
+              className="bg-white hover:bg-gray-100"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Read Again
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
