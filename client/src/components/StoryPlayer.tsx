@@ -50,13 +50,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           description: `You correctly said "${story.words[currentWordIndex]}"!`
         });
         setCurrentWordIndex(prev => prev + 1);
+        setIsActive(false);
+        stopRecording();
       } else {
         toast({
           title: "Congratulations! 🎉",
           description: "You've completed the story!"
         });
+        setIsActive(false);
+        stopRecording();
       }
-      setIsActive(false);
     } else {
       toast({
         title: "Almost there! 💪",
