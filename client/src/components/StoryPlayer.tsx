@@ -154,38 +154,38 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             </option>
           ))}
         </select>
-        
+
         <Button
           size="lg"
           onClick={readWord}
           disabled={isActive || isSpeaking}
           className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
         >
-        <Play className="mr-2 h-4 w-4" />
-        {isActive ? "Listening..." : isSpeaking ? "Speaking..." : "Read Word"}
-      </Button>
+          <Play className="mr-2 h-4 w-4" />
+          {isActive ? "Listening..." : isSpeaking ? "Speaking..." : "Read Word"}
+        </Button>
 
-      {lastHeard && (
-        <div className="text-sm text-gray-600">
-          Last heard: "{lastHeard}"
+        {lastHeard && (
+          <div className="text-sm text-gray-600">
+            Last heard: "{lastHeard}"
+          </div>
+        )}
+
+        {currentWordIndex === story.words.length - 1 && (
+          <p className="mt-4 text-green-600">Last word! Keep going!</p>
+        )}
+        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
+          <p className="text-gray-600 min-h-[2rem] transition-all">
+            {isActive ? (
+              transcript ?
+                <span className="animate-pulse">{transcript}</span> :
+                <span className="animate-pulse">Listening...</span>
+            ) : (
+              "Click 'Read Word' to start"
+            )}
+          </p>
         </div>
-      )}
-
-      {currentWordIndex === story.words.length - 1 && (
-        <p className="mt-4 text-green-600">Last word! Keep going!</p>
-      )}
-
-      <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
-        <p className="text-gray-600 min-h-[2rem] transition-all">
-          {isActive ? (
-            transcript ?
-              <span className="animate-pulse">{transcript}</span> :
-              <span className="animate-pulse">Listening...</span>
-          ) : (
-            "Click 'Read Word' to start"
-          )}
-        </p>
       </div>
     </div>
   );
