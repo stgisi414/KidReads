@@ -97,8 +97,13 @@ export default function VoiceInput({ onResult, isLoading }: VoiceInputProps) {
     if (!recognition || isLoading) return;
 
     if (isListening) {
-      recognition.stop();
-      setIsListening(false);
+      try {
+        recognition.abort(); // Use abort() to immediately stop
+        recognition.stop();
+        setIsListening(false);
+      } catch (error) {
+        console.error('Failed to stop recognition:', error);
+      }
     } else {
       try {
         recognition.start();
