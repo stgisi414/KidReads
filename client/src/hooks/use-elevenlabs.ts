@@ -7,6 +7,14 @@ interface ElevenLabsOptions {
   similarityBoost?: number;
 }
 
+interface ElevenLabsError {
+  detail?: {
+    message?: string;
+    status?: string;
+  };
+  message?: string;
+}
+
 export const useElevenLabs = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -38,8 +46,9 @@ export const useElevenLabs = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-        throw new Error(`ElevenLabs API error: ${errorData.detail || response.status}`);
+        const errorData = await response.json() as ElevenLabsError;
+        const errorMessage = errorData.detail?.message || errorData.message || response.statusText;
+        throw new Error(`ElevenLabs API error: ${errorMessage}`);
       }
 
       const audioBlob = await response.blob();
@@ -55,7 +64,8 @@ export const useElevenLabs = () => {
         audio.play();
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate speech');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate speech';
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
