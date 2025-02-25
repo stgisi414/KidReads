@@ -24,8 +24,12 @@ const STOP_WORDS = new Set([
   'to', 'in', 'on', 'at', 'for', 'by', 'with', 'from', 'of', 'into', 'onto', 'upon', 'within', 'without', 'through', 'between', 'among', 'across', 'behind', 'beside', 'beyond', 'under', 'over', 'after', 'before',
   // Conjunctions
   'and', 'but', 'or', 'nor', 'yet', 'so',
-  // Pronouns and possessives
+  // Personal Pronouns
+  'he', 'she', 'it', 'they', 'we', 'you', 'i',
+  // Possessive Pronouns and Adjectives
   'his', 'her', 'their', 'its', 'my', 'your', 'our',
+  // Demonstrative Pronouns
+  'this', 'that', 'these', 'those',
   // Other connecting words
   'as', 'if', 'when', 'while', 'where', 'how', 'than'
 ]);
