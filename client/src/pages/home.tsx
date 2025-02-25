@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoImage from "../assets/logo.png";
 import type { Story } from "@shared/schema";
+import BackgroundSlider from "@/components/BackgroundSlider";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
@@ -59,8 +60,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg p-8 shadow-xl bg-white/90 backdrop-blur">
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Animated Background */}
+      {stories && stories.length > 0 && <BackgroundSlider stories={stories} />}
+
+      <Card className="w-full max-w-lg p-8 shadow-xl bg-white/80 backdrop-blur-md transition-all duration-300 hover:bg-white/90 hover:shadow-2xl">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-4">
             <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
