@@ -62,26 +62,23 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       {stories && stories.length > 0 && (
-        <BackgroundSlider 
-          stories={stories} 
-          onAccentColorChange={setAccentColor}
-        />
+        <div className="absolute inset-0 opacity-30">
+          <BackgroundSlider 
+            stories={stories} 
+            onAccentColorChange={setAccentColor}
+          />
+        </div>
       )}
 
-      <Card className="w-full max-w-lg p-8 shadow-xl bg-white/90 backdrop-blur-md transition-all duration-300 hover:bg-white/95 hover:shadow-2xl">
+      <Card className="w-full max-w-lg p-8 shadow-xl bg-white/80 backdrop-filter backdrop-opacity-80 transition-all duration-300 hover:bg-white/90 hover:shadow-2xl">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-4">
             <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
             <h5 
-              className="text-3xl font-bold sparkle-text"
+              className="text-3xl font-bold"
               style={{
-                background: `linear-gradient(90deg, 
-                  ${accentColor}00 0%, 
-                  ${accentColor} 25%, 
-                  ${accentColor} 50%, 
-                  ${accentColor} 75%, 
-                  ${accentColor}00 100%)`,
-                backgroundSize: '200% auto',
+                color: accentColor,
+                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
               }}
             >
               KidReads
