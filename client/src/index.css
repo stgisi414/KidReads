@@ -25,9 +25,9 @@
 }
 
 .sparkle-text {
-  background-image: linear-gradient(90deg, #4CAF50 0%, #2196F3 25%, #9C27B0 50%, #E91E63 75%, #4CAF50 100%);
+  display: inline-block;
+  background: linear-gradient(90deg, #4CAF50 0%, #2196F3 25%, #9C27B0 50%, #E91E63 75%, #4CAF50 100%) 0 0;
   background-size: 200% auto;
-  color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
