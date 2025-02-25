@@ -20,6 +20,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const { speak, isLoading: isSpeaking } = useElevenLabs();
 
   const onTranscriptionUpdate = useCallback((transcript: string) => {
+    if (!isActive) return; // Only process if we're actively listening
+    
     const heardText = transcript.toLowerCase().trim();
     setLastHeard(heardText);
 
@@ -28,7 +30,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       word.replace(/[.,!?]$/, '').trim().toLowerCase()
     );
 
-    // Only process the last word spoken
     const lastHeardWord = heardWords[heardWords.length - 1];
     if (!lastHeardWord) return;
 
@@ -44,19 +45,23 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       currentWord.includes(lastHeardWord);
 
     if (foundMatch) {
+      // First stop recording and set inactive
       stopRecording();
       setIsActive(false);
       
+      // Then handle the success case
       if (currentWordIndex < story.words.length - 1) {
         toast({
           title: "Great job! 🌟",
           description: `You correctly said "${story.words[currentWordIndex]}"!`
         });
         
-        // Small delay to ensure recognition has stopped
-        setTimeout(() => {
-          setCurrentWordIndex(prev => prev + 1);
-        }, 1000);
+        // Wait for everything to settle before moving to next word
+        Promise.resolve().then(() => {
+          requestAnimationFrame(() => {
+            setCurrentWordIndex(prev => prev + 1);
+          });
+        });
       } else {
         toast({
           title: "Congratulations! 🎉",
