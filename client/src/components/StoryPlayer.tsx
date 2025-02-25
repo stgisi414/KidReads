@@ -95,6 +95,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const generateSpeech = async (text: string) => {
     try {
+      console.log('Generating speech for text:', text);
       const response = await fetch('/api/tts', {
         method: 'POST',
         headers: {

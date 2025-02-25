@@ -40,7 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('Failed to generate audio buffer');
       }
 
-      console.log('Successfully generated audio buffer');
+      console.log('✅ Successfully generated audio buffer');
       res.setHeader('Content-Type', 'audio/mpeg');
       res.send(Buffer.from(audioBuffer));
     } catch (error) {
