@@ -31,7 +31,7 @@ const STOP_WORDS = new Set([
   // Demonstrative Pronouns
   'this', 'that', 'these', 'those',
   // Other connecting words
-  'as', 'if', 'when', 'while', 'where', 'how', 'than',
+  'as', 'if', 'when', 'while', 'where', 'how', 'than', 'too',
   //Commonly used adverbs
   'very', 'quite', 'much', 'more', 'less', 'most', 'even',
 ]);
@@ -153,12 +153,16 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   useEffect(() => {
     const groups: WordGroup[] = [];
     const words = story.words;
+    const hasPunctuation = (word: string) => /[.,!?]/.test(word);
 
     let i = 0;
     while (i < words.length) {
-      const currentWord = words[i].toLowerCase().replace(/[.,!?]$/, '');
+      const currentWord = words[i].toLowerCase();
 
-      if (STOP_WORDS.has(currentWord) && i + 1 < words.length) {
+      // Check if current word is a stop word and there's a next word without breaking the groups at punctuation
+      if (STOP_WORDS.has(currentWord.replace(/[.,!?]$/, '')) && 
+          i + 1 < words.length && 
+          !hasPunctuation(words[i])) {
         const group = {
           text: `${words[i]} ${words[i + 1]}`,
           words: [words[i], words[i + 1]],
