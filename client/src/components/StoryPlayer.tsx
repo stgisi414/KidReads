@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button"; // Fix import
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { Play, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
@@ -50,6 +50,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const stopRecordingRef = useRef<() => void>(() => {});
 
   const { speak, isLoading: isSpeaking } = useElevenLabs();
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -73,77 +74,80 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     return matches / longer.length;
   };
 
-  // Initialize speech recognition with callbacks defined using refs to avoid dependency issues
-  const speechCallbacks = useCallback((handleStop: () => void) => ({
-    onTranscriptionUpdate: (transcript: string) => {
-      if (isPending) return;
+  const handleTranscriptionUpdate = useCallback((transcript: string) => {
+    if (isPending) return;
 
-      const heardText = transcript.toLowerCase().trim();
-      setLastHeard(heardText);
+    const heardText = transcript.toLowerCase().trim();
+    setLastHeard(heardText);
 
-      const currentGroup = wordGroups[currentGroupIndex];
-      if (!currentGroup) return;
+    const currentGroup = wordGroups[currentGroupIndex];
+    if (!currentGroup) return;
 
-      const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
-      console.log('Comparing:', { heard: heardText, expected: expectedText });
+    const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
+    console.log('Comparing:', { heard: heardText, expected: expectedText });
 
-      const similarityThreshold = isMobileDevice ? 0.4 : 0.5;
-      const similarity = calculateWordSimilarity(heardText, expectedText);
-      console.log('Similarity:', similarity);
+    const similarityThreshold = isMobileDevice ? 0.4 : 0.5;
+    const similarity = calculateWordSimilarity(heardText, expectedText);
+    console.log('Similarity:', similarity);
 
-      if (similarity >= similarityThreshold ||
-          heardText === expectedText ||
-          heardText.includes(expectedText) ||
-          expectedText.includes(heardText)) {
+    if (similarity >= similarityThreshold ||
+        heardText === expectedText ||
+        heardText.includes(expectedText) ||
+        expectedText.includes(heardText)) {
 
-        setIsPending(true);
-        handleStop();
-        setIsActive(false);
-
-        if (currentGroupIndex < wordGroups.length - 1) {
-          toast({
-            title: "Great job! 🌟",
-            description: `You correctly said "${currentGroup.text}"!`
-          });
-
-          const delay = isMobileDevice ? 0 : 500;
-          setTimeout(() => {
-            setCurrentGroupIndex(prev => prev + 1);
-            setIsPending(false);
-          }, delay);
-        } else {
-          setShowCelebration(true);
-          setIsPending(false);
-          toast({
-            title: "Congratulations! 🎉",
-            description: "You've completed the story!"
-          });
-        }
-      } else {
-        if (!isMobileDevice || transcript.endsWith('.')) {
-          toast({
-            title: "Almost there! 💪",
-            description: `Try saying "${currentGroup.text}" again.`
-          });
-        }
-      }
-    },
-    onRecognitionEnd: () => {
+      setIsPending(true);
+      stopRecordingRef.current();
       setIsActive(false);
-      if (!isMobileDevice) {
-        setTimeout(() => setIsPending(false), 300);
+
+      if (currentGroupIndex < wordGroups.length - 1) {
+        toast({
+          title: "Great job! 🌟",
+          description: `You correctly said "${currentGroup.text}"!`
+        });
+
+        const delay = isMobileDevice ? 0 : 500;
+        setTimeout(() => {
+          setCurrentGroupIndex(prev => prev + 1);
+          setIsPending(false);
+        }, delay);
+      } else {
+        setShowCelebration(true);
+        setIsPending(false);
+        toast({
+          title: "Congratulations! 🎉",
+          description: "You've completed the story!"
+        });
+      }
+    } else {
+      if (!isMobileDevice || transcript.endsWith('.')) {
+        toast({
+          title: "Almost there! 💪",
+          description: `Try saying "${currentGroup.text}" again.`
+        });
       }
     }
-  }), [currentGroupIndex, wordGroups, isPending, isMobileDevice, toast]);
+  }, [currentGroupIndex, wordGroups, isPending, isMobileDevice, toast]);
+
+  const handleRecognitionEnd = useCallback(() => {
+    setIsActive(false);
+    if (!isMobileDevice) {
+      setTimeout(() => setIsPending(false), 300);
+    }
+  }, [isMobileDevice]);
 
   const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
     language: "en-US",
-    onTranscriptionUpdate: speechCallbacks(stopRecording).onTranscriptionUpdate,
-    onRecognitionEnd: speechCallbacks(stopRecording).onRecognitionEnd,
+    onTranscriptionUpdate: handleTranscriptionUpdate,
+    onRecognitionEnd: handleRecognitionEnd,
     continuous: false,
     interimResults: !isMobileDevice,
     initializeOnMount: false
   });
+
+  // Store the stopRecording function in a ref
+  useEffect(() => {
+    stopRecordingRef.current = stopRecording;
+  }, [stopRecording]);
 
   // Process story words into groups
   useEffect(() => {
