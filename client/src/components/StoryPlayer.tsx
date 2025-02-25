@@ -20,23 +20,25 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const { speak, isLoading: isSpeaking } = useElevenLabs();
 
   const onTranscriptionUpdate = useCallback((transcript: string) => {
-    if (!isActive) return;
-    
     const heardText = transcript.toLowerCase().trim();
     setLastHeard(heardText);
 
-    const currentWord = story.words[currentWordIndex]?.toLowerCase().trim() || "";
-    const heardWords = heardText.split(/\s+/);
-    const lastHeardWord = heardWords[heardWords.length - 1]?.toLowerCase().trim();
-    
+    const currentWord = story.words[currentWordIndex].toLowerCase().trim();
+    const heardWords = heardText.split(/\s+/).map(word => 
+      word.replace(/[.,!?]$/, '').trim().toLowerCase()
+    );
+
+    const lastHeardWord = heardWords[heardWords.length - 1];
     if (!lastHeardWord) return;
 
     const similarityThreshold = 0.4;
     const similarity = calculateWordSimilarity(lastHeardWord, currentWord);
     
-    console.log("Comparing:", lastHeardWord, currentWord, similarity);
-    
-    if (similarity >= similarityThreshold || lastHeardWord === currentWord) {
+    if (similarity >= similarityThreshold || 
+        lastHeardWord === currentWord || 
+        lastHeardWord.includes(currentWord) || 
+        currentWord.includes(lastHeardWord)) {
+      
       stopRecording();
       setIsActive(false);
       
