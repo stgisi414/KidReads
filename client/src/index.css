@@ -25,9 +25,10 @@
 }
 
 .sparkle-text {
+  background: linear-gradient(90deg, #4CAF50 0%, #2196F3 25%, #9C27B0 50%, #E91E63 75%, #4CAF50 100%);
+  background-size: 200% auto;
   background-clip: text;
   -webkit-background-clip: text;
-  color: transparent;
+  -webkit-text-fill-color: transparent;
   animation: sparkle 3s linear infinite;
-  text-shadow: 0 0 2px rgba(0,0,0,0.1);
 }
