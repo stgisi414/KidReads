@@ -32,6 +32,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceId: voiceId
       });
 
+      if (!voice) {
+        throw new Error('Failed to initialize ElevenLabs voice client');
+      }
+
+      console.log('✅ Voice client initialized, generating audio for:', text);
       const audioBuffer = await voice.textToSpeech(text);
       if (!audioBuffer) {
         throw new Error('Failed to generate audio buffer');

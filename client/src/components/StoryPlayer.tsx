@@ -36,10 +36,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       const normalizedTarget = story.words[currentWordIndex].toLowerCase().trim();
       const similarity = calculateWordSimilarity(normalizedHeard, normalizedTarget);
       console.log("Comparing:", normalizedHeard, normalizedTarget, similarity);
-      return similarity >= similarityThreshold || 
-             heardWord === currentWord ||
-             heardWord.includes(currentWord) ||
-             currentWord.includes(heardWord);
+      return similarity >= similarityThreshold ||
+        heardWord === currentWord ||
+        heardWord.includes(currentWord) ||
+        currentWord.includes(heardWord);
     });
 
     if (foundMatch) {
@@ -72,7 +72,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     onRecognitionEnd: () => {
       setIsActive(false);
     },
-    initializeOnMount: false 
+    initializeOnMount: false
   });
 
   const calculateWordSimilarity = (word1: string, word2: string): number => {
@@ -109,7 +109,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to generate speech');;
+        throw new Error(error.error || 'Failed to generate speech');
       }
 
       const blob = await response.blob();
@@ -210,8 +210,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
         <p className="text-gray-600 min-h-[2rem] transition-all">
           {isActive ? (
-            transcript ? 
-              <span className="animate-pulse">{transcript}</span> : 
+            transcript ?
+              <span className="animate-pulse">{transcript}</span> :
               <span className="animate-pulse">Listening...</span>
           ) : (
             "Click 'Read Word' to start"
