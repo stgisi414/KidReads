@@ -34,23 +34,17 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     const similarityThreshold = 0.4;
     const normalizedHeard = lastHeardWord.toLowerCase().trim();
-    const currentWord = story.words[currentWordIndex];
-    const normalizedTarget = currentWord.toLowerCase().trim();
+    const normalizedTarget = story.words[currentWordIndex].toLowerCase().trim();
     const similarity = calculateWordSimilarity(normalizedHeard, normalizedTarget);
     
     console.log("Comparing:", normalizedHeard, normalizedTarget, similarity);
     const foundMatch = similarity >= similarityThreshold ||
-      normalizedHeard === normalizedTarget ||
-      normalizedHeard.includes(normalizedTarget) ||
-      normalizedTarget.includes(normalizedHeard);
+      lastHeardWord === currentWord ||
+      lastHeardWord.includes(currentWord) ||
+      currentWord.includes(lastHeardWord);
 
     if (foundMatch) {
       if (currentWordIndex < story.words.length - 1) {
-        toast({
-          title: "Great job! 🌟",
-          description: `You correctly said "${currentWord}"!`
-        });
-        setCurrentWordIndex(currentWordIndex + 1); // Explicitly increment by 1
         toast({
           title: "Great job! 🌟",
           description: `You correctly said "${story.words[currentWordIndex]}"!`
