@@ -38,6 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Voice client initialized, generating audio for:', text);
       const audioBuffer = await voice.textToSpeech(text);
+
       if (!audioBuffer) {
         throw new Error('Failed to generate audio buffer');
       }
