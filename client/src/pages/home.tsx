@@ -3,14 +3,28 @@ import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import VoiceInput from "@/components/VoiceInput";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoImage from "../assets/logo.png";
+import type { Story } from "@shared/schema";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Fetch existing stories
+  const { data: stories } = useQuery<Story[]>({
+    queryKey: ['/api/stories'],
+    queryFn: async () => {
+      const response = await fetch('/api/stories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch stories');
+      }
+      return response.json();
+    }
+  });
 
   const handleTopicSubmit = async (topic: string) => {
     setIsLoading(true);
@@ -27,6 +41,21 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSampleStory = () => {
+    if (!stories || stories.length === 0) {
+      toast({
+        title: "No stories available",
+        description: "Please try speaking a topic instead.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Pick a random story from existing ones
+    const randomStory = stories[Math.floor(Math.random() * stories.length)];
+    setLocation(`/read/${randomStory.id}`);
   };
 
   return (
@@ -48,24 +77,9 @@ export default function Home() {
               className="w-full bg-primary/90 hover:bg-primary text-white text-xl py-6"
               size="lg"
               disabled={isLoading}
-              onClick={() => {
-                const topics = [
-                  "friendly cat",
-                  "playful puppy",
-                  "magical rainbow",
-                  "flying butterfly",
-                  "happy elephant",
-                  "silly monkey",
-                  "gentle giraffe",
-                  "swimming dolphin",
-                  "busy bee",
-                  "wise owl"
-                ];
-                const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-                handleTopicSubmit(randomTopic);
-              }}
+              onClick={handleSampleStory}
             >
-              Try an Example Story
+              Try a Sample Story
             </Button>
           </div>
         </div>
