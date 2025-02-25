@@ -1,11 +1,18 @@
 import { useState, useCallback } from "react";
 
+interface ElevenLabsOptions {
+  voiceId?: string;
+  modelId?: string;
+  stability?: number;
+  similarityBoost?: number;
+}
+
 export const useElevenLabs = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const speak = useCallback(async (text: string, options = {}) => {
+  const speak = useCallback(async (text: string, options: ElevenLabsOptions = {}) => {
     if (isPlaying || isLoading) return;
 
     setIsLoading(true);
@@ -31,7 +38,8 @@ export const useElevenLabs = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`ElevenLabs API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+        throw new Error(`ElevenLabs API error: ${errorData.detail || response.status}`);
       }
 
       const audioBlob = await response.blob();
