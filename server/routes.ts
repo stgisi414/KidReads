@@ -32,10 +32,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceId: voiceId
       });
 
-      const audioBuffer = await voice.textToSpeech(text, {
-        fileName: `speech_${Date.now()}.mp3`
-      });
-
+      const audioBuffer = await voice.textToSpeech(text);
       if (!audioBuffer) {
         throw new Error('Failed to generate audio buffer');
       }
