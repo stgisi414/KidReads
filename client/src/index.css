@@ -17,3 +17,17 @@
     @apply font-heading;
   }
 }
+
+/* Add sparkle animation */
+@keyframes sparkle {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.sparkle-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: sparkle 3s linear infinite;
+  text-shadow: 0 0 2px rgba(0,0,0,0.1);
+}

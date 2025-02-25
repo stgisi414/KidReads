@@ -67,7 +67,7 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
         <div
           key={story.id}
           className={`absolute inset-0 transition-all duration-1000 ease-in-out
-            ${index === currentIndex ? 'opacity-15' : 'opacity-0'}`}
+            ${index === currentIndex ? 'opacity-40' : 'opacity-0'}`}
           style={{
             backgroundImage: `url(${story.imageUrl})`,
             backgroundSize: 'cover',
@@ -77,9 +77,9 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
         />
       ))}
       <div 
-        className="absolute inset-0 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-[2px]"
         style={{
-          background: `linear-gradient(to b, ${dominantColor}15, ${dominantColor}25)`
+          background: `linear-gradient(to bottom, ${dominantColor}22, ${dominantColor}44)`
         }}
       />
     </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,25 +68,21 @@ export default function Home() {
         />
       )}
 
-      <Card className="w-full max-w-lg p-8 shadow-xl bg-white/80 backdrop-blur-md transition-all duration-300 hover:bg-white/90 hover:shadow-2xl">
+      <Card className="w-full max-w-lg p-8 shadow-xl bg-white/90 backdrop-blur-md transition-all duration-300 hover:bg-white/95 hover:shadow-2xl">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-4">
             <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
             <h5 
               className="text-3xl font-bold sparkle-text"
               style={{
-                '--accent-color': accentColor,
                 background: `linear-gradient(90deg, 
                   ${accentColor}00 0%, 
                   ${accentColor} 25%, 
-                  ${accentColor}80 50%, 
+                  ${accentColor} 50%, 
                   ${accentColor} 75%, 
                   ${accentColor}00 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
                 backgroundSize: '200% auto',
-                animation: 'sparkle 3s linear infinite'
-              } as any}
+              }}
             >
               KidReads
             </h5>
@@ -110,13 +106,6 @@ export default function Home() {
           </div>
         </div>
       </Card>
-
-      <style jsx global>{`
-        @keyframes sparkle {
-          0% { background-position: 200% center; }
-          100% { background-position: -200% center; }
-        }
-      `}</style>
     </div>
   );
 }
