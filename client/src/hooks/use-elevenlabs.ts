@@ -7,21 +7,26 @@ export const useElevenLabs = () => {
 
   const speak = useCallback(async (text: string, options = {}) => {
     if (isPlaying || isLoading) return;
-    
+
     setIsLoading(true);
     setIsPlaying(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/tts', {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${options.voiceId}`, {
         method: 'POST',
         headers: {
           'Accept': 'audio/mpeg',
           'Content-Type': 'application/json',
+          'xi-api-key': import.meta.env.VITE_ELEVENLABS_API_KEY,
         },
         body: JSON.stringify({
           text,
-          voiceId: options.voiceId || "pNInz6obpgDQGcFmaJgB", // Default to Adam voice
+          model_id: options.modelId || 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: options.stability || 0.5,
+            similarity_boost: options.similarityBoost || 0.75,
+          },
         }),
       });
 

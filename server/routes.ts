@@ -4,15 +4,9 @@ import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
 import { generateStory } from "./services/ai";
 import fal from "@fal-ai/serverless-client";
-import Voice from "elevenlabs-node";
-import crypto from "crypto";
 
 if (!process.env.FAL_AI_API_KEY) {
   throw new Error("FAL_AI_API_KEY is required");
-}
-
-if (!process.env.ELEVENLABS_API_KEY) {
-  throw new Error("ELEVENLABS_API_KEY is required");
 }
 
 fal.config({
@@ -20,38 +14,6 @@ fal.config({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  app.post("/api/tts", async (req, res) => {
-    try {
-      const { text, voiceId } = req.body;
-
-      if (!text || !voiceId) {
-        return res.status(400).json({ error: "Missing required parameters" });
-      }
-
-      // Generate a unique filename for this request
-      const fileName = `speech-${crypto.randomBytes(8).toString('hex')}.mp3`;
-
-      const voice = new Voice({
-        apiKey: process.env.ELEVENLABS_API_KEY as string,
-        voiceId: voiceId
-      });
-
-      console.log('✅ Voice client initialized, generating audio for:', text);
-      const audioBuffer = await voice.textToSpeech(text, { fileName });
-
-      if (!audioBuffer) {
-        throw new Error('Failed to generate audio buffer');
-      }
-
-      console.log('✅ Successfully generated audio buffer');
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.send(Buffer.from(audioBuffer));
-    } catch (error) {
-      console.error('Error generating speech:', error);
-      res.status(500).json({ error: "Failed to generate speech" });
-    }
-  });
-
   app.post("/api/stories", async (req, res) => {
     try {
       const { topic } = req.body;
