@@ -107,7 +107,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate speech');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate speech');;
       }
 
       const blob = await response.blob();
