@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; // Fix import
 import { Play, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
@@ -55,6 +55,96 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
   const { toast } = useToast();
 
+  const calculateWordSimilarity = (word1: string, word2: string): number => {
+    word1 = word1.toLowerCase().trim();
+    word2 = word2.toLowerCase().trim();
+
+    if (word1 === word2) return 1;
+    if (word1.includes(word2) || word2.includes(word1)) return 0.9;
+
+    let matches = 0;
+    const longer = word1.length > word2.length ? word1 : word2;
+    const shorter = word1.length > word2.length ? word2 : word1;
+
+    for (let i = 0; i < shorter.length; i++) {
+      if (longer.includes(shorter[i])) matches++;
+    }
+
+    return matches / longer.length;
+  };
+
+  // Initialize speech recognition with callbacks defined using refs to avoid dependency issues
+  const speechCallbacks = useCallback((handleStop: () => void) => ({
+    onTranscriptionUpdate: (transcript: string) => {
+      if (isPending) return;
+
+      const heardText = transcript.toLowerCase().trim();
+      setLastHeard(heardText);
+
+      const currentGroup = wordGroups[currentGroupIndex];
+      if (!currentGroup) return;
+
+      const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
+      console.log('Comparing:', { heard: heardText, expected: expectedText });
+
+      const similarityThreshold = isMobileDevice ? 0.4 : 0.5;
+      const similarity = calculateWordSimilarity(heardText, expectedText);
+      console.log('Similarity:', similarity);
+
+      if (similarity >= similarityThreshold ||
+          heardText === expectedText ||
+          heardText.includes(expectedText) ||
+          expectedText.includes(heardText)) {
+
+        setIsPending(true);
+        handleStop();
+        setIsActive(false);
+
+        if (currentGroupIndex < wordGroups.length - 1) {
+          toast({
+            title: "Great job! 🌟",
+            description: `You correctly said "${currentGroup.text}"!`
+          });
+
+          const delay = isMobileDevice ? 0 : 500;
+          setTimeout(() => {
+            setCurrentGroupIndex(prev => prev + 1);
+            setIsPending(false);
+          }, delay);
+        } else {
+          setShowCelebration(true);
+          setIsPending(false);
+          toast({
+            title: "Congratulations! 🎉",
+            description: "You've completed the story!"
+          });
+        }
+      } else {
+        if (!isMobileDevice || transcript.endsWith('.')) {
+          toast({
+            title: "Almost there! 💪",
+            description: `Try saying "${currentGroup.text}" again.`
+          });
+        }
+      }
+    },
+    onRecognitionEnd: () => {
+      setIsActive(false);
+      if (!isMobileDevice) {
+        setTimeout(() => setIsPending(false), 300);
+      }
+    }
+  }), [currentGroupIndex, wordGroups, isPending, isMobileDevice, toast]);
+
+  const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
+    language: "en-US",
+    onTranscriptionUpdate: speechCallbacks(stopRecording).onTranscriptionUpdate,
+    onRecognitionEnd: speechCallbacks(stopRecording).onRecognitionEnd,
+    continuous: false,
+    interimResults: !isMobileDevice,
+    initializeOnMount: false
+  });
+
   // Process story words into groups
   useEffect(() => {
     const groups: WordGroup[] = [];
@@ -86,95 +176,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     console.log('Created word groups:', groups);
     setWordGroups(groups);
   }, [story.words]);
-
-  const onTranscriptionUpdate = useCallback((transcript: string) => {
-    if (isPending) return; // Prevent multiple rapid-fire updates
-
-    const heardText = transcript.toLowerCase().trim();
-    setLastHeard(heardText);
-
-    const currentGroup = wordGroups[currentGroupIndex];
-    if (!currentGroup) return;
-
-    const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
-    console.log('Comparing:', { heard: heardText, expected: expectedText });
-
-    const similarityThreshold = isMobileDevice ? 0.4 : 0.5; // Stricter threshold for desktop
-    const similarity = calculateWordSimilarity(heardText, expectedText);
-    console.log('Similarity:', similarity);
-
-    if (similarity >= similarityThreshold ||
-        heardText === expectedText ||
-        heardText.includes(expectedText) ||
-        expectedText.includes(heardText)) {
-
-      setIsPending(true); // Prevent multiple recognitions
-      stopRecording();
-      setIsActive(false);
-
-      if (currentGroupIndex < wordGroups.length - 1) {
-        toast({
-          title: "Great job! 🌟",
-          description: `You correctly said "${currentGroup.text}"!`
-        });
-
-        // Add delay before moving to next word on desktop
-        const delay = isMobileDevice ? 0 : 500;
-        setTimeout(() => {
-          setCurrentGroupIndex(prev => prev + 1);
-          setIsPending(false);
-        }, delay);
-      } else {
-        setShowCelebration(true);
-        setIsPending(false);
-        toast({
-          title: "Congratulations! 🎉",
-          description: "You've completed the story!"
-        });
-      }
-    } else {
-      // Only show "try again" message if the transcript seems complete
-      if (!isMobileDevice || transcript.endsWith('.')) {
-        toast({
-          title: "Almost there! 💪",
-          description: `Try saying "${currentGroup.text}" again.`
-        });
-      }
-    }
-  }, [wordGroups, currentGroupIndex, toast, isPending, stopRecording, isMobileDevice]);
-
-  const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
-    language: "en-US",
-    onTranscriptionUpdate,
-    continuous: false,
-    interimResults: !isMobileDevice, // Only use interim results on desktop
-    onRecognitionEnd: () => {
-      setIsActive(false);
-      // Add small delay before allowing new recognition on desktop
-      if (!isMobileDevice) {
-        setTimeout(() => setIsPending(false), 300);
-      }
-    },
-    initializeOnMount: false
-  });
-
-  const calculateWordSimilarity = (word1: string, word2: string): number => {
-    word1 = word1.toLowerCase().trim();
-    word2 = word2.toLowerCase().trim();
-
-    if (word1 === word2) return 1;
-    if (word1.includes(word2) || word2.includes(word1)) return 0.9;
-
-    let matches = 0;
-    const longer = word1.length > word2.length ? word1 : word2;
-    const shorter = word1.length > word2.length ? word2 : word1;
-
-    for (let i = 0; i < shorter.length; i++) {
-      if (longer.includes(shorter[i])) matches++;
-    }
-
-    return matches / longer.length;
-  };
 
   const resetStory = () => {
     setCurrentGroupIndex(0);
@@ -218,7 +219,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         voiceId: selectedVoice
       });
 
-      // Add small delay before starting recognition on desktop
       if (!isMobileDevice) {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
