@@ -29,7 +29,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const voice = new Voice({
         apiKey: process.env.ELEVENLABS_API_KEY as string,
-        voiceId: voiceId
       });
 
       if (!voice) {
@@ -37,7 +36,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('✅ Voice client initialized, generating audio for:', text);
-      const audioBuffer = await voice.textToSpeech(text);
+      const audioBuffer = await voice.textToSpeech(text, {
+        voiceId: voiceId,
+        fileName: 'speech.mp3'
+      });
 
       if (!audioBuffer) {
         throw new Error('Failed to generate audio buffer');
