@@ -21,6 +21,26 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
   const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].id);
+
+  const playWelcomeMessage = useCallback(async (voiceId: string) => {
+    const voice = VOICE_OPTIONS.find(v => v.id === voiceId);
+    if (!voice) return;
+    
+    const welcomeMessages = {
+      "pNInz6obpgDQGcFmaJgB": "Hi, I'm Adam! Let's read together and have fun!", // Adam
+      "ErXwobaYiN019PkySvjV": "Hi, I'm Josh! I'm ready to help you read!", // Josh
+      "21m00Tcm4TlvDq8ikWAM": "Hi, I'm Rachel! Let's dive into a story together!" // Rachel
+    };
+
+    const message = welcomeMessages[voiceId];
+    if (message) {
+      try {
+        await speak(message, { voiceId });
+      } catch (error) {
+        console.error('Error playing welcome message:', error);
+      }
+    }
+  }, [speak]);
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const { toast } = useToast();
@@ -145,7 +165,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       <div className="space-y-4">
         <select
           value={selectedVoice}
-          onChange={(e) => setSelectedVoice(e.target.value)}
+          onChange={(e) => {
+            const newVoiceId = e.target.value;
+            setSelectedVoice(newVoiceId);
+            playWelcomeMessage(newVoiceId);
+          }}
           className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {VOICE_OPTIONS.map(voice => (
