@@ -11,9 +11,9 @@ interface StoryPlayerProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: "pNInz6obpgDQGcFmaJgB", name: "Adam" },
-  { id: "ErXwobaYiN019PkySvjV", name: "Josh" },
-  { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
+  { id: "dyTPmGzuLaJM15vpN3DS", name: "Aiden" },
+  { id: "pPdl9cQBQq4p6mRkZy2Z", name: "Emma" },
+  { id: "7fbQ7yJuEo56rYjrYaEh", name: "John" },
 ] as const;
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
@@ -29,9 +29,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     if (!voice) return;
 
     const welcomeMessages = {
-      "pNInz6obpgDQGcFmaJgB": "Hi, I'm Adam! Let's read together and have fun!", // Adam
-      "ErXwobaYiN019PkySvjV": "Hi, I'm Josh! I'm ready to help you read!", // Josh
-      "21m00Tcm4TlvDq8ikWAM": "Hi, I'm Rachel! Let's dive into a story together!" // Rachel
+      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Aiden! Let's read together and have fun!", // Adam
+      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Emma! I'm ready to help you read!", // Josh
+      "7fbQ7yJuEo56rYjrYaEh": "Hi, I'm John! Let's dive into a story together!" // Rachel
     };
 
     const message = welcomeMessages[voiceId];
