@@ -28,17 +28,20 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       word.replace(/[.,!?]$/, '').trim().toLowerCase()
     );
 
+    // Only process the last word spoken
+    const lastHeardWord = heardWords[heardWords.length - 1];
+    if (!lastHeardWord) return;
+
     const similarityThreshold = 0.4;
-    const foundMatch = heardWords.some((heardWord: string) => {
-      const normalizedHeard = heardWord.toLowerCase().trim();
-      const normalizedTarget = story.words[currentWordIndex].toLowerCase().trim();
-      const similarity = calculateWordSimilarity(normalizedHeard, normalizedTarget);
-      console.log("Comparing:", normalizedHeard, normalizedTarget, similarity);
-      return similarity >= similarityThreshold ||
-        heardWord === currentWord ||
-        heardWord.includes(currentWord) ||
-        currentWord.includes(heardWord);
-    });
+    const normalizedHeard = lastHeardWord.toLowerCase().trim();
+    const normalizedTarget = story.words[currentWordIndex].toLowerCase().trim();
+    const similarity = calculateWordSimilarity(normalizedHeard, normalizedTarget);
+    
+    console.log("Comparing:", normalizedHeard, normalizedTarget, similarity);
+    const foundMatch = similarity >= similarityThreshold ||
+      lastHeardWord === currentWord ||
+      lastHeardWord.includes(currentWord) ||
+      currentWord.includes(lastHeardWord);
 
     if (foundMatch) {
       if (currentWordIndex < story.words.length - 1) {
