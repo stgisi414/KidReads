@@ -94,7 +94,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const readWord = async () => {
     if (isActive || isSpeaking) return;
 
-    const wordToRead = story.words[currentWordIndex];
+    const wordToRead = '"'+story.words[currentWordIndex]+'"';
     setIsActive(true);
     setLastHeard("");
 

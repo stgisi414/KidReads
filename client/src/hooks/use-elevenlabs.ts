@@ -27,6 +27,11 @@ export const useElevenLabs = () => {
     setIsPlaying(true);
     setError(null);
 
+    const voiceId = options.voiceId || "ErXwobaYiN019PkySvjV"; // Josh - Good for children's stories (CHANGE THIS!)
+  const modelId = options.modelId || "eleven_turbo_v2"; // Prioritize speed
+  const stability = options.stability || 0.3; // More expressive
+  const similarityBoost = options.similarityBoost || 0.65; // Slightly more natural
+
     try {
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${options.voiceId}`, {
         method: 'POST',
@@ -37,10 +42,10 @@ export const useElevenLabs = () => {
         },
         body: JSON.stringify({
           text,
-          model_id: options.modelId || 'eleven_multilingual_v2',
+          model_id: modelId,
           voice_settings: {
-            stability: options.stability || 0.5,
-            similarity_boost: options.similarityBoost || 0.75,
+            stability: stability,
+            similarity_boost: similarityBoost,
           },
         }),
       });
