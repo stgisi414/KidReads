@@ -49,8 +49,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(VOICE_OPTIONS[0].id);
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   const { speak, isLoading: isSpeaking } = useElevenLabs();
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const { toast } = useToast();
 
   // Process story words into groups
   useEffect(() => {
@@ -62,7 +65,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       const currentWord = words[i].toLowerCase().replace(/[.,!?]$/, '');
 
       if (STOP_WORDS.has(currentWord) && i + 1 < words.length) {
-        // Group stop word with next word
         const group = {
           text: `${words[i]} ${words[i + 1]}`,
           words: [words[i], words[i + 1]],
@@ -71,7 +73,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         groups.push(group);
         i += 2;
       } else {
-        // Single word
         const group = {
           text: words[i],
           words: [words[i]],
@@ -85,6 +86,95 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     console.log('Created word groups:', groups);
     setWordGroups(groups);
   }, [story.words]);
+
+  const onTranscriptionUpdate = useCallback((transcript: string) => {
+    if (isPending) return; // Prevent multiple rapid-fire updates
+
+    const heardText = transcript.toLowerCase().trim();
+    setLastHeard(heardText);
+
+    const currentGroup = wordGroups[currentGroupIndex];
+    if (!currentGroup) return;
+
+    const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
+    console.log('Comparing:', { heard: heardText, expected: expectedText });
+
+    const similarityThreshold = isMobileDevice ? 0.4 : 0.5; // Stricter threshold for desktop
+    const similarity = calculateWordSimilarity(heardText, expectedText);
+    console.log('Similarity:', similarity);
+
+    if (similarity >= similarityThreshold ||
+        heardText === expectedText ||
+        heardText.includes(expectedText) ||
+        expectedText.includes(heardText)) {
+
+      setIsPending(true); // Prevent multiple recognitions
+      stopRecording();
+      setIsActive(false);
+
+      if (currentGroupIndex < wordGroups.length - 1) {
+        toast({
+          title: "Great job! 🌟",
+          description: `You correctly said "${currentGroup.text}"!`
+        });
+
+        // Add delay before moving to next word on desktop
+        const delay = isMobileDevice ? 0 : 500;
+        setTimeout(() => {
+          setCurrentGroupIndex(prev => prev + 1);
+          setIsPending(false);
+        }, delay);
+      } else {
+        setShowCelebration(true);
+        setIsPending(false);
+        toast({
+          title: "Congratulations! 🎉",
+          description: "You've completed the story!"
+        });
+      }
+    } else {
+      // Only show "try again" message if the transcript seems complete
+      if (!isMobileDevice || transcript.endsWith('.')) {
+        toast({
+          title: "Almost there! 💪",
+          description: `Try saying "${currentGroup.text}" again.`
+        });
+      }
+    }
+  }, [wordGroups, currentGroupIndex, toast, isPending, stopRecording, isMobileDevice]);
+
+  const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
+    language: "en-US",
+    onTranscriptionUpdate,
+    continuous: false,
+    interimResults: !isMobileDevice, // Only use interim results on desktop
+    onRecognitionEnd: () => {
+      setIsActive(false);
+      // Add small delay before allowing new recognition on desktop
+      if (!isMobileDevice) {
+        setTimeout(() => setIsPending(false), 300);
+      }
+    },
+    initializeOnMount: false
+  });
+
+  const calculateWordSimilarity = (word1: string, word2: string): number => {
+    word1 = word1.toLowerCase().trim();
+    word2 = word2.toLowerCase().trim();
+
+    if (word1 === word2) return 1;
+    if (word1.includes(word2) || word2.includes(word1)) return 0.9;
+
+    let matches = 0;
+    const longer = word1.length > word2.length ? word1 : word2;
+    const shorter = word1.length > word2.length ? word2 : word1;
+
+    for (let i = 0; i < shorter.length; i++) {
+      if (longer.includes(shorter[i])) matches++;
+    }
+
+    return matches / longer.length;
+  };
 
   const resetStory = () => {
     setCurrentGroupIndex(0);
@@ -110,83 +200,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, [speak]);
 
-  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const { toast } = useToast();
-
-  const onTranscriptionUpdate = useCallback((transcript: string) => {
-    const heardText = transcript.toLowerCase().trim();
-    setLastHeard(heardText);
-
-    const currentGroup = wordGroups[currentGroupIndex];
-    if (!currentGroup) return;
-
-    const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
-    console.log('Comparing:', { heard: heardText, expected: expectedText });
-
-    const similarityThreshold = 0.4;
-    const similarity = calculateWordSimilarity(heardText, expectedText);
-    console.log('Similarity:', similarity);
-
-    if (similarity >= similarityThreshold ||
-        heardText === expectedText ||
-        heardText.includes(expectedText) ||
-        expectedText.includes(heardText)) {
-
-      stopRecording();
-      setIsActive(false);
-
-      if (currentGroupIndex < wordGroups.length - 1) {
-        toast({
-          title: "Great job! 🌟",
-          description: `You correctly said "${currentGroup.text}"!`
-        });
-        setCurrentGroupIndex(prev => prev + 1);
-      } else {
-        setShowCelebration(true);
-        toast({
-          title: "Congratulations! 🎉",
-          description: "You've completed the story!"
-        });
-      }
-    } else {
-      toast({
-        title: "Almost there! 💪",
-        description: `Try saying "${currentGroup.text}" again.`
-      });
-    }
-  }, [wordGroups, currentGroupIndex, toast]);
-
-  const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
-    language: "en-US",
-    onTranscriptionUpdate,
-    continuous: false,
-    interimResults: !isMobileDevice,
-    onRecognitionEnd: () => {
-      setIsActive(false);
-    },
-    initializeOnMount: false
-  });
-
-  const calculateWordSimilarity = (word1: string, word2: string): number => {
-    word1 = word1.toLowerCase().trim();
-    word2 = word2.toLowerCase().trim();
-
-    if (word1 === word2) return 1;
-    if (word1.includes(word2) || word2.includes(word1)) return 0.9;
-
-    let matches = 0;
-    const longer = word1.length > word2.length ? word1 : word2;
-    const shorter = word1.length > word2.length ? word2 : word1;
-
-    for (let i = 0; i < shorter.length; i++) {
-      if (longer.includes(shorter[i])) matches++;
-    }
-
-    return matches / longer.length;
-  };
-
   const readWord = async () => {
-    if (isActive || isSpeaking) return;
+    if (isActive || isSpeaking || isPending) return;
 
     const currentGroup = wordGroups[currentGroupIndex];
     if (!currentGroup) return;
@@ -196,15 +211,22 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     setIsActive(true);
     setLastHeard("");
+    setIsPending(false);
 
     try {
       await speak(wordToRead, {
         voiceId: selectedVoice
       });
+
+      // Add small delay before starting recognition on desktop
+      if (!isMobileDevice) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
       await startRecording();
     } catch (error) {
       console.error('Error in readWord:', error);
       setIsActive(false);
+      setIsPending(false);
       toast({
         title: "Error",
         description: "Failed to read the word. Please try again.",
@@ -258,7 +280,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         <Button
           size="lg"
           onClick={readWord}
-          disabled={isActive || isSpeaking}
+          disabled={isActive || isSpeaking || isPending}
           className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
         >
           <Play className="mr-2 h-4 w-4" />
