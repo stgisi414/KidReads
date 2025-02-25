@@ -10,10 +10,17 @@ interface StoryPlayerProps {
   story: Story;
 }
 
+const VOICE_OPTIONS = [
+  { id: "pNInz6obpgDQGcFmaJgB", name: "Adam" },
+  { id: "ErXwobaYiN019PkySvjV", name: "Josh" },
+  { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
+] as const;
+
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
+  const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].id);
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const { toast } = useToast();
@@ -100,7 +107,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     try {
       await speak(wordToRead, {
-        voiceId: "pNInz6obpgDQGcFmaJgB" // Adam voice
+        voiceId: selectedVoice
       });
       await startRecording();
     } catch (error) {
@@ -135,12 +142,25 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         ))}
       </div>
 
-      <Button
-        size="lg"
-        onClick={readWord}
-        disabled={isActive || isSpeaking}
-        className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
-      >
+      <div className="space-y-4">
+        <select
+          value={selectedVoice}
+          onChange={(e) => setSelectedVoice(e.target.value)}
+          className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          {VOICE_OPTIONS.map(voice => (
+            <option key={voice.id} value={voice.id}>
+              {voice.name}
+            </option>
+          ))}
+        </select>
+        
+        <Button
+          size="lg"
+          onClick={readWord}
+          disabled={isActive || isSpeaking}
+          className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
+        >
         <Play className="mr-2 h-4 w-4" />
         {isActive ? "Listening..." : isSpeaking ? "Speaking..." : "Read Word"}
       </Button>
