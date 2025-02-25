@@ -64,7 +64,7 @@ export default function Home() {
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-4">
             <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
-            <h5 className="text-2xl font-bold text-primary">
+            <h5 className="text-3xl font-bold text-primary">
               KidReads
             </h5>
           </div>
