@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import BackgroundSlider from "@/components/BackgroundSlider";
 export default function Home() {
   const [location, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [accentColor, setAccentColor] = useState("#4CAF50");
   const { toast } = useToast();
 
   // Fetch existing stories
@@ -54,21 +55,39 @@ export default function Home() {
       return;
     }
 
-    // Pick a random story from existing ones
     const randomStory = stories[Math.floor(Math.random() * stories.length)];
     setLocation(`/read/${randomStory.id}`);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Animated Background */}
-      {stories && stories.length > 0 && <BackgroundSlider stories={stories} />}
+      {stories && stories.length > 0 && (
+        <BackgroundSlider 
+          stories={stories} 
+          onAccentColorChange={setAccentColor}
+        />
+      )}
 
       <Card className="w-full max-w-lg p-8 shadow-xl bg-white/80 backdrop-blur-md transition-all duration-300 hover:bg-white/90 hover:shadow-2xl">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-4">
             <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
-            <h5 className="text-3xl font-bold text-primary">
+            <h5 
+              className="text-3xl font-bold sparkle-text"
+              style={{
+                '--accent-color': accentColor,
+                background: `linear-gradient(90deg, 
+                  ${accentColor}00 0%, 
+                  ${accentColor} 25%, 
+                  ${accentColor}80 50%, 
+                  ${accentColor} 75%, 
+                  ${accentColor}00 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundSize: '200% auto',
+                animation: 'sparkle 3s linear infinite'
+              } as any}
+            >
               KidReads
             </h5>
           </div>
@@ -78,16 +97,26 @@ export default function Home() {
           <div className="space-y-4">
             <VoiceInput onResult={handleTopicSubmit} isLoading={isLoading} />
             <Button
-              className="w-full bg-primary/90 hover:bg-primary text-white text-xl py-6"
+              className="w-full bg-opacity-90 hover:bg-opacity-100 text-white text-xl py-6"
               size="lg"
               disabled={isLoading}
               onClick={handleSampleStory}
+              style={{
+                backgroundColor: accentColor
+              }}
             >
               Try a Sample Story
             </Button>
           </div>
         </div>
       </Card>
+
+      <style jsx global>{`
+        @keyframes sparkle {
+          0% { background-position: 200% center; }
+          100% { background-position: -200% center; }
+        }
+      `}</style>
     </div>
   );
 }
