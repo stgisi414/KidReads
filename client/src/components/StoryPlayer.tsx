@@ -21,6 +21,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
   const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0].id);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const { speak, isLoading: isSpeaking } = useElevenLabs();
 
@@ -77,10 +78,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         });
         setCurrentWordIndex(currentWordIndex + 1);
       } else {
-        toast({
-          title: "Congratulations! 🎉",
-          description: "You've completed the story!"
-        });
+        setShowCelebration(true);
       }
     } else {
       toast({
@@ -152,6 +150,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="p-8 text-center space-y-6">
+      {showCelebration && (
+        <CelebrationOverlay 
+          onRestart={() => {
+            setCurrentWordIndex(0);
+            setShowCelebration(false);
+          }} 
+        />
+      )}
       <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
         {story.words.map((word, i) => (
           <span
