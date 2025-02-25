@@ -31,7 +31,9 @@ const STOP_WORDS = new Set([
   // Demonstrative Pronouns
   'this', 'that', 'these', 'those',
   // Other connecting words
-  'as', 'if', 'when', 'while', 'where', 'how', 'than'
+  'as', 'if', 'when', 'while', 'where', 'how', 'than',
+  //Commonly used adverbs
+  'very', 'quite', 'much', 'more', 'less', 'most', 'even',
 ]);
 
 interface WordGroup {
