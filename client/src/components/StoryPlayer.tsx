@@ -17,7 +17,18 @@ const VOICE_OPTIONS = [
 ] as const;
 
 // Define stop words that should be grouped with the following word
-const STOP_WORDS = new Set(['the', 'a', 'an', 'to', 'in', 'on', 'at', 'for', 'and', 'but', 'or']);
+const STOP_WORDS = new Set([
+  // Articles
+  'the', 'a', 'an',
+  // Prepositions
+  'to', 'in', 'on', 'at', 'for', 'by', 'with', 'from', 'of', 'into', 'onto', 'upon', 'within', 'without', 'through', 'between', 'among', 'across', 'behind', 'beside', 'beyond', 'under', 'over', 'after', 'before',
+  // Conjunctions
+  'and', 'but', 'or', 'nor', 'yet', 'so',
+  // Pronouns and possessives
+  'his', 'her', 'their', 'its', 'my', 'your', 'our',
+  // Other connecting words
+  'as', 'if', 'when', 'while', 'where', 'how', 'than'
+]);
 
 interface WordGroup {
   text: string;
@@ -110,9 +121,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     const similarity = calculateWordSimilarity(heardText, expectedText);
     console.log('Similarity:', similarity);
 
-    if (similarity >= similarityThreshold || 
-        heardText === expectedText || 
-        heardText.includes(expectedText) || 
+    if (similarity >= similarityThreshold ||
+        heardText === expectedText ||
+        heardText.includes(expectedText) ||
         expectedText.includes(heardText)) {
 
       stopRecording();
