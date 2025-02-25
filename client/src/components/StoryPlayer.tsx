@@ -20,48 +20,32 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const { speak, isLoading: isSpeaking } = useElevenLabs();
 
   const onTranscriptionUpdate = useCallback((transcript: string) => {
-    if (!isActive) return; // Only process if we're actively listening
+    if (!isActive) return;
     
     const heardText = transcript.toLowerCase().trim();
     setLastHeard(heardText);
 
     const currentWord = story.words[currentWordIndex]?.toLowerCase().trim() || "";
-    const heardWords = heardText.split(/\s+/).map((word: string) =>
-      word.replace(/[.,!?]$/, '').trim().toLowerCase()
-    );
-
-    const lastHeardWord = heardWords[heardWords.length - 1];
+    const heardWords = heardText.split(/\s+/);
+    const lastHeardWord = heardWords[heardWords.length - 1]?.toLowerCase().trim();
+    
     if (!lastHeardWord) return;
 
     const similarityThreshold = 0.4;
-    const normalizedHeard = lastHeardWord.toLowerCase().trim();
-    const normalizedTarget = story.words[currentWordIndex].toLowerCase().trim();
-    const similarity = calculateWordSimilarity(normalizedHeard, normalizedTarget);
+    const similarity = calculateWordSimilarity(lastHeardWord, currentWord);
     
-    console.log("Comparing:", normalizedHeard, normalizedTarget, similarity);
-    const foundMatch = similarity >= similarityThreshold ||
-      lastHeardWord === currentWord ||
-      lastHeardWord.includes(currentWord) ||
-      currentWord.includes(lastHeardWord);
-
-    if (foundMatch) {
-      // First stop recording and set inactive
+    console.log("Comparing:", lastHeardWord, currentWord, similarity);
+    
+    if (similarity >= similarityThreshold || lastHeardWord === currentWord) {
       stopRecording();
       setIsActive(false);
       
-      // Then handle the success case
       if (currentWordIndex < story.words.length - 1) {
         toast({
           title: "Great job! 🌟",
           description: `You correctly said "${story.words[currentWordIndex]}"!`
         });
-        
-        // Wait for everything to settle before moving to next word
-        Promise.resolve().then(() => {
-          requestAnimationFrame(() => {
-            setCurrentWordIndex(prev => prev + 1);
-          });
-        });
+        setCurrentWordIndex(currentWordIndex + 1);
       } else {
         toast({
           title: "Congratulations! 🎉",
