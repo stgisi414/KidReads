@@ -33,7 +33,7 @@ export const useElevenLabs = () => {
         headers: {
           'Accept': 'audio/mpeg',
           'Content-Type': 'application/json',
-          'xi-api-key': import.meta.env.VITE_ELEVENLABS_API_KEY,
+          'xi-api-key': "sk_dfba85b4b9aa4632fce2fc4403b701910ca1febd112518f0",
         },
         body: JSON.stringify({
           text,
