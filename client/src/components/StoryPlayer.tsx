@@ -581,7 +581,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="text-center relative">
-      <div className="p-8 space-y-6">
+      <div className="p-8 pb-4 space-y-6">
         <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700">
           <Heart className="h-5 w-5 text-red-500" />
           <span>{story.likes || 0} likes</span>
