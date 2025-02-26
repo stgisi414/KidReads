@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AlertCircle, Home } from "lucide-react";
 import StoryPlayer from "@/components/StoryPlayer";
 import type { Story } from "@shared/schema";
 
@@ -22,8 +23,29 @@ export default function ReadAlong() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-red-500">Error loading story. Please try again.</p>
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="pt-6 text-center">
+            <div className="flex flex-col items-center mb-6">
+              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+              <h1 className="text-3xl font-bold text-gray-900">Oops!</h1>
+              <p className="text-xl text-gray-700 mt-2">Story Not Found</p>
+            </div>
+
+            <p className="mt-4 text-gray-600 mb-6">
+              The story you're looking for doesn't exist or has been moved.
+            </p>
+
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => setLocation('/')}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Return Home
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -38,8 +60,29 @@ export default function ReadAlong() {
 
   if (!story) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Story not found</p>
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="pt-6 text-center">
+            <div className="flex flex-col items-center mb-6">
+              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+              <h1 className="text-3xl font-bold text-gray-900">Oops!</h1>
+              <p className="text-xl text-gray-700 mt-2">Story Not Found</p>
+            </div>
+
+            <p className="mt-4 text-gray-600 mb-6">
+              We couldn't find the story you're looking for.
+            </p>
+
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => setLocation('/')}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Return Home
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
