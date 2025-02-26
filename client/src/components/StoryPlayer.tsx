@@ -65,7 +65,7 @@ const FORBIDDEN_WORDS = [
   'scat', 'watersports', 'golden shower', 'fisting', 'analingus', 'fellatio', 'cunnilingus',
 
   // --- Bodily Fluids/Excrement ---
-  'blood', 'gore', 'bloody', 'gory', 'guts', 'viscera', 'entrails', 'marrow', 'pus', 'gangrene', 'sepsis', 'maggots', 'rot', 'decay', 'decompose', 'putrefy', 'cadaver', 'corpse', 'skeleton', 'skull', 'bones', 'innards', 'excrement', 'feces', 'vomit', 'mucus', 'phlegm', 'snot', 'bile', 'puke',
+  'blood', 'gore', 'bloody', 'gory', 'guts', 'viscera', 'entrails', 'marrow', 'pus', 'gangrene', 'sepsis', 'maggots', 'rot', 'decay', 'decompose', 'putrefy', 'cadaver', 'corpse', 'skeleton', 'skull', 'bones', 'innards', 'excrement', 'feces', 'vomit', 'mucus', 'phlegm', 'snot', 'bile', 'puke', 'poop', 'shit', 'shitty', 'shitty', 'shitty', 'shit', 'pee', 'peepee', 'peepee', 'peepee',
 
   // --- Derogatory Body Descriptions (Context Dependent - Use with Caution) ---
   'fat', 'obese', 'skinny', 'anorexic', 'bulimic', 'ugly', 'hideous', 'disgusting' /*when referring to appearance*/, 'deformed', 'crippled', 'handicapped', //  Context is crucial; these can be used clinically or descriptively, but also hurtfully. Disability slurs in Hate section are more direct.
@@ -580,8 +580,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="text-center relative">
-      <div className="p-8">
-        <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700">
+      <div className="p-1">
+        <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700 mb-2">
           <Heart className="h-5 w-5 text-red-500" />
           <span>{story.likes || 0} likes</span>
         </div>

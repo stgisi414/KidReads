@@ -91,7 +91,7 @@ export default function ReadAlong() {
 
   return (
     <div className="min-h-screen flex flex-col overflow-hidden pb-0"> {/* Added pb-0 */}
-      <Card className="flex-1 max-w-2xl mx-auto w-full p-0 mb-0"> {/* Added mb-0 */}
+      <Card className="flex-1 max-w-2xl mx-auto w-full p-0 mb-0 pb-0"> {/* Added mb-0 */}
         <Button
           variant="outline"
           className="absolute top-4 right-4 z-10 bg-white/40 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white/80"

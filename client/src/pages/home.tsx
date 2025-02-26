@@ -89,7 +89,7 @@ export default function Home() {
               <h2 className="text-xl font-semibold mb-4">Recent Stories</h2>
               <div className="relative h-[120px] overflow-hidden">
                 <div className="absolute w-full transition-transform duration-1000 ease-in-out hover:pause-animation animate-scroll">
-                  {[...stories, ...stories].slice(0, 6).map((story, index) => (
+                  {[...stories, ...stories].slice(0, 16).map((story, index) => (
                     <Button
                       key={`${story.id}-${index}`}
                       variant="outline"
