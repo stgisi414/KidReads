@@ -120,7 +120,6 @@ const FORBIDDEN_WORDS = [
   'gore', 'gory', 'suicidal', 'suicide', 'self-harm', 'self-mutilation', 'cut myself', 'slit wrists', 'overdose myself', 'hang myself', 'shoot myself', 'end my life', 'take my life', 'jump off a building', 'step in front of a train', 'pills', 'razor blades', 'noose', 'gun to my head', 'poison myself', 'drown myself', 'burn myself', 'starve myself', 'depressed' /*suicide context*/, 'hopeless', 'worthless', 'life is meaningless', 'i want to die', 'i wish i were dead', 'i can\'t go on', 'i\'m done with life', 'goodbye world', 'farewell cruel world', 'i\'m checking out', 'signing off', 'i\'m out of here',
   'groomer', 'grooming', 'predator', 'pimp', 'lure', 'entice', 'manipulate' /*grooming context*/, 'coerce' /*grooming context*/, 'undermine' /*grooming context*/, 'isolate' /*grooming context*/, 'secret' /*grooming context*/, 'promise' /*grooming context*/, 'gift' /*grooming context*/, 'attention' /*grooming context*/, 'special' /*grooming context*/, 'trust' /*grooming context*/, 'confide' /*grooming context*/, 'alone time', 'one-on-one', 'private', 'bedroom', 'sleepover', 'vacation', 'trip', 'getaway', 'hotel room', 'motel', 'cabin', 'camping', 'road trip', 'out of town', 'away from parents', 'just us', 'no adults', 'no supervision', 'don\'t tell', 'keep it secret', 'our little secret', 'promise me you won\'t tell', 'this is just between us', 'nobody needs to know', 'it\'s our special secret', 'we\'ll keep it quiet', 'zip your lips', 'mum\'s the word', 'don\'t breathe a word', 'not a peep', 'hush hush', 'quiet down', 'keep it under wraps', 'off the record', 'between you and me', 'just you and i', 'nobody else', 'just us two', 'private matter', 'personal business', 'confidential', 'classified', 'hush-hush', 'cloak and dagger', 'secretive', 'furtive', 'covert', 'undercover', 'clandestine', 'surreptitious', 'stealthy', 'sneak',
 
-
   // ========================= Misinformation/Harmful Content =========================
   'hoax', 'fake news', 'disinformation', 'misinformation', 'conspiracy', 'propaganda',
 
@@ -580,8 +579,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   };
 
   return (
-    <div className="text-center relative">
-      <div className="p-8 pb-4 space-y-6">
+    <div className="text-center relative min-h-screen flex flex-col">
+      <div className="flex-grow p-8 pb-4 space-y-6 max-h-[calc(100vh-2rem)] overflow-hidden">
         <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700">
           <Heart className="h-5 w-5 text-red-500" />
           <span>{story.likes || 0} likes</span>
@@ -646,53 +645,39 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                   <span className="animate-pulse">{transcript}</span> :
                   <span className="animate-pulse">Listening...</span>
               ) : (
-                "Click 'Read Word' to start"
+                transcript || "Ready to listen..."
               )}
             </p>
           </div>
         </div>
-      </div>
 
-      {/* Celebration Overlay */}
-      {showCelebration && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center" style={{ zIndex: 9999 }}>
-          <div className="text-center bg-white p-8 rounded-lg shadow-xl max-w-sm mx-4">
-            <div className="text-[7rem] animate-bounce mb-8">🎉</div>
-            <h2 className="text-2xl font-bold mb-4">Congratulations!</h2>
-            <p className="text-gray-600 mb-6">
-              You've completed the story successfully!
-            </p>
-            <div className="grid grid-cols-2 gap-4 mb-6">
+        {showCelebration && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm mx-auto">
+              <h2 className="text-2xl font-bold mb-4">🎉 Congratulations!</h2>
+              <p className="mb-6">You've completed the story!</p>
+              <div className="space-x-4">
+                <Button onClick={handleShare} className="mb-2">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+                <Button onClick={handleLike} disabled={isLiked}>
+                  <Heart className="mr-2 h-4 w-4" />
+                  {isLiked ? 'Liked!' : 'Like'}
+                </Button>
+              </div>
               <Button
                 variant="outline"
-                onClick={handleShare}
-                className="w-full"
+                onClick={resetStory}
+                className="mt-4"
               >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleLike}
-                className={`w-full ${isLiked ? 'bg-pink-50 text-pink-600' : ''}`}
-                disabled={isLiked}
-              >
-                <Heart className={`mr-2 h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                {isLiked ? 'Liked!' : 'Like'}
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Read Again
               </Button>
             </div>
-            <Button
-              variant="default"
-              size="lg"
-              onClick={resetStory}
-              className="w-full"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Read Again
-            </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
