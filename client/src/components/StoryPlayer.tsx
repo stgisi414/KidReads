@@ -240,6 +240,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Added loading state
 
   // Refs
   const stopRecordingRef = useRef<() => void>(() => {});
@@ -502,7 +503,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       if (!isMobileDevice) {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
-      await startRecording();
+      awaitstartRecording();
     } catch (error) {
       console.error('Error in readWord:', error);
       setIsActive(false);
@@ -524,8 +525,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   }, [isRecording, stopRecording]);
 
   const handleLike = async () => {
-    if (isLiked) return;
+    if (isLiked || isLoading) return; // Prevent multiple clicks while loading
 
+    setIsLoading(true); // Set loading state to true
     try {
       const response = await apiRequest("POST", `/api/stories/${story.id}/like`);
       if (!response.ok) {
@@ -544,6 +546,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         description: "Failed to like the story. Please try again.",
         variant: "destructive"
       });
+      setIsLoading(false); // Set loading state to false on error
+    } finally {
+      setIsLoading(false); // Ensure loading state is always reset
     }
   };
 
@@ -662,9 +667,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                   <Share2 className="mr-2 h-4 w-4" />
                   Share
                 </Button>
-                <Button onClick={handleLike} disabled={isLiked}>
+                <Button onClick={handleLike} disabled={isLiked || isLoading}> {/* Added isLoading to disable button */}
                   <Heart className="mr-2 h-4 w-4" />
-                  {isLiked ? 'Liked!' : 'Like'}
+                  {isLiked ? 'Liked!' : isLoading ? 'Liking...' : 'Like'} {/* Added loading text */}
                 </Button>
               </div>
               <Button
