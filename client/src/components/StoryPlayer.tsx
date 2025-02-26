@@ -501,23 +501,20 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
-      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Brian! Let's read together and have fun!",
-      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Emma! I'm ready to help you read!",
-      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Aiden! Let's begin reading!"
+      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Rachel! Let's read together and have fun!",
+      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Domi! I'm ready to help you read!",
+      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Bella! Let's begin reading!"
     } as const;
 
     const message = welcomeMessages[voiceId];
     if (message) {
       try {
-        await speak(message, {
-          voiceId: voiceId,
-          speak: elevenLabsSpeak
-        });
+        await speak(message, { voiceId });
       } catch (error) {
         console.error('Error playing welcome message:', error);
       }
     }
-  }, [speak, elevenLabsSpeak]);
+  }, [speak]);
 
   const { speak: elevenLabsSpeak } = useElevenLabs();
 
@@ -659,18 +656,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         <div className="mt-4">
           <select
             value={selectedVoice}
-            onChange={async (e) => {
+            onChange={(e) => {
               const newVoiceId = e.target.value as typeof VOICE_OPTIONS[number]['id'];
               setSelectedVoice(newVoiceId);
-              try {
-                await playWelcomeMessage(newVoiceId);
-              } catch (error) {
-                console.error("Failed to play welcome message:", error);
-                toast({
-                  title: "Voice Changed",
-                  description: `Switched to ${VOICE_OPTIONS.find(v => v.id === newVoiceId)?.name || "new voice"}`
-                });
-              }
+              playWelcomeMessage(newVoiceId);
             }}
             className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary mb-4"
           >
