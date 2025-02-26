@@ -94,7 +94,7 @@ export default function ReadAlong() {
       <Card className="flex-1 max-w-2xl mx-auto w-full p-0">
         <Button
           variant="outline"
-          className="absolute top-4 right-4 z-10 bg-transparant-5"
+          className="absolute top-4 right-4 z-10 bg-white/40 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white/80"
           onClick={() => setLocation('/')}
         >
           <img src={logoImage} alt="Back" className="h-8 w-8" />
