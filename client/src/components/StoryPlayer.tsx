@@ -219,15 +219,51 @@ const NUMBER_WORDS: Record<string, string> = {
   'eighteen': '18', 'nineteen': '19', 'twenty': '20'
 };
 
-const normalizeNumber = (word: string): string => {
+const normalizeNumber = (word: string): string[] => {
   word = word.toLowerCase().trim();
-  // Check if the word is a number word and convert to digit
-  if (NUMBER_WORDS[word]) return NUMBER_WORDS[word];
-  // Check if the word is a digit and convert to word
-  for (const [wordNum, digit] of Object.entries(NUMBER_WORDS)) {
-    if (word === digit) return wordNum;
+  let forms = [word];
+  
+  // If it's a number word, add its digit form
+  if (NUMBER_WORDS[word]) {
+    forms.push(NUMBER_WORDS[word]);
   }
-  return word;
+  
+  // If it's a digit, add its word form
+  for (const [wordNum, digit] of Object.entries(NUMBER_WORDS)) {
+    if (word === digit) {
+      forms.push(wordNum);
+      break;
+    }
+  }
+  
+  return forms;
+};
+
+const calculateWordSimilarity = (word1: string, word2: string): number => {
+  const forms1 = normalizeNumber(word1.toLowerCase().trim());
+  const forms2 = normalizeNumber(word2.toLowerCase().trim());
+  
+  // Try all combinations of normalized forms
+  let maxSimilarity = 0;
+  for (const form1 of forms1) {
+    for (const form2 of forms2) {
+      if (form1 === form2) return 1;
+      if (form1.includes(form2) || form2.includes(form1)) return 0.9;
+      
+      let matches = 0;
+      const longer = form1.length > form2.length ? form1 : form2;
+      const shorter = form1.length > form2.length ? form2 : form1;
+      
+      for (let i = 0; i < shorter.length; i++) {
+        if (longer.includes(shorter[i])) matches++;
+      }
+      
+      const similarity = matches / longer.length;
+      maxSimilarity = Math.max(maxSimilarity, similarity);
+    }
+  }
+  
+  return maxSimilarity;
 };
 
 const calculateWordSimilarity = (word1: string, word2: string): number => {
