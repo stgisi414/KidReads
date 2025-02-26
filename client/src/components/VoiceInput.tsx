@@ -92,7 +92,7 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
         recognition.start();
       }
     };
-  }, [recognition, onResult]);
+  }, [recognition, onSubmit, toast]);
 
   const toggleListening = () => {
     if (!recognition || isLoading) return;
