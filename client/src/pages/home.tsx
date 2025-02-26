@@ -32,6 +32,18 @@ export default function Home() {
     setIsLoading(true);
     try {
       const response = await apiRequest("POST", "/api/stories", { topic });
+      if (!response.ok) {
+        const error = await response.json();
+        if (error.type === 'CONTENT_FILTER') {
+          toast({
+            title: "Topic not allowed",
+            description: error.error,
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error('Failed to generate story');
+      }
       const story = await response.json();
       setLocation(`/read/${story.id}`);
     } catch (error) {

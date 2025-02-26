@@ -19,34 +19,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { topic } = req.body;
       console.log('Generating story for topic:', topic);
 
-      const { content, words } = await generateStory(topic);
-      console.log('Generated story:', { content, wordCount: words.length });
+      try {
+        const { content, words } = await generateStory(topic);
+        console.log('Generated story:', { content, wordCount: words.length });
 
-      console.log('Generating illustration for topic:', topic);
-      const result = await fal.subscribe("fal-ai/fast-lightning-sdxl", {
-        input: {
-          prompt: `A children's book illustration of ${topic}, cute, colorful, simple style`,
-          negative_prompt: "text, words, letters, scary, violent",
+        console.log('Generating illustration for topic:', topic);
+        const result = await fal.subscribe("fal-ai/fast-lightning-sdxl", {
+          input: {
+            prompt: `A children's book illustration of ${topic}, cute, colorful, simple style`,
+            negative_prompt: "text, words, letters, scary, violent, religious symbols, political symbols, inappropriate content",
+          }
+        });
+
+        if (!result?.images?.[0]?.url) {
+          throw new Error('Failed to generate illustration');
         }
-      });
 
-      if (!result?.images?.[0]?.url) {
-        throw new Error('Failed to generate illustration');
+        const imageUrl = result.images[0].url;
+        console.log('Generated illustration URL:', imageUrl);
+
+        const storyData = {
+          topic,
+          content,
+          imageUrl,
+          words,
+        };
+
+        const story = await storage.createStory(storyData);
+        console.log('Story created successfully:', story.id);
+        res.json(story);
+      } catch (error: any) {
+        if (error.message.includes('sensitive content') || error.message.includes('sensitive topics')) {
+          res.status(400).json({ 
+            error: error.message,
+            type: 'CONTENT_FILTER'
+          });
+        } else {
+          throw error; 
+        }
       }
-
-      const imageUrl = result.images[0].url;
-      console.log('Generated illustration URL:', imageUrl);
-
-      const storyData = {
-        topic,
-        content,
-        imageUrl,
-        words,
-      };
-
-      const story = await storage.createStory(storyData);
-      console.log('Story created successfully:', story.id);
-      res.json(story);
     } catch (error) {
       console.error('Error creating story:', error);
       res.status(500).json({ error: "Failed to create story" });
