@@ -77,9 +77,9 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
         }
 
         // Calculate average RGB
-        r = Math.round(r/count);
-        g = Math.round(g/count);
-        b = Math.round(b/count);
+        r = Math.round(r / count);
+        g = Math.round(g / count);
+        b = Math.round(b / count);
 
         // Calculate color brightness
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
@@ -144,26 +144,27 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
           }}
         />
       ))}
-      <div 
+      <div
         className="absolute inset-0 backdrop-blur-[2px]"
         style={{
           background: `linear-gradient(to bottom, ${dominantColor}22, ${dominantColor}44)`
         }}
       />
       {/* Story Snippet Overlay */}
-      <div 
+      <div
         className="absolute inset-x-0 bottom-0 p-8 text-center transition-opacity duration-500"
         style={{ opacity: snippetOpacity }}
       >
         <div className="max-w-3xl mx-auto">
-          <p 
+          <p
             className="text-xl md:text-2xl font-medium text-white drop-shadow-lg"
             style={{
-              textShadow: `0 2px 4px ${dominantColor}88`,
-              backgroundColor: `${dominantColor}22`,
-              backdropFilter: 'blur(4px)',
-              padding: '1rem',
-              borderRadius: '0.5rem',
+              textShadow: `0 2px 8px rgba(0,0,0,0.8), 0 1px 3px ${dominantColor}`,
+              backgroundColor: `${dominantColor}88`,
+              backdropFilter: 'blur(8px) brightness(0.8)',
+              padding: '1.5rem',
+              borderRadius: '0.75rem',
+              boxShadow: `0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)`
             }}
           >
             {getStorySnippet(stories[currentIndex].content)}
