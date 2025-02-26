@@ -171,8 +171,8 @@ interface StoryPlayerProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: "en-US-Neural2-H", name: "Male" },
-  { id: "en-US-Neural2-F", name: "Female" }
+  { id: "ErXwobaYiN019PkySvjV", name: "Male (Josh)" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Female (Bella)" }
 ] as const;
 
 // Define stop words that should be grouped with the following word
