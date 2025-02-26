@@ -8,12 +8,36 @@ import type { Story } from "@shared/schema";
 
 // List of forbidden words and topics for content filtering
 const FORBIDDEN_WORDS = [
-  'devil', 'demon', 'satan', 'hell',
-  'gun', 'weapon', 'bomb', 'kill', 'shoot',
-  'war', 'fight', 'death', 'die',
-  'blood', 'gore',
-  'religion', 'god', 'jesus', 'bible',
-  'hate', 'racist', 'violence'
+  // Violence/Death
+  'kill', 'killed', 'killing', 'kills', 'shoot', 'shot', 'shooting', 'shoots', 'stab', 'stabbed', 'stabbing', 'stabs', 'die', 'died', 'dying', 'death', 'dead', 'murder', 'murdered', 'murdering', 'murders', 'war', 'fight', 'fighting', 'fights', 'bomb', 'bombs', 'bombing', 'explode', 'exploded', 'exploding', 'explosion', 'explosions', 'weapon', 'weapons', 'gun', 'guns', 'attack', 'attacked', 'attacking', 'attacks', 'assault', 'assaulted', 'assaulting', 'slay', 'slew', 'slaying', 'slain', 'massacre', 'massacred', 'massacring', 'slaughter', 'slaughtered', 'slaughtering', 'execute', 'executed', 'executing', 'execution', 'executions', 'assassinate', 'assassinated', 'assassinating', 'assassination', 'homicide', 'suicide',
+
+  // Satanic/Demonic
+  'devil', 'demon', 'satan', 'hell', 'lucifer', 'beezlebub', 'demonize', 'demonic', 'satanic', 'satanism', 'occult', 'damnation', 'infernal',
+
+  // Body Parts/Bodily Functions (Highly explicit and vulgar terms)
+  'pussy', 'vagina', 'penis', 'dick', 'cock', 'ass', 'anus', 'rectum', 'testicles', 'breasts', 'tits', 'titties', 'asshole', 'butthole', 'cum', 'jizz', 'semen', 'ejaculate', 'ejaculation', 'clitoris', 'vagina', 'labia', 'prostate', 'scrotum', 'cunt',
+
+  // Hate/Discrimination
+  'hate', 'hated', 'hating', 'hates', 'racist', 'racism', 'nazi', 'fascist', 'bigot', 'bigotry', 'supremacist', 'supremacy', 'discrimination', 'discriminatory', 'segregation', 'genocide', 'ethnic cleansing', 'holocaust',
+    //Slurs
+  'nigger', 'nigga', 'chink', 'gook', 'wetback', 'spic', 'kike', 'faggot', 'dyke', 'tranny', 'retarded', 'retard', // and other widely recognized slurs.  A comprehensive list is impractical, but focus on the most egregious and commonly used.
+
+  // Sex/Sexual Acts (Explicit and graphic terms)
+  'sex', 'fuck', 'fucked', 'fucking', 'fucker', 'motherfucker', 'blowjob', 'handjob', 'rimjob', 'screwing', 'rape', 'raped', 'raping', 'rapist', 'molest', 'molested', 'molesting', 'molester', 'pedophile', 'pedophilia', 'incest', 'bestiality', 'orgy', 'threesome', 'gangbang', 'porn', 'pornography', 'pornographic',
+
+  // Drugs/Alcohol
+  'drug', 'drugs', 'alcohol', 'drunk', 'intoxicated', 'cocaine', 'heroin', 'marijuana', 'weed', 'meth', 'methamphetamine', 'crack', 'lsd', 'ecstasy', 'mdma', 'opioids', 'amphetamine', 'narcotics', 'high', 'stoned', 'wasted', 'plastered', 'hammered', 'booze',
+
+  // Swearing/Cursing
+  'damn', 'bitch', 'bastard', 'shit', 'shitty', 'bullshit', 'goddamn', 'hell' /*if not already in satanic section*/, 'asshole', 'piss', 'crap',
+
+  // Other Potentially Problematic Words
+  // 'religion', 'god' - REMOVED.  These are too broad and likely to cause false positives.  Only include specific, malicious uses in other categories (e.g., hateful slurs).
+  'blood', 'gore', 'bloody', 'gory', 'suicidal',
+
+    //Misinformation/Harmful content: added to cover broader cases
+    'hoax', 'fake news', 'disinformation', 'misinformation', 'conspiracy', 'propaganda',
+
 ];
 
 interface StoryPlayerProps {
@@ -59,6 +83,8 @@ const containsForbiddenContent = (text: string): boolean => {
 };
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
+  const { toast } = useToast();
+
   // Check for inappropriate content when story is loaded
   useEffect(() => {
     if (containsForbiddenContent(story.topic) || containsForbiddenContent(story.content)) {
@@ -81,7 +107,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const { speak, isLoading: isSpeaking } = useElevenLabs();
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const { toast } = useToast();
 
   const calculateWordSimilarity = (word1: string, word2: string): number => {
     word1 = word1.toLowerCase().trim();
