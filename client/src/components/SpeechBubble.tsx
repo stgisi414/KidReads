@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 
 interface SpeechBubbleProps {
@@ -33,10 +34,16 @@ export default function SpeechBubble({ text }: SpeechBubbleProps) {
         ${isPlaying ? 'animate-pulse' : ''}
       `}
     >
-      {/* Left pointing triangle */}
+      {/* Speech bubble tail with shadow */}
       <div className="absolute left-0 top-1/2 -translate-x-2 -translate-y-1/2">
-        <div className="w-0 h-0 border-t-[10px] border-t-transparent border-r-[20px] border-r-white border-b-[10px] border-b-transparent relative z-10" />
-        <div className="w-0 h-0 border-t-[11px] border-t-transparent border-r-[21px] border-r-gray-200 border-b-[11px] border-b-transparent absolute -left-[1px] -top-[11px] z-0" />
+        {/* Shadow triangle */}
+        <div className="absolute -left-[1px] -top-[11px]">
+          <div className="w-0 h-0 border-t-[11px] border-t-transparent border-r-[21px] border-r-gray-200 border-b-[11px] border-b-transparent" />
+        </div>
+        {/* White triangle */}
+        <div className="relative">
+          <div className="w-0 h-0 border-t-[10px] border-t-transparent border-r-[20px] border-r-white border-b-[10px] border-b-transparent" />
+        </div>
       </div>
       
       <p className="text-gray-600 font-medium">{text}</p>
