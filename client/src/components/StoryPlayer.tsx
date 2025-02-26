@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Play, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { useElevenLabs } from "@/hooks/use-elevenlabs";
 import type { Story } from "@shared/schema";
 import { Share2, Heart } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -171,9 +170,8 @@ interface StoryPlayerProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: "UGTtbzgh3HObxRjWaSpr", name: "🧑 Brian" },
-  { id: "pPdl9cQBQq4p6mRkZy2Z", name: "🧑‍🦱 Emma" },
-  { id: "dyTPmGzuLaJM15vpN3DS", name: "🧒 Aiden" }
+  { id: "en-US-Neural2-H", name: "Male" },
+  { id: "en-US-Neural2-F", name: "Female" }
 ] as const;
 
 // Define stop words that should be grouped with the following word
@@ -222,12 +220,12 @@ const NUMBER_WORDS: Record<string, string> = {
 const normalizeNumber = (word: string): string[] => {
   word = word.toLowerCase().trim();
   let forms = [word];
-  
+
   // If it's a number word, add its digit form
   if (NUMBER_WORDS[word]) {
     forms.push(NUMBER_WORDS[word]);
   }
-  
+
   // If it's a digit, add its word form
   for (const [wordNum, digit] of Object.entries(NUMBER_WORDS)) {
     if (word === digit) {
@@ -235,53 +233,35 @@ const normalizeNumber = (word: string): string[] => {
       break;
     }
   }
-  
+
   return forms;
 };
 
 const calculateWordSimilarity = (word1: string, word2: string): number => {
   const forms1 = normalizeNumber(word1.toLowerCase().trim());
   const forms2 = normalizeNumber(word2.toLowerCase().trim());
-  
+
   // Try all combinations of normalized forms
   let maxSimilarity = 0;
   for (const form1 of forms1) {
     for (const form2 of forms2) {
       if (form1 === form2) return 1;
       if (form1.includes(form2) || form2.includes(form1)) return 0.9;
-      
+
       let matches = 0;
       const longer = form1.length > form2.length ? form1 : form2;
       const shorter = form1.length > form2.length ? form2 : form1;
-      
+
       for (let i = 0; i < shorter.length; i++) {
         if (longer.includes(shorter[i])) matches++;
       }
-      
+
       const similarity = matches / longer.length;
       maxSimilarity = Math.max(maxSimilarity, similarity);
     }
   }
-  
+
   return maxSimilarity;
-};
-
-const calculateWordSimilarity = (word1: string, word2: string): number => {
-  word1 = normalizeNumber(word1.toLowerCase().trim());
-  word2 = normalizeNumber(word2.toLowerCase().trim());
-
-  if (word1 === word2) return 1;
-  if (word1.includes(word2) || word2.includes(word1)) return 0.9;
-
-  let matches = 0;
-  const longer = word1.length > word2.length ? word1 : word2;
-  const shorter = word1.length > word2.length ? word2 : word1;
-
-  for (let i = 0; i < shorter.length; i++) {
-    if (longer.includes(shorter[i])) matches++;
-  }
-
-  return matches / longer.length;
 };
 
 export default function StoryPlayer({ story }: StoryPlayerProps) {
@@ -293,7 +273,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(VOICE_OPTIONS[0].id);
+  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("en-US-Neural2-H");
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -413,12 +393,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     initializeOnMount: false
   });
 
-  const { speak: originalSpeak, isLoading: isSpeakingOriginal } = useElevenLabs();
 
   const speak = async (text: string, options: any) => {
     try {
       setIsSpeaking(true);
-      await originalSpeak(text, options);
+      // Assuming originalSpeak is still available from useElevenLabs
+      //  Replace with your actual implementation if different.
+      await options.speak(text, options);
     } finally {
       setIsSpeaking(false);
     }
@@ -526,9 +507,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
-      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Aiden! Let's read together and have fun!",
-      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Emma! I'm ready to help you read!",
-      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Brian! Let's dive into a story together!"
+      "en-US-Neural2-H": "Hi, I'm a male voice! Let's read together and have fun!",
+      "en-US-Neural2-F": "Hi, I'm a female voice! I'm ready to help you read!"
     } as const;
 
     const message = welcomeMessages[voiceId];
@@ -556,7 +536,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     try {
       await speak(wordToRead, {
-        voiceId: selectedVoice
+        voiceId: selectedVoice,
+        speak:  useElevenLabs().speak // Pass speak function from hook
       });
 
       if (!isMobileDevice) {
