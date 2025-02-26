@@ -209,73 +209,51 @@ const containsForbiddenContent = (text: string): boolean => {
   return FORBIDDEN_WORDS.some(word => normalizedText.includes(word.toLowerCase()));
 };
 
+// Move pure functions outside component
+const calculateWordSimilarity = (word1: string, word2: string): number => {
+  word1 = word1.toLowerCase().trim();
+  word2 = word2.toLowerCase().trim();
+
+  if (word1 === word2) return 1;
+  if (word1.includes(word2) || word2.includes(word1)) return 0.9;
+
+  let matches = 0;
+  const longer = word1.length > word2.length ? word1 : word2;
+  const shorter = word1.length > word2.length ? word2 : word1;
+
+  for (let i = 0; i < shorter.length; i++) {
+    if (longer.includes(shorter[i])) matches++;
+  }
+
+  return matches / longer.length;
+};
+
 export default function StoryPlayer({ story }: StoryPlayerProps) {
   const { toast } = useToast();
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // Check for inappropriate content when story is loaded
-  useEffect(() => {
-    if (containsForbiddenContent(story.topic) || containsForbiddenContent(story.content)) {
-      toast({
-        title: "⚠️ Content Warning",
-        description: "This story may contain inappropriate content for children.",
-        variant: "default"
-      });
-    }
-  }, [story, toast]);
-
+  // State declarations
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false); // Added isSpeaking state
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
   const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(VOICE_OPTIONS[0].id);
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [isLiked, setIsLiked] = useState(false); // Added like state
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Refs
   const stopRecordingRef = useRef<() => void>(() => {});
   const activeTimerRef = useRef<number | null>(null);
   const activeStartTimeRef = useRef<number>(0);
 
-  const { startRecording, stopRecording, isRecording, transcript, recognition } = useSpeechRecognition({
-    language: "en-US",
-    onTranscriptionUpdate: handleTranscriptionUpdate,
-    onRecognitionEnd: handleRecognitionEnd,
-    continuous: false,
-    interimResults: !isMobileDevice,
-    initializeOnMount: false
-  });
-
-  const { speak: originalSpeak, isLoading: isSpeakingOriginal } = useElevenLabs();
-
-  const speak = async (text: string, options: any) => {
-    try {
-      setIsSpeaking(true);
-      await originalSpeak(text, options);
-    } finally {
-      setIsSpeaking(false);
+  const handleRecognitionEnd = useCallback(() => {
+    setIsActive(false);
+    if (!isMobileDevice) {
+      setTimeout(() => setIsPending(false), 300);
     }
-  };
-
-
-  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-  const calculateWordSimilarity = (word1: string, word2: string): number => {
-    word1 = word1.toLowerCase().trim();
-    word2 = word2.toLowerCase().trim();
-
-    if (word1 === word2) return 1;
-    if (word1.includes(word2) || word2.includes(word1)) return 0.9;
-
-    let matches = 0;
-    const longer = word1.length > word2.length ? word1 : word2;
-    const shorter = word1.length > word2.length ? word2 : word1;
-
-    for (let i = 0; i < shorter.length; i++) {
-      if (longer.includes(shorter[i])) matches++;
-    }
-
-    return matches / longer.length;
-  };
+  }, [isMobileDevice]);
 
   const handleTranscriptionUpdate = useCallback((transcript: string) => {
     if (isPending) return;
@@ -366,14 +344,39 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         });
       }
     }
-  }, [currentGroupIndex, wordGroups, isPending, isMobileDevice, toast]);
+  }, [currentGroupIndex, wordGroups, isPending, isMobileDevice]);
 
-  const handleRecognitionEnd = useCallback(() => {
-    setIsActive(false);
-    if (!isMobileDevice) {
-      setTimeout(() => setIsPending(false), 300);
+  const { startRecording, stopRecording, isRecording, transcript, recognition } = useSpeechRecognition({
+    language: "en-US",
+    onTranscriptionUpdate: handleTranscriptionUpdate,
+    onRecognitionEnd: handleRecognitionEnd,
+    continuous: false,
+    interimResults: !isMobileDevice,
+    initializeOnMount: false
+  });
+
+  const { speak: originalSpeak, isLoading: isSpeakingOriginal } = useElevenLabs();
+
+  const speak = async (text: string, options: any) => {
+    try {
+      setIsSpeaking(true);
+      await originalSpeak(text, options);
+    } finally {
+      setIsSpeaking(false);
     }
-  }, [isMobileDevice]);
+  };
+
+  // Check for inappropriate content when story is loaded
+  useEffect(() => {
+    if (containsForbiddenContent(story.topic) || containsForbiddenContent(story.content)) {
+      toast({
+        title: "⚠️ Content Warning",
+        description: "This story may contain inappropriate content for children.",
+        variant: "default"
+      });
+    }
+  }, [story, toast]);
+
 
   // Store the stopRecording function in a ref
   useEffect(() => {
@@ -454,6 +457,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   }, [isActive, isSpeaking, recognition]);
 
 
+
   const resetStory = () => {
     setCurrentGroupIndex(0);
     setShowCelebration(false);
@@ -493,7 +497,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsPending(false);
 
     try {
-            await speak(wordToRead, {
+      await speak(wordToRead, {
         voiceId: selectedVoice
       });
 
@@ -504,8 +508,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     } catch (error) {
       console.error('Error in readWord:', error);
       setIsActive(false);
-      setIsPending(false);
-      toast({
+      setIsPending(false);      toast({
         title: "⛔ Error",
         description: "Failed to read the word. Please try again.",
         variant: "destructive"
