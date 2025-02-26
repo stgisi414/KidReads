@@ -1,3 +1,6 @@
+
+import logoImage from "../assets/logo.png";
+
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -95,7 +98,7 @@ export default function ReadAlong() {
           className="absolute top-4 right-4"
           onClick={() => setLocation('/')}
         >
-          <img src="/assets/logo.png" alt="Back" className="h-8 w-8" />
+          <img src={logoImage} alt="Back" className="h-8 w-8" />
           Return Home
         </Button>
         <div className="aspect-video mb-6 rounded-lg overflow-hidden">
