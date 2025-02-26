@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,15 +10,16 @@ import logoImage from "../assets/logo.png";
 import type { Story } from "@shared/schema";
 import BackgroundSlider from "@/components/BackgroundSlider";
 import SpeechBubble from "@/components/SpeechBubble";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [accentColor, setAccentColor] = useState("#4CAF50");
   const { toast } = useToast();
 
   // Fetch existing stories
-  const { data: stories } = useQuery<Story[]>({
+  const { data: stories, isLoading: isLoadingStories } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
     queryFn: async () => {
       const response = await fetch('/api/stories');
@@ -32,7 +33,7 @@ export default function Home() {
   const handleStoryCreation = async (topic: string) => {
     if (!topic) return;
 
-    setIsLoading(true);
+    setIsCreating(true);
     try {
       const response = await apiRequest("POST", "/api/stories", { topic });
       const story = await response.json();
@@ -55,9 +56,11 @@ export default function Home() {
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsCreating(false);
     }
   };
+
+  const isLoading = isLoadingStories || isCreating;
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -65,13 +68,20 @@ export default function Home() {
         {stories && stories.length > 0 && (
           <BackgroundSlider 
             stories={stories}
+            accentColor={accentColor}
             onColorChange={setAccentColor}
           />
         )}
       </div>
 
-      <Card className="w-full max-w-lg mx-auto m-4 p-2">
-        <div className="flex flex-col items-center justify-center text-center">
+      <Card className={`w-full max-w-lg mx-auto m-4 p-2 transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
+        <div className="flex flex-col items-center justify-center text-center relative">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50 rounded-lg">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+
           <div className="flex items-center justify-center gap-4 mb-6">
             <img src={logoImage} alt="KidReads Logo" className="w-48 h-48 object-contain" />
             <SpeechBubble text="What would you like to read about?" />
@@ -95,6 +105,7 @@ export default function Home() {
                       variant="outline"
                       className="w-full justify-start text-left h-auto mb-2"
                       onClick={() => setLocation(`/read/${story.id}`)}
+                      disabled={isLoading}
                     >
                       <span className="line-clamp-1">{story.topic}</span>
                     </Button>
