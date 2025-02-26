@@ -115,7 +115,6 @@ const FORBIDDEN_WORDS = [
 
   // ========================= Other Potentially Problematic Words =========================
   'gore', 'gory', 'suicidal', 'suicide', 'self-harm', 'self-mutilation', 'cut myself', 'slit wrists', 'overdose myself', 'hang myself', 'shoot myself', 'end my life', 'take my life', 'jump off a building', 'step in front of a train', 'pills', 'razor blades', 'noose', 'gun to my head', 'poison myself', 'drown myself', 'burn myself', 'starve myself', 'depressed' /*suicide context*/, 'hopeless', 'worthless', 'life is meaningless', 'i want to die', 'i wish i were dead', 'i can\'t go on', 'i\'m done with life', 'goodbye world', 'farewell cruel world', 'i\'m checking out', 'signing off', 'i\'m out of here',
-
   'groomer', 'grooming', 'predator', 'pimp', 'lure', 'entice', 'manipulate' /*grooming context*/, 'coerce' /*grooming context*/, 'undermine' /*grooming context*/, 'isolate' /*grooming context*/, 'secret' /*grooming context*/, 'promise' /*grooming context*/, 'gift' /*grooming context*/, 'attention' /*grooming context*/, 'special' /*grooming context*/, 'trust' /*grooming context*/, 'confide' /*grooming context*/, 'alone time', 'one-on-one', 'private', 'bedroom', 'sleepover', 'vacation', 'trip', 'getaway', 'hotel room', 'motel', 'cabin', 'camping', 'road trip', 'out of town', 'away from parents', 'just us', 'no adults', 'no supervision', 'don\'t tell', 'keep it secret', 'our little secret', 'promise me you won\'t tell', 'this is just between us', 'nobody needs to know', 'it\'s our special secret', 'we\'ll keep it quiet', 'zip your lips', 'mum\'s the word', 'don\'t breathe a word', 'not a peep', 'hush hush', 'quiet down', 'keep it under wraps', 'off the record', 'between you and me', 'just you and i', 'nobody else', 'just us two', 'private matter', 'personal business', 'confidential', 'classified', 'hush-hush', 'cloak and dagger', 'secretive', 'furtive', 'covert', 'undercover', 'clandestine', 'surreptitious', 'stealthy', 'sneak',
 
 
@@ -498,8 +497,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       {/* Celebration Overlay */}
       {showCelebration && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 animate-fade-in">
-          <div className="text-center">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div 
+            className="absolute inset-0"            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              backdropFilter: 'blur(4px)'
+            }}
+          />
+          <div className="relative text-center">
             <div className="text-[7rem] animate-bounce mb-8">🎉</div>
             <Button
               variant="outline"
