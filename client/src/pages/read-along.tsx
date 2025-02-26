@@ -95,7 +95,8 @@ export default function ReadAlong() {
           className="absolute top-4 right-4"
           onClick={() => setLocation('/')}
         >
-          Return Home
+         <img src="/assets/logo.png" alt="Back" className="h-8 w-8" />
+           Return Home
         </Button>
         <div className="aspect-video mb-6 rounded-lg overflow-hidden">
           <img
