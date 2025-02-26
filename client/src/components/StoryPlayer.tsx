@@ -585,6 +585,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           <Heart className="h-5 w-5 text-red-500" />
           <span>{story.likes || 0} likes</span>
         </div>
+
         <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
           {wordGroups.map((group, groupIndex) => (
             <span
@@ -600,7 +601,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           ))}
         </div>
 
-        {/* Rest of the controls */}
         <div className="space-y-4">
           <select
             value={selectedVoice}
@@ -646,39 +646,36 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                   <span className="animate-pulse">{transcript}</span> :
                   <span className="animate-pulse">Listening...</span>
               ) : (
-                <span>Ready to listen</span>
+                transcript || "Ready to listen..."
               )}
             </p>
           </div>
         </div>
 
-        {/* Congratulations Modal */}
         {showCelebration && (
-          <div className="fixed inset-0 z-50">
-            <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm mx-auto">
-                <h2 className="text-2xl font-bold mb-4">🎉 Congratulations!</h2>
-                <p className="mb-6">You've completed the story!</p>
-                <div className="space-x-4">
-                  <Button onClick={handleShare} className="mb-2">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
-                  <Button onClick={handleLike} disabled={isLiked}>
-                    <Heart className="mr-2 h-4 w-4" />
-                    {isLiked ? 'Liked!' : 'Like'}
-                  </Button>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={resetStory}
-                  className="mt-4 w-full"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Read Again
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-black bg-opacity-50" />
+            <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm mx-auto relative">
+              <h2 className="text-2xl font-bold mb-4">🎉 Congratulations!</h2>
+              <p className="mb-6">You've completed the story!</p>
+              <div className="space-x-4">
+                <Button onClick={handleShare} className="mb-2">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+                <Button onClick={handleLike} disabled={isLiked}>
+                  <Heart className="mr-2 h-4 w-4" />
+                  {isLiked ? 'Liked!' : 'Like'}
                 </Button>
               </div>
+              <Button
+                variant="outline"
+                onClick={resetStory}
+                className="mt-4 w-full"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Read Again
+              </Button>
             </div>
           </div>
         )}
