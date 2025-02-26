@@ -171,9 +171,9 @@ interface StoryPlayerProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
-  { id: "AZnzlk1XvdvUeBnXmlld", name: "Domi" },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella" }
+  { id: "UGTtbzgh3HObxRjWaSpr", name: "🧑 Brian" },
+  { id: "pPdl9cQBQq4p6mRkZy2Z", name: "🧑‍🦱 Emma" },
+  { id: "dyTPmGzuLaJM15vpN3DS", name: "🧒 Aiden" }
 ] as const;
 
 // Define stop words that should be grouped with the following word
@@ -276,7 +276,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("21m00Tcm4TlvDq8ikWAM");
+  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("UGTtbzgh3HObxRjWaSpr");
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -501,9 +501,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
-      "21m00Tcm4TlvDq8ikWAM": "Hi, I'm Rachel! Let's read together and have fun!",
-      "AZnzlk1XvdvUeBnXmlld": "Hi, I'm Domi! I'm ready to help you read!",
-      "EXAVITQu4vr4xnSDxMaL": "Hi, I'm Bella! Let's begin reading!"
+      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Rachel! Let's read together and have fun!",
+      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Domi! I'm ready to help you read!",
+      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Bella! Let's begin reading!"
     } as const;
 
     const message = welcomeMessages[voiceId];
