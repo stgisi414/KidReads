@@ -498,7 +498,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       {/* Celebration Overlay */}
       {showCelebration && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 animate-fade-in">
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black/50 z-50 animate-fade-in">
           <div className="text-center">
             <div className="text-[7rem] animate-bounce mb-8">🎉</div>
             <Button
