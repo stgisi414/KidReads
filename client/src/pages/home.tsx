@@ -28,91 +28,76 @@ export default function Home() {
     }
   });
 
-  const handleTopicSubmit = async (topic: string) => {
+  const handleStoryCreation = async (topic: string) => {
+    if (!topic) return;
+
     setIsLoading(true);
     try {
       const response = await apiRequest("POST", "/api/stories", { topic });
-      if (!response.ok) {
-        const error = await response.json();
-        if (error.type === 'CONTENT_FILTER') {
-          toast({
-            title: "Topic not allowed",
-            description: error.error,
-            variant: "destructive",
-          });
-          return;
-        }
-        throw new Error('Failed to generate story');
-      }
       const story = await response.json();
-      setLocation(`/read/${story.id}`);
+
+      if (response.ok) {
+        setLocation(`/read/${story.id}`);
+      } else if (story.type === 'CONTENT_FILTER') {
+        toast({
+          title: "Content Warning",
+          description: "Please choose a kid-friendly topic.",
+          variant: "destructive"
+        });
+      } else {
+        throw new Error('Failed to create story');
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate story. Please try again.",
-        variant: "destructive",
+        description: "Failed to create story. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSampleStory = () => {
-    if (!stories || stories.length === 0) {
-      toast({
-        title: "No stories available",
-        description: "Please try speaking a topic instead.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const randomStory = stories[Math.floor(Math.random() * stories.length)];
-    setLocation(`/read/${randomStory.id}`);
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 pt-4 pb-0 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <div className="absolute inset-0 -z-10 opacity-30">
         {stories && stories.length > 0 && (
           <BackgroundSlider 
             stories={stories} 
-            onAccentColorChange={setAccentColor}
+            onColorChange={setAccentColor}
           />
         )}
       </div>
 
-      <Card className="w-full max-w-lg shadow-xl p-4 bg-white/80 backdrop-blur transition-all duration-300 hover:bg-white/90 hover:shadow-2xl">
-        <div className="text-center space-y-6">
-          <div className="flex items-center justify-center gap-4">
-            <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
-            <h5 
-              className="text-3xl font-bold"
-              style={{
-                color: accentColor,
-                textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-              }}
-            >
-              KidReads
-            </h5>
-          </div>
-          <p className="text-2xl text-gray-600">
-            Tell me what you want to read about!
-          </p>
-          <div className="space-y-4">
-            <VoiceInput onResult={handleTopicSubmit} isLoading={isLoading} />
-            <Button
-              className="w-full bg-opacity-90 hover:bg-opacity-100 text-white text-xl py-6"
-              size="lg"
-              disabled={isLoading}
-              onClick={handleSampleStory}
-              style={{
-                backgroundColor: accentColor
-              }}
-            >
-              📚 Try a Sample Story
-            </Button>
-          </div>
+      <Card className="w-full max-w-lg mx-auto">
+        <div className="flex flex-col items-center justify-center text-center">
+          <img src={logoImage} alt="KidReads Logo" className="w-48 h-48 object-contain mb-4" />
+          <h1 className="text-4xl font-bold mb-2 sparkle-text">KidReads</h1>
+          <p className="text-xl text-gray-600 mb-6">What would you like to read about?</p>
+
+          <VoiceInput
+            onSubmit={handleStoryCreation}
+            isLoading={isLoading}
+            accentColor={accentColor}
+          />
+
+          {stories && stories.length > 0 && (
+            <div className="w-full mt-6">
+              <h2 className="text-xl font-semibold mb-4">Recent Stories</h2>
+              <div className="grid gap-2">
+                {stories.slice(0, 3).map(story => (
+                  <Button
+                    key={story.id}
+                    variant="outline"
+                    className="w-full justify-start text-left h-auto"
+                    onClick={() => setLocation(`/read/${story.id}`)}
+                  >
+                    <span className="line-clamp-1">{story.topic}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     </div>
