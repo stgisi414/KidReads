@@ -677,6 +677,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             <div
               className="bg-white p-8 rounded-lg shadow-xl max-w-md mx-4 text-center"
               onClick={e => e.stopPropagation()}
+              onMouseEnter={playCompletionSound}
             >
               <h2 className="text-3xl font-bold mb-4">Amazing Job! 🌟</h2>
               <p className="text-xl mb-6">You've completed the story!</p>
