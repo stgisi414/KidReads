@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -85,19 +85,21 @@ export default function Home() {
           />
 
           {stories && stories.length > 0 && (
-            <div className="w-full mt-6">
+            <div className="w-full mt-6 overflow-hidden">
               <h2 className="text-xl font-semibold mb-4">Recent Stories</h2>
-              <div className="grid gap-2">
-                {stories.slice(0, 3).map(story => (
-                  <Button
-                    key={story.id}
-                    variant="outline"
-                    className="w-full justify-start text-left h-auto"
-                    onClick={() => setLocation(`/read/${story.id}`)}
-                  >
-                    <span className="line-clamp-1">{story.topic}</span>
-                  </Button>
-                ))}
+              <div className="relative h-[120px] overflow-hidden">
+                <div className="absolute w-full transition-transform duration-1000 ease-in-out hover:pause-animation animate-scroll">
+                  {[...stories, ...stories].slice(0, 6).map((story, index) => (
+                    <Button
+                      key={`${story.id}-${index}`}
+                      variant="outline"
+                      className="w-full justify-start text-left h-auto mb-2"
+                      onClick={() => setLocation(`/read/${story.id}`)}
+                    >
+                      <span className="line-clamp-1">{story.topic}</span>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
