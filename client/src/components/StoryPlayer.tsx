@@ -6,6 +6,16 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useElevenLabs } from "@/hooks/use-elevenlabs";
 import type { Story } from "@shared/schema";
 
+// List of forbidden words and topics for content filtering
+const FORBIDDEN_WORDS = [
+  'devil', 'demon', 'satan', 'hell',
+  'gun', 'weapon', 'bomb', 'kill', 'shoot',
+  'war', 'fight', 'death', 'die',
+  'blood', 'gore',
+  'religion', 'god', 'jesus', 'bible',
+  'hate', 'racist', 'violence'
+];
+
 interface StoryPlayerProps {
   story: Story;
 }
@@ -42,7 +52,24 @@ interface WordGroup {
   startIndex: number;
 }
 
+// Check if content contains any forbidden words
+const containsForbiddenContent = (text: string): boolean => {
+  const normalizedText = text.toLowerCase();
+  return FORBIDDEN_WORDS.some(word => normalizedText.includes(word.toLowerCase()));
+};
+
 export default function StoryPlayer({ story }: StoryPlayerProps) {
+  // Check for inappropriate content when story is loaded
+  useEffect(() => {
+    if (containsForbiddenContent(story.topic) || containsForbiddenContent(story.content)) {
+      toast({
+        title: "Content Warning",
+        description: "This story contains inappropriate content for children.",
+        variant: "destructive"
+      });
+    }
+  }, [story, toast]);
+
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
