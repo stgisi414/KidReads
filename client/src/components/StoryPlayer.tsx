@@ -509,7 +509,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       setIsActive(false);
       setIsPending(false);      toast({
         title: "⛔ Error",
-        description: "Failed to read the word. Please try again.",
+        description:"Failed to read the word. Please try again.",
         variant: "destructive"
       });
     }
@@ -652,31 +652,39 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </div>
 
         {showCelebration && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm mx-auto">
-              <h2 className="text-2xl font-bold mb-4">🎉 Congratulations!</h2>
-              <p className="mb-6">You've completed the story!</p>
-              <div className="space-x-4">
-                <Button onClick={handleShare} className="mb-2">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
-                <Button onClick={handleLike} disabled={isLiked}>
-                  <Heart className="mr-2 h-4 w-4" />
-                  {isLiked ? 'Liked!' : 'Like'}
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-white rounded-lg p-8 max-w-sm w-full mx-4 text-center space-y-6">
+                <h2 className="text-2xl font-bold text-primary">🎉 Congratulations!</h2>
+                <p className="text-lg">You've completed the story!</p>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleLike}
+                    disabled={isLiked}
+                  >
+                    <Heart className={`mr-2 h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                    Like
+                  </Button>
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={resetStory}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Read Again
                 </Button>
               </div>
-              <Button
-                variant="outline"
-                onClick={resetStory}
-                className="mt-4"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Read Again
-              </Button>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );
