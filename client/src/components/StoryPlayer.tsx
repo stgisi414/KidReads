@@ -170,9 +170,9 @@ interface StoryPlayerProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: "dyTPmGzuLaJM15vpN3DS", name: "🧒 Aiden" },
-  { id: "pPdl9cQBQq4p6mRkZy2Z", name: "🧑‍🦱 Emma" },
   { id: "UGTtbzgh3HObxRjWaSpr", name: "🧑 Brian" },
+  { id: "pPdl9cQBQq4p6mRkZy2Z", name: "🧑‍🦱 Emma" },
+  { id: "dyTPmGzuLaJM15vpN3DS", name: "🧒 Aiden" }
 ] as const;
 
 // Define stop words that should be grouped with the following word
