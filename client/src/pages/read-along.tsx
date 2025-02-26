@@ -91,8 +91,8 @@ export default function ReadAlong() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <Card className="max-w-2xl mx-auto p-6 relative">
+    <div className="min-h-screen bg-background p-6">
+      <Card className="max-w-2xl mx-auto relative">
         <Button
           variant="outline"
           className="absolute top-4 right-4"
