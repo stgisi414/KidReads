@@ -580,13 +580,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="text-center relative">
-      <div className="p-8 space-y-6">
+      <div className="p-0">
         <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700">
           <Heart className="h-5 w-5 text-red-500" />
           <span>{story.likes || 0} likes</span>
         </div>
 
-        <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
+        <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap">
           {wordGroups.map((group, groupIndex) => (
             <span
               key={group.startIndex}
@@ -601,7 +601,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           ))}
         </div>
 
-        <div className="space-y-4">
+        <div className="mt-4">
           <select
             value={selectedVoice}
             onChange={(e) => {
