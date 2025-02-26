@@ -72,9 +72,9 @@ export default function Home() {
   };
 
   return (
-    <div className="fixed inset-0 flex justify-center">
+    <div className="min-h-screen flex justify-center p-4 relative">
       {stories && stories.length > 0 && (
-        <div className="fixed inset-0 opacity-30">
+        <div className="absolute inset-0 opacity-30">
           <BackgroundSlider 
             stories={stories} 
             onAccentColorChange={setAccentColor}
