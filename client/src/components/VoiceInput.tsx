@@ -4,11 +4,12 @@ import { Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface VoiceInputProps {
-  onResult: (text: string) => void;
+  onSubmit: (text: string) => void;
   isLoading?: boolean;
+  accentColor?: string;
 }
 
-export default function VoiceInput({ onResult, isLoading }: VoiceInputProps) {
+export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const { toast } = useToast();
@@ -58,7 +59,7 @@ export default function VoiceInput({ onResult, isLoading }: VoiceInputProps) {
       // Only send final results to the callback
       if (finalTranscript) {
         console.log('📝 Sending final result:', finalTranscript);
-        onResult(finalTranscript);
+        onSubmit(finalTranscript);
         setIsListening(false);
         recognition.stop();
       }
