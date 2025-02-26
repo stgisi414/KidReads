@@ -171,8 +171,9 @@ interface StoryPlayerProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: "ErXwobaYiN019PkySvjV", name: "Male (Josh)" },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Female (Bella)" }
+  { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
+  { id: "AZnzlk1XvdvUeBnXmlld", name: "Domi" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella" }
 ] as const;
 
 // Define stop words that should be grouped with the following word
@@ -219,17 +220,18 @@ const NUMBER_WORDS: Record<string, string> = {
 };
 
 const normalizeNumber = (word: string): string[] => {
-  word = word.toLowerCase().trim();
-  let forms = [word];
+  // Remove spaces between letters (e.g. "s e v e n" -> "seven")
+  const withoutSpaces = word.toLowerCase().replace(/\s+/g, '').trim();
+  let forms = [word, withoutSpaces];
 
   // If it's a number word, add its digit form
-  if (NUMBER_WORDS[word]) {
-    forms.push(NUMBER_WORDS[word]);
+  if (NUMBER_WORDS[withoutSpaces]) {
+    forms.push(NUMBER_WORDS[withoutSpaces]);
   }
 
   // If it's a digit, add its word form
   for (const [wordNum, digit] of Object.entries(NUMBER_WORDS)) {
-    if (word === digit) {
+    if (word === digit || withoutSpaces === digit) {
       forms.push(wordNum);
       break;
     }
@@ -274,7 +276,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("ErXwobaYiN019PkySvjV");
+  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("21m00Tcm4TlvDq8ikWAM");
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -385,7 +387,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, [currentGroupIndex, wordGroups, isPending, isMobileDevice]);
 
-  const { startRecording, stopRecording, isRecording, transcript, recognition } = useSpeechRecognition({
+  const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
     language: "en-US",
     onTranscriptionUpdate: handleTranscriptionUpdate,
     onRecognitionEnd: handleRecognitionEnd,
@@ -416,7 +418,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       });
     }
   }, [story, toast]);
-
 
   // Store the stopRecording function in a ref
   useEffect(() => {
@@ -468,17 +469,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           console.log('Detected stuck state, resetting button...');
           setIsActive(false);
           setIsPending(false);
-          if (recognition) {
-            try {
-              recognition.abort();
-              recognition.stop();
-            } catch (error) {
-              console.error('Error stopping recognition:', error);
-            }
-          }
+          stopRecording();
           toast({
             title: "Auto-Reset",
-            description: "Microphone state was reset due to inactivity",
+            description: "Microphone state was reset due to inactivity"
           });
         }
       }, 2000);
@@ -494,8 +488,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         activeTimerRef.current = null;
       }
     }
-  }, [isActive, isSpeaking, recognition]);
-
+  }, [isActive, isSpeaking, stopRecording]);
 
 
   const resetStory = () => {
@@ -508,8 +501,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
-      "ErXwobaYiN019PkySvjV": "Hi, I'm Josh! Let's read together and have fun!",
-      "EXAVITQu4vr4xnSDxMaL": "Hi, I'm Bella! I'm ready to help you read!"
+      "21m00Tcm4TlvDq8ikWAM": "Hi, I'm Rachel! Let's read together and have fun!",
+      "AZnzlk1XvdvUeBnXmlld": "Hi, I'm Domi! I'm ready to help you read!",
+      "EXAVITQu4vr4xnSDxMaL": "Hi, I'm Bella! Let's begin reading!"
     } as const;
 
     const message = welcomeMessages[voiceId];
