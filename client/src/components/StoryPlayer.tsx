@@ -172,7 +172,7 @@ interface StoryPlayerProps {
 const VOICE_OPTIONS = [
   { id: "dyTPmGzuLaJM15vpN3DS", name: "Aiden" },
   { id: "pPdl9cQBQq4p6mRkZy2Z", name: "Emma" },
-  { id: "7fbQ7yJuEo56rYjrYaEh", name: "John" },
+  { id: "UGTtbzgh3HObxRjWaSpr", name: "Brian" },
 ] as const;
 
 // Define stop words that should be grouped with the following word
@@ -373,7 +373,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     const welcomeMessages = {
       "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Aiden! Let's read together and have fun!",
       "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Emma! I'm ready to help you read!",
-      "7fbQ7yJuEo56rYjrYaEh": "Hi, I'm John! Let's dive into a story together!"
+      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Brian! Let's dive into a story together!"
     } as const;
 
     const message = welcomeMessages[voiceId];
