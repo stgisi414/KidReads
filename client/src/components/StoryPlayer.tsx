@@ -522,6 +522,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, [speak]);
 
+  const { speak: elevenLabsSpeak } = useElevenLabs();
+
   const readWord = async () => {
     if (isActive || isSpeaking || isPending) return;
 
@@ -538,7 +540,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     try {
       await speak(wordToRead, {
         voiceId: selectedVoice,
-        speak:  useElevenLabs().speak // Pass speak function from hook
+        speak: elevenLabsSpeak
       });
 
       if (!isMobileDevice) {
