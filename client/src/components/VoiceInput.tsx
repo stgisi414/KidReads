@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,15 +13,16 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const { toast } = useToast();
+  const debounceTimerRef = useRef<number | null>(null);
+  const lastProcessedTextRef = useRef<string>("");
 
   useEffect(() => {
-    // Initialize speech recognition with better error handling
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const newRecognition = new SpeechRecognition();
-      newRecognition.continuous = true; // Keep listening until explicitly stopped
-      newRecognition.interimResults = true; // Get interim results
-      newRecognition.lang = 'en-US'; // Set language explicitly
+      newRecognition.continuous = false; 
+      newRecognition.interimResults = true;
+      newRecognition.lang = 'en-US';
       setRecognition(newRecognition);
     }
   }, []);
@@ -39,37 +40,33 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
+      const finalTranscript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join(' ')
+        .trim()
+        .toLowerCase()
+        .replace(/(\b\w+\b)(?:\s+\1\b)+/g, '$1');
 
-      // Log the raw results for debugging
-      console.log('🎯 Recognition results:', event.results);
-
-      for (let i = 0; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript;
-        } else {
-          interimTranscript += result[0].transcript;
+      if (finalTranscript && finalTranscript !== lastProcessedTextRef.current) {
+        if (debounceTimerRef.current) {
+          window.clearTimeout(debounceTimerRef.current);
         }
-      }
 
-      // Only send final results if they meet minimum length
-      if (finalTranscript) {
-        const cleanTranscript = finalTranscript.trim();
-        console.log('📝 Final result:', cleanTranscript);
-
-        if (cleanTranscript.length < 3) {
-          toast({
-            title: "Too Short",
-            description: "Please say a longer phrase (at least 3 characters)",
-            variant: "destructive"
-          });
-        } else {
-          onSubmit(cleanTranscript);
-          setIsListening(false);
-          recognition.stop();
-        }
+        debounceTimerRef.current = window.setTimeout(() => {
+          if (finalTranscript.length < 3) {
+            toast({
+              title: "Too Short",
+              description: "Please say a longer phrase (at least 3 characters)",
+              variant: "destructive"
+            });
+          } else {
+            lastProcessedTextRef.current = finalTranscript;
+            onSubmit(finalTranscript);
+            setIsListening(false);
+            recognition.stop();
+          }
+          debounceTimerRef.current = null;
+        }, 1000); 
       }
     };
 
@@ -77,7 +74,6 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
       console.error('❌ Recognition error:', event.error);
 
       if (event.error === 'no-speech') {
-        // Don't stop on no-speech, just notify
         toast({
           title: "No Speech Detected",
           description: "Please speak louder or check your microphone",
@@ -94,10 +90,12 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
 
     recognition.onend = () => {
       console.log('🛑 Recognition ended');
-      // Only stop if we have a final result
-      if (isListening) {
-        console.log('🔄 Restarting recognition');
-        recognition.start();
+      setIsListening(false);
+    };
+
+    return () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
       }
     };
   }, [recognition, onSubmit, toast]);
@@ -107,7 +105,10 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
 
     if (isListening) {
       try {
-        recognition.abort(); // Use abort() to immediately stop
+        if (debounceTimerRef.current) {
+          window.clearTimeout(debounceTimerRef.current);
+          debounceTimerRef.current = null;
+        }
         recognition.stop();
         setIsListening(false);
       } catch (error) {
@@ -115,6 +116,7 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
       }
     } else {
       try {
+        lastProcessedTextRef.current = ""; 
         recognition.start();
       } catch (error) {
         console.error('Failed to start recognition:', error);
