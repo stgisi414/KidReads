@@ -194,6 +194,8 @@ const STOP_WORDS = new Set([
   'as', 'if', 'when', 'while', 'where', 'how', 'than', 'too',
   //Commonly used adverbs
   'very', 'quite', 'much', 'more', 'less', 'most', 'even',
+  //spelled numbers
+  'zero', 'one', 'two', 'three', 'four', 'five', 'six',
 ]);
 
 interface WordGroup {
