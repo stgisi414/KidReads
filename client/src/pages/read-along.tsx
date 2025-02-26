@@ -1,4 +1,3 @@
-
 import logoImage from "../assets/logo.png";
 
 import { useQuery } from "@tanstack/react-query";
@@ -91,17 +90,17 @@ export default function ReadAlong() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      <Card className="max-w-2xl mx-auto relative w-full p-0">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-50">
+      <Card className="max-w-2xl mx-auto relative w-full p-0 mt-0">
         <Button
           variant="outline"
-          className="absolute top-4 right-4"
+          className="absolute top-4 right-4 z-10"
           onClick={() => setLocation('/')}
         >
           <img src={logoImage} alt="Back" className="h-8 w-8" />
           Return Home
         </Button>
-        <div className="aspect-video mb-6 rounded-lg overflow-hidden">
+        <div className="aspect-video mb-4 rounded-t-lg overflow-hidden">
           <img
             src={story.imageUrl}
             alt={story.topic}
