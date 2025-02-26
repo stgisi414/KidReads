@@ -72,7 +72,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center p-4 relative pb-[30vh]">
+    <div className="min-h-screen flex justify-center p-4 relative pb-[20vh]"> {/* Reduced bottom padding */}
       {stories && stories.length > 0 && (
         <div className="absolute inset-0 opacity-30">
           <BackgroundSlider 
