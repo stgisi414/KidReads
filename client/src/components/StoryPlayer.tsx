@@ -280,10 +280,47 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       setIsActive(false);
 
       if (currentGroupIndex < wordGroups.length - 1) {
-        toast({
-          title: "Great job! 🌟",
-          description: `You correctly said "${currentGroup.text}"!`
-        });
+        const remainingWords = wordGroups.length - (currentGroupIndex + 1);
+        const toastMessage = (() => {
+          if (remainingWords === 0) {
+            return {
+              title: "Amazing finish! 🎯",
+              description: `Perfect! You said "${currentGroup.text}" - You've completed the story!`
+            };
+          } else if (remainingWords === 1) {
+            return {
+              title: "Almost there! 🎨",
+              description: `Excellent! You said "${currentGroup.text}" - Just one word to go!`
+            };
+          } else if (remainingWords === 2) {
+            return {
+              title: "Keep going! 🌈",
+              description: `Great job with "${currentGroup.text}" - Only two more words!`
+            };
+          } else if (remainingWords === 3) {
+            return {
+              title: "You're on fire! 🔥",
+              description: `Wonderful! You said "${currentGroup.text}" - Just three more words!`
+            };
+          } else if (remainingWords >= 4 && remainingWords <= 7) {
+            return {
+              title: "Fantastic progress! ⭐",
+              description: `Well done! You said "${currentGroup.text}" - ${remainingWords} words to go!`
+            };
+          } else if (remainingWords >= 8 && remainingWords <= 15) {
+            return {
+              title: "Great job! 🌟",
+              description: `You correctly said "${currentGroup.text}" - Keep up the momentum!`
+            };
+          } else {
+            return {
+              title: "Excellent! 🎈",
+              description: `You correctly said "${currentGroup.text}"!`
+            };
+          }
+        })();
+
+        toast(toastMessage);
 
         const delay = isMobileDevice ? 0 : 500;
         setTimeout(() => {
