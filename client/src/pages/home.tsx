@@ -110,7 +110,7 @@ export default function Home() {
                 backgroundColor: accentColor
               }}
             >
-              Try a Sample Story
+              📚 Try a Sample Story
             </Button>
           </div>
         </div>

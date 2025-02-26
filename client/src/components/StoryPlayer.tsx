@@ -216,7 +216,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   useEffect(() => {
     if (containsForbiddenContent(story.topic) || containsForbiddenContent(story.content)) {
       toast({
-        title: "Content Warning",
+        title: "⚠️ Content Warning",
         description: "This story may contain inappropriate content for children.",
         variant: "default"
       });
@@ -417,7 +417,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       setIsActive(false);
       setIsPending(false);
       toast({
-        title: "Error",
+        title: "⛔ Error",
         description: "Failed to read the word. Please try again.",
         variant: "destructive"
       });
@@ -449,7 +449,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       });
     } catch (error) {
       toast({
-        title: "Error",
+        title: "⛔ Error",
         description: "Failed to like the story. Please try again.",
         variant: "destructive"
       });
@@ -479,7 +479,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         });
       } catch (error) {
         toast({
-          title: "Error",
+          title: "⛔ Error",
           description: "Failed to copy share link.",
           variant: "destructive"
         });
@@ -546,7 +546,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           )}
 
           <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">🎙️ Live Transcript</h3>
             <p className="text-gray-600 min-h-[2rem] transition-all">
               {isActive ? (
                 transcript ?
