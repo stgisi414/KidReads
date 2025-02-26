@@ -503,17 +503,17 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       if (!isMobileDevice) {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
-      awaitstartRecording();
+      await startRecording();
     } catch (error) {
       console.error('Error in readWord:', error);
       setIsActive(false);
       setIsPending(false);
       toast({
         title: "⛔ Error",
-        description:"Failed to read the word. Please try again.",
+        description: "Failed to read the word. Please try again.",
         variant: "destructive"
       });
-        }
+    }
   };
 
   useEffect(() => {
@@ -686,5 +686,4 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       </div>
     </div>
   );
-
 }
