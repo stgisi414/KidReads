@@ -8,6 +8,7 @@ import type { Story } from "@shared/schema";
 import { Share2, Heart } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
+import lessonCompleteSound from "../assets/lesson_complete.mp3";
 
 // List of forbidden words and topics for content filtering
 const FORBIDDEN_WORDS = [
@@ -155,7 +156,7 @@ const FORBIDDEN_WORDS = [
   // --- Financial Scams/Misinformation ---
   'get rich quick scheme', 'pyramid scheme', 'ponzi scheme', 'multi-level marketing', 'mlm', 'network marketing', 'direct selling', 'affinity fraud', 'romance scam', 'online dating scam', 'nigerian prince scam', 'lottery scam', 'inheritance scam', 'tax scam', 'irs scam', 'tech support scam', 'grandparent scam', 'emergency scam', 'disaster relief scam', 'charity scam', 'investment scam', 'cryptocurrency scam', 'nft scam', 'rug pull', 'pump and dump', 'phishing scam', 'vishing scam', 'smishing scam', 'bait and switch', 'false advertising', 'misleading advertising', 'deceptive advertising', 'greenwashing', 'pinkwashing', 'bluewashing', 'astroturfing', 'sockpuppeting', 'shilling', 'paid endorsement', 'sponsored content', 'native advertising', 'advertorial', 'infomercial', 'direct response advertising', 'hard sell', 'high pressure sales tactics', 'bait and hook', 'loss leader', 'upselling', 'cross-selling', 'bundling', 'discount scam', 'clearance scam', 'going out of business sale scam', 'liquidation sale scam', 'limited time offer scam', 'urgency scam', 'scarcity scam', 'fear mongering', 'panic buying', 'price gouging', 'price fixing', 'market manipulation', 'insider trading', 'front running', 'wash trading', 'spoofing', 'layering', 'market timing', 'technical analysis', 'fundamental analysis', 'day trading', 'swing trading', 'margin trading', 'short selling', 'leverage trading', 'options trading', 'futures trading', 'forex trading', 'cryptocurrency trading', 'algorithmic trading', 'high frequency trading', 'dark pools', 'flash crash', 'black swan event', 'systemic risk', 'financial contagion', 'economic collapse', 'market crash', 'stock market bubble', 'housing bubble', 'debt crisis', 'sovereign debt crisis', 'currency crisis', 'banking crisis', 'financial crisis', 'global recession', 'economic depression', 'stagflation', 'hyperinflation', 'deflationary spiral', 'economic inequality', 'wealth gap', 'poverty', 'unemployment', 'inflation', 'interest rates', 'federal reserve', 'central bank', 'monetary policy', 'fiscal policy', 'quantitative easing', 'bailout', 'stimulus package', 'austerity measures', 'debt ceiling', 'national debt', 'government shutdown', 'trade war', 'tariffs', 'sanctions', 'embargo', 'protectionism', 'free trade', 'globalization', 'supply chain disruption', 'inflationary pressures', 'cost of living crisis', 'energy crisis', 'food crisis', 'water crisis', 'climate change', 'global warming', 'environmental degradation', 'pollution', 'deforestation', 'biodiversity loss', 'extinction event', 'pandemics', 'epidemics', 'public health crisis', 'healthcare system collapse', 'hospital overcrowding', 'ventilator shortage', 'ppe shortage',
 
-  // --- Health Misinformation/Disinformation ---
+  // ========================= Health Misinformation/Disinformation =========================
   'medical misinformation', 'health disinformation', 'vaccine hesitancy', 'anti-mask sentiment', 'social distancing fatigue', 'lockdown fatigue',
 
   // --- Economic/Financial Hardship (Used to incite fear/panic in misinformation contexts) ---
@@ -246,6 +247,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const stopRecordingRef = useRef<() => void>(() => {});
   const activeTimerRef = useRef<number | null>(null);
   const activeStartTimeRef = useRef<number>(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleRecognitionEnd = useCallback(() => {
     setIsActive(false);
@@ -583,8 +585,18 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   };
 
+  const playCompletionSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(error => {
+        console.error('Error playing completion sound:', error);
+      });
+    }
+  };
+
   return (
     <div className="text-center relative">
+      <audio ref={audioRef} src={lessonCompleteSound} preload="auto" />
       <div className="p-1">
         <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700 mb-2">
           <Heart className="h-5 w-5 text-red-500" />
@@ -658,28 +670,45 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </div>
 
         {showCelebration && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-sm mx-auto relative">
-              <h2 className="text-2xl font-bold mb-4">🎉 Congratulations!</h2>
-              <p className="mb-6">You've completed the story!</p>
-              <div className="space-x-4">
-                <Button onClick={handleShare} className="mb-2">
-                  <Share2 className="mr-2 h-4 w-4" />
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+            onClick={() => setShowCelebration(false)}
+          >
+            <div
+              className="bg-white p-8 rounded-lg shadow-xl max-w-md mx-4 text-center"
+              onClick={e => e.stopPropagation()}
+            >
+              <h2 className="text-3xl font-bold mb-4">Amazing Job! 🌟</h2>
+              <p className="text-xl mb-6">You've completed the story!</p>
+              <div
+                className="text-6xl mb-6 cursor-pointer hover:scale-110 transition-transform"
+                onClick={playCompletionSound}
+              >
+                🎉
+              </div>
+              <div className="flex justify-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={handleShare}
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
                   Share
                 </Button>
-                <Button onClick={handleLike} disabled={isLiked || isLoading}> {/* Added isLoading to disable button */}
-                  <Heart className="mr-2 h-4 w-4" />
-                  {isLiked ? 'Liked!' : isLoading ? 'Liking...' : 'Like'} {/* Added loading text */}
+                <Button
+                  variant="outline"
+                  onClick={handleLike}
+                  className="flex items-center gap-2"
+                  disabled={isLiked || isLoading}
+                >
+                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-500' : ''}`} />
+                  {isLiked ? 'Liked' : 'Like'}
+                </Button>
+                <Button onClick={resetStory}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Read Again
                 </Button>
               </div>
-              <Button
-                variant="outline"
-                onClick={resetStory}
-                className="mt-4 w-full bg-white/80"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Read Again
-              </Button>
             </div>
           </div>
         )}
