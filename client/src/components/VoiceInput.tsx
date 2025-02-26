@@ -45,23 +45,31 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
       // Log the raw results for debugging
       console.log('🎯 Recognition results:', event.results);
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-          console.log('✅ Final transcript:', transcript);
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
         } else {
-          interimTranscript += transcript;
-          console.log('⏳ Interim transcript:', transcript);
+          interimTranscript += result[0].transcript;
         }
       }
 
-      // Only send final results to the callback
+      // Only send final results if they meet minimum length
       if (finalTranscript) {
-        console.log('📝 Sending final result:', finalTranscript);
-        onSubmit(finalTranscript);
-        setIsListening(false);
-        recognition.stop();
+        const cleanTranscript = finalTranscript.trim();
+        console.log('📝 Final result:', cleanTranscript);
+
+        if (cleanTranscript.length < 3) {
+          toast({
+            title: "Too Short",
+            description: "Please say a longer phrase (at least 3 characters)",
+            variant: "destructive"
+          });
+        } else {
+          onSubmit(cleanTranscript);
+          setIsListening(false);
+          recognition.stop();
+        }
       }
     };
 
