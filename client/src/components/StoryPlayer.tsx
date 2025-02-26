@@ -209,9 +209,28 @@ const containsForbiddenContent = (text: string): boolean => {
 };
 
 // Move pure functions outside component
+const NUMBER_WORDS: Record<string, string> = {
+  'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+  'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
+  'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
+  'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
+  'eighteen': '18', 'nineteen': '19', 'twenty': '20'
+};
+
+const normalizeNumber = (word: string): string => {
+  word = word.toLowerCase().trim();
+  // Check if the word is a number word and convert to digit
+  if (NUMBER_WORDS[word]) return NUMBER_WORDS[word];
+  // Check if the word is a digit and convert to word
+  for (const [wordNum, digit] of Object.entries(NUMBER_WORDS)) {
+    if (word === digit) return wordNum;
+  }
+  return word;
+};
+
 const calculateWordSimilarity = (word1: string, word2: string): number => {
-  word1 = word1.toLowerCase().trim();
-  word2 = word2.toLowerCase().trim();
+  word1 = normalizeNumber(word1.toLowerCase().trim());
+  word2 = normalizeNumber(word2.toLowerCase().trim());
 
   if (word1 === word2) return 1;
   if (word1.includes(word2) || word2.includes(word1)) return 0.9;
