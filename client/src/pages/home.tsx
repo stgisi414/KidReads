@@ -69,7 +69,7 @@ export default function Home() {
         )}
       </div>
 
-      <Card className="w-full max-w-lg mx-auto">
+      <Card className="w-full max-w-lg mx-auto m-4 p-2">
         <div className="flex flex-col items-center justify-center text-center">
           <img src={logoImage} alt="KidReads Logo" className="w-48 h-48 object-contain mb-4" />
           <h1 className="text-4xl font-bold mb-2 sparkle-text">KidReads</h1>
