@@ -26,15 +26,15 @@ export default function ReadAlong() {
   if (error) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6 text-center">
-            <div className="flex flex-col items-center mb-6">
-              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <Card className="w-full max-w-md mx-4 mb-0"> {/* Added mb-0 */}
+          <CardContent className="pt-6 text-center pb-0"> {/* Added pb-0 */}
+            <div className="flex flex-col items-center mb-0"> {/* Added mb-0 */}
+              <AlertCircle className="h-12 w-12 text-red-500 mb-0" /> {/* Added mb-0 */}
               <h1 className="text-3xl font-bold text-gray-900">Oops!</h1>
               <p className="text-xl text-gray-700 mt-2">Story Not Found</p>
             </div>
 
-            <p className="mt-4 text-gray-600 mb-6">
+            <p className="mt-4 text-gray-600 mb-0"> {/* Added mb-0 */}
               The story you're looking for doesn't exist or has been moved.
             </p>
 
@@ -63,15 +63,15 @@ export default function ReadAlong() {
   if (!story) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6 text-center">
-            <div className="flex flex-col items-center mb-6">
-              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <Card className="w-full max-w-md mx-4 mb-0"> {/* Added mb-0 */}
+          <CardContent className="pt-6 text-center pb-0"> {/* Added pb-0 */}
+            <div className="flex flex-col items-center mb-0"> {/* Added mb-0 */}
+              <AlertCircle className="h-12 w-12 text-red-500 mb-0" /> {/* Added mb-0 */}
               <h1 className="text-3xl font-bold text-gray-900">Oops!</h1>
               <p className="text-xl text-gray-700 mt-2">Story Not Found</p>
             </div>
 
-            <p className="mt-4 text-gray-600 mb-6">
+            <p className="mt-4 text-gray-600 mb-0"> {/* Added mb-0 */}
               We couldn't find the story you're looking for.
             </p>
 
@@ -90,8 +90,8 @@ export default function ReadAlong() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden">
-      <Card className="flex-1 max-w-2xl mx-auto w-full p-0">
+    <div className="min-h-screen flex flex-col overflow-hidden pb-0"> {/* Added pb-0 */}
+      <Card className="flex-1 max-w-2xl mx-auto w-full p-0 mb-0"> {/* Added mb-0 */}
         <Button
           variant="outline"
           className="absolute top-4 right-4 z-10 bg-white/40 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white/80"
