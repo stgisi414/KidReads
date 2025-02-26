@@ -157,7 +157,7 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
       >
         <div className="max-w-3xl mx-auto">
           <p
-            className="text-xl md:text-2xl font-medium text-white drop-shadow-lg"
+            className="text-xl md:text-2xl font-medium text-black drop-shadow-lg"
             style={{
               textShadow: `0 2px 8px rgba(0,0,0,0.8), 0 1px 3px ${dominantColor}`,
               backgroundColor: `${dominantColor}88`,
