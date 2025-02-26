@@ -580,7 +580,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   return (
     <div className="text-center relative">
-      <div className="p-0">
+      <div className="p-8">
         <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700">
           <Heart className="h-5 w-5 text-red-500" />
           <span>{story.likes || 0} likes</span>
@@ -609,7 +609,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
               setSelectedVoice(newVoiceId);
               playWelcomeMessage(newVoiceId);
             }}
-            className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary mb-4"
           >
             {VOICE_OPTIONS.map(voice => (
               <option key={voice.id} value={voice.id}>

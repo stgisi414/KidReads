@@ -94,17 +94,17 @@ export default function ReadAlong() {
       <Card className="flex-1 max-w-2xl mx-auto w-full p-0">
         <Button
           variant="outline"
-          className="absolute top-4 right-4 z-10"
+          className="absolute top-4 right-4 z-10 bg-transparant-5"
           onClick={() => setLocation('/')}
         >
           <img src={logoImage} alt="Back" className="h-8 w-8" />
           Return Home
         </Button>
-        <div className="aspect-video rounded-t-lg overflow-hidden">
+        <div className="aspect-video rounded-t-lg overflow-hidden p-4">
           <img
             src={story.imageUrl}
             alt={story.topic}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover border-2 border-gray-200 border-dashed rounded-lg"
           />
         </div>
         <StoryPlayer story={story} />
