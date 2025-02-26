@@ -72,7 +72,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center p-4 relative pb-[40vh] overflow-y-hidden"> {/* Restored padding and fixed overflow */}
+    <div className="min-h-screen h-screen flex justify-center p-4 overflow-hidden"> {/* Fixed height and overflow */}
       {stories && stories.length > 0 && (
         <div className="absolute inset-0 opacity-30">
           <BackgroundSlider 
