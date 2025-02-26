@@ -72,8 +72,8 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex justify-center">
-      <div className="fixed inset-0 -z-10 opacity-30">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 -z-10 opacity-30">
         {stories && stories.length > 0 && (
           <BackgroundSlider 
             stories={stories} 
@@ -82,7 +82,7 @@ export default function Home() {
         )}
       </div>
 
-      <Card className="w-full max-w-lg mt-2 p-4 pt-10 shadow-xl bg-white/80 backdrop-filter backdrop-opacity-80 transition-all duration-300 hover:bg-white/90 hover:shadow-2xl">
+      <Card className="w-full max-w-lg shadow-xl bg-white/80 backdrop-blur transition-all duration-300 hover:bg-white/90 hover:shadow-2xl">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center gap-4">
             <img src={logoImage} alt="Logo" className="h-16 w-auto"/>
