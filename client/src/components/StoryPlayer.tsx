@@ -512,7 +512,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         description:"Failed to read the word. Please try again.",
         variant: "destructive"
       });
-    }
+        }
   };
 
   useEffect(() => {
@@ -670,7 +670,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
               <Button
                 variant="outline"
                 onClick={resetStory}
-                className="mt-4 w-full"
+                className="mt-4 w-full bg-white/80"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Read Again
