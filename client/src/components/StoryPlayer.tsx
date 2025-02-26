@@ -9,6 +9,7 @@ import { Share2, Heart } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import lessonCompleteSound from "../assets/lesson_complete.mp3";
+import Cookies from 'js-cookie';
 
 // List of forbidden words and topics for content filtering
 const FORBIDDEN_WORDS = [
@@ -276,7 +277,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("UGTtbzgh3HObxRjWaSpr");
+  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(() => {
+    // Try to get saved voice from cookie, default to Brian if not found
+    return Cookies.get('preferredVoice') || "UGTtbzgh3HObxRjWaSpr";
+  });
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -397,16 +401,22 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   });
 
 
-  const speak = async (text: string, options: any) => {
+  const { speak: elevenLabsSpeak } = useElevenLabs();
+
+  // Update the speak function to use elevenLabsSpeak directly
+  const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
-      // Assuming originalSpeak is still available from useElevenLabs
-      //  Replace with your actual implementation if different.
-      await options.speak(text, options);
+      await elevenLabsSpeak(text, { voiceId: options.voiceId });
     } finally {
       setIsSpeaking(false);
     }
   };
+
+  // Save voice preference when it changes
+  useEffect(() => {
+    Cookies.set('preferredVoice', selectedVoice, { expires: 365 }); // Expires in 1 year
+  }, [selectedVoice]);
 
   // Check for inappropriate content when story is loaded
   useEffect(() => {
@@ -516,7 +526,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, [speak]);
 
-  const { speak: elevenLabsSpeak } = useElevenLabs();
 
   const readWord = async () => {
     if (isActive || isSpeaking || isPending) return;
@@ -533,8 +542,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     try {
       await speak(wordToRead, {
-        voiceId: selectedVoice,
-        speak: elevenLabsSpeak
+        voiceId: selectedVoice
       });
 
       if (!isMobileDevice) {
