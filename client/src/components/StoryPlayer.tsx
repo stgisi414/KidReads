@@ -428,81 +428,83 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   }, [isRecording, stopRecording]);
 
   return (
-    <div className="p-8 text-center space-y-6 relative">
-      <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
-        {wordGroups.map((group, groupIndex) => (
-          <span
-            key={group.startIndex}
-            className={`inline-block mx-1 ${
-              groupIndex === currentGroupIndex
-                ? 'text-2xl font-semibold text-primary'
-                : 'text-gray-600'
-            }`}
-          >
-            {group.text}
-          </span>
-        ))}
-      </div>
-
-      <div className="space-y-4">
-        <select
-          value={selectedVoice}
-          onChange={(e) => {
-            const newVoiceId = e.target.value as typeof VOICE_OPTIONS[number]['id'];
-            setSelectedVoice(newVoiceId);
-            playWelcomeMessage(newVoiceId);
-          }}
-          className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          {VOICE_OPTIONS.map(voice => (
-            <option key={voice.id} value={voice.id}>
-              {voice.name}
-            </option>
+    <div className="text-center relative">
+      <div className="p-8 space-y-6">
+        <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
+          {wordGroups.map((group, groupIndex) => (
+            <span
+              key={group.startIndex}
+              className={`inline-block mx-1 ${
+                groupIndex === currentGroupIndex
+                  ? 'text-2xl font-semibold text-primary'
+                  : 'text-gray-600'
+              }`}
+            >
+              {group.text}
+            </span>
           ))}
-        </select>
+        </div>
 
-        <Button
-          size="lg"
-          onClick={readWord}
-          disabled={isActive || isSpeaking || isPending}
-          className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
-        >
-          <Play className="mr-2 h-4 w-4" />
-          {isActive ? "Listening..." : isSpeaking ? "Speaking..." : "Read Word"}
-        </Button>
+        <div className="space-y-4">
+          <select
+            value={selectedVoice}
+            onChange={(e) => {
+              const newVoiceId = e.target.value as typeof VOICE_OPTIONS[number]['id'];
+              setSelectedVoice(newVoiceId);
+              playWelcomeMessage(newVoiceId);
+            }}
+            className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {VOICE_OPTIONS.map(voice => (
+              <option key={voice.id} value={voice.id}>
+                {voice.name}
+              </option>
+            ))}
+          </select>
 
-        {lastHeard && (
-          <div className="text-sm text-gray-600">
-            Last heard: "{lastHeard}"
+          <Button
+            size="lg"
+            onClick={readWord}
+            disabled={isActive || isSpeaking || isPending}
+            className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
+          >
+            <Play className="mr-2 h-4 w-4" />
+            {isActive ? "Listening..." : isSpeaking ? "Speaking..." : "Read Word"}
+          </Button>
+
+          {lastHeard && (
+            <div className="text-sm text-gray-600">
+              Last heard: "{lastHeard}"
+            </div>
+          )}
+
+          {currentGroupIndex === wordGroups.length - 1 && (
+            <p className="mt-4 text-green-600">Last word! Keep going!</p>
+          )}
+
+          <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
+            <p className="text-gray-600 min-h-[2rem] transition-all">
+              {isActive ? (
+                transcript ?
+                  <span className="animate-pulse">{transcript}</span> :
+                  <span className="animate-pulse">Listening...</span>
+              ) : (
+                "Click 'Read Word' to start"
+              )}
+            </p>
           </div>
-        )}
-
-        {currentGroupIndex === wordGroups.length - 1 && (
-          <p className="mt-4 text-green-600">Last word! Keep going!</p>
-        )}
-
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Live Transcript</h3>
-          <p className="text-gray-600 min-h-[2rem] transition-all">
-            {isActive ? (
-              transcript ?
-                <span className="animate-pulse">{transcript}</span> :
-                <span className="animate-pulse">Listening...</span>
-            ) : (
-              "Click 'Read Word' to start"
-            )}
-          </p>
         </div>
       </div>
 
       {/* Celebration Overlay */}
       {showCelebration && (
-        <div className="fixed top-0 left-0 w-screen h-screen bg-black/50 flex items-center justify-center" style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center" style={{ zIndex: 9999 }}>
           <div className="text-center">
             <div className="text-[7rem] animate-bounce mb-8">🎉</div>
             <Button
-              variant="outline"              size="lg"
-              onClick={resetStory}
+              variant="outline"
+              size="lg"              onClick={resetStory}
               className="bg-white hover:bg-gray-100"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
@@ -513,4 +515,5 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       )}
     </div>
   );
+
 }
