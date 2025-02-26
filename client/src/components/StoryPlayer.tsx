@@ -497,14 +497,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       {/* Celebration Overlay */}
       {showCelebration && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center" style={{ zIndex: 9999 }}>
           <div 
-            className="absolute inset-0"            style={{
+            className="absolute inset-0"
+            style={{
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
               backdropFilter: 'blur(4px)'
             }}
           />
-          <div className="relative text-center">
+          <div className="relative z-10 text-center">
             <div className="text-[7rem] animate-bounce mb-8">🎉</div>
             <Button
               variant="outline"
