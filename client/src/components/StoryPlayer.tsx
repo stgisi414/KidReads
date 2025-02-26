@@ -5,6 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useElevenLabs } from "@/hooks/use-elevenlabs";
 import type { Story } from "@shared/schema";
+import { Share2, Heart } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
 // List of forbidden words and topics for content filtering
 const FORBIDDEN_WORDS = [
@@ -227,6 +230,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [isLiked, setIsLiked] = useState(false); // Added like state
   const stopRecordingRef = useRef<() => void>(() => {});
 
   const { speak, isLoading: isSpeaking } = useElevenLabs();
@@ -336,8 +340,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       const currentWord = words[i].toLowerCase();
 
       // Check if current word is a stop word and there's a next word without breaking the groups at punctuation
-      if (STOP_WORDS.has(currentWord.replace(/[.,!?]$/, '')) && 
-          i + 1 < words.length && 
+      if (STOP_WORDS.has(currentWord.replace(/[.,!?]$/, '')) &&
+          i + 1 < words.length &&
           !hasPunctuation(words[i])) {
         const group = {
           text: `${words[i]} ${words[i + 1]}`,
@@ -366,6 +370,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setShowCelebration(false);
     setLastHeard("");
     setIsActive(false);
+    setIsLiked(false); // Reset like state
   };
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
@@ -427,9 +432,68 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     };
   }, [isRecording, stopRecording]);
 
+  const handleLike = async () => {
+    if (isLiked) return;
+
+    try {
+      const response = await apiRequest("POST", `/api/stories/${story.id}/like`);
+      if (!response.ok) {
+        throw new Error('Failed to like story');
+      }
+      setIsLiked(true);
+      // Invalidate the story query to refetch with updated likes
+      queryClient.invalidateQueries({ queryKey: [`/api/stories/${story.id}`] });
+      toast({
+        title: "Liked! 💖",
+        description: "Thanks for showing your appreciation!"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to like the story. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    const shareText = `I completed reading a story about ${story.topic}!`;
+    const shareUrl = `${window.location.origin}/read/${story.id}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'KidReads Story',
+          text: shareText,
+          url: shareUrl
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        toast({
+          title: "Copied! 📋",
+          description: "Share link copied to clipboard!"
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to copy share link.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   return (
     <div className="text-center relative">
       <div className="p-8 space-y-6">
+        <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700">
+          <Heart className="h-5 w-5 text-red-500" />
+          <span>{story.likes || 0} likes</span>
+        </div>
         <div className="max-w-2xl mx-auto text-xl mb-8 leading-relaxed break-words whitespace-pre-wrap">
           {wordGroups.map((group, groupIndex) => (
             <span
@@ -450,8 +514,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             value={selectedVoice}
             onChange={(e) => {
               const newVoiceId = e.target.value as typeof VOICE_OPTIONS[number]['id'];
-              setSelectedVoice(newVoiceId);
-              playWelcomeMessage(newVoiceId);
+              setSelectedVoice(newVoiceId);              playWelcomeMessage(newVoiceId);
             }}
             className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
@@ -500,12 +563,36 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       {/* Celebration Overlay */}
       {showCelebration && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center" style={{ zIndex: 9999 }}>
-          <div className="text-center">
+          <div className="text-center bg-white p-8 rounded-lg shadow-xl max-w-sm mx-4">
             <div className="text-[7rem] animate-bounce mb-8">🎉</div>
+            <h2 className="text-2xl font-bold mb-4">Congratulations!</h2>
+            <p className="text-gray-600 mb-6">
+              You've completed the story successfully!
+            </p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                className="w-full"
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLike}
+                className={`w-full ${isLiked ? 'bg-pink-50 text-pink-600' : ''}`}
+                disabled={isLiked}
+              >
+                <Heart className={`mr-2 h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                {isLiked ? 'Liked!' : 'Like'}
+              </Button>
+            </div>
             <Button
-              variant="outline"
-              size="lg"              onClick={resetStory}
-              className="bg-white hover:bg-gray-100"
+              variant="default"
+              size="lg"
+              onClick={resetStory}
+              className="w-full"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Read Again
@@ -515,5 +602,4 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       )}
     </div>
   );
-
 }

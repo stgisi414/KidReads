@@ -8,6 +8,7 @@ export const stories = pgTable("stories", {
   content: text("content").notNull(),
   imageUrl: text("image_url").notNull(),
   words: text("words").array().notNull(),
+  likes: integer("likes").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -22,6 +23,7 @@ export const readingSessions = pgTable("reading_sessions", {
 
 export const insertStorySchema = createInsertSchema(stories).omit({
   id: true,
+  likes: true,
   createdAt: true,
 });
 

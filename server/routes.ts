@@ -78,6 +78,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(story);
   });
 
+  app.post("/api/stories/:id/like", async (req, res) => {
+    try {
+      const story = await storage.incrementLikes(parseInt(req.params.id));
+      if (!story) {
+        res.status(404).json({ error: "Story not found" });
+        return;
+      }
+      res.json(story);
+    } catch (error) {
+      console.error('Error liking story:', error);
+      res.status(500).json({ error: "Failed to like story" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
