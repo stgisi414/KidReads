@@ -25,7 +25,7 @@ export default function ReadAlong() {
 
   if (error) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen w-full flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6 text-center">
             <div className="flex flex-col items-center mb-6">
@@ -54,7 +54,7 @@ export default function ReadAlong() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin">Loading...</div>
       </div>
     );
@@ -62,7 +62,7 @@ export default function ReadAlong() {
 
   if (!story) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen w-full flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6 text-center">
             <div className="flex flex-col items-center mb-6">
@@ -90,8 +90,8 @@ export default function ReadAlong() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-50">
-      <Card className="max-w-2xl mx-auto relative w-full p-0 mt-0">
+    <div className="min-h-screen flex flex-col overflow-hidden">
+      <Card className="flex-1 max-w-2xl mx-auto w-full p-0">
         <Button
           variant="outline"
           className="absolute top-4 right-4 z-10"
@@ -100,7 +100,7 @@ export default function ReadAlong() {
           <img src={logoImage} alt="Back" className="h-8 w-8" />
           Return Home
         </Button>
-        <div className="aspect-video mb-4 rounded-t-lg overflow-hidden">
+        <div className="aspect-video rounded-t-lg overflow-hidden">
           <img
             src={story.imageUrl}
             alt={story.topic}
