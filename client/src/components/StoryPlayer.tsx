@@ -225,6 +225,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [isActive, setIsActive] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false); // Added isSpeaking state
   const [lastHeard, setLastHeard] = useState<string>("");
   const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(VOICE_OPTIONS[0].id);
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
@@ -232,8 +233,30 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isPending, setIsPending] = useState(false);
   const [isLiked, setIsLiked] = useState(false); // Added like state
   const stopRecordingRef = useRef<() => void>(() => {});
+  const activeTimerRef = useRef<number | null>(null);
+  const activeStartTimeRef = useRef<number>(0);
 
-  const { speak, isLoading: isSpeaking } = useElevenLabs();
+  const { startRecording, stopRecording, isRecording, transcript, recognition } = useSpeechRecognition({
+    language: "en-US",
+    onTranscriptionUpdate: handleTranscriptionUpdate,
+    onRecognitionEnd: handleRecognitionEnd,
+    continuous: false,
+    interimResults: !isMobileDevice,
+    initializeOnMount: false
+  });
+
+  const { speak: originalSpeak, isLoading: isSpeakingOriginal } = useElevenLabs();
+
+  const speak = async (text: string, options: any) => {
+    try {
+      setIsSpeaking(true);
+      await originalSpeak(text, options);
+    } finally {
+      setIsSpeaking(false);
+    }
+  };
+
+
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const calculateWordSimilarity = (word1: string, word2: string): number => {
@@ -271,9 +294,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     console.log('Similarity:', similarity);
 
     if (similarity >= similarityThreshold ||
-        heardText === expectedText ||
-        heardText.includes(expectedText) ||
-        expectedText.includes(heardText)) {
+      heardText === expectedText ||
+      heardText.includes(expectedText) ||
+      expectedText.includes(heardText)) {
 
       setIsPending(true);
       stopRecordingRef.current();
@@ -352,15 +375,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, [isMobileDevice]);
 
-  const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
-    language: "en-US",
-    onTranscriptionUpdate: handleTranscriptionUpdate,
-    onRecognitionEnd: handleRecognitionEnd,
-    continuous: false,
-    interimResults: !isMobileDevice,
-    initializeOnMount: false
-  });
-
   // Store the stopRecording function in a ref
   useEffect(() => {
     stopRecordingRef.current = stopRecording;
@@ -378,8 +392,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       // Check if current word is a stop word and there's a next word without breaking the groups at punctuation
       if (STOP_WORDS.has(currentWord.replace(/[.,!?]$/, '')) &&
-          i + 1 < words.length &&
-          !hasPunctuation(words[i])) {
+        i + 1 < words.length &&
+        !hasPunctuation(words[i])) {
         const group = {
           text: `${words[i]} ${words[i + 1]}`,
           words: [words[i], words[i + 1]],
@@ -401,6 +415,44 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     console.log('Created word groups:', groups);
     setWordGroups(groups);
   }, [story.words]);
+
+  useEffect(() => {
+    if (isActive && !isSpeaking) {
+      activeStartTimeRef.current = Date.now();
+      activeTimerRef.current = window.setInterval(() => {
+        const stuckDuration = Date.now() - activeStartTimeRef.current;
+        if (stuckDuration > 3000 && !isSpeaking) {
+          console.log('Detected stuck state, resetting button...');
+          setIsActive(false);
+          setIsPending(false);
+          if (recognition) {
+            try {
+              recognition.abort();
+              recognition.stop();
+            } catch (error) {
+              console.error('Error stopping recognition:', error);
+            }
+          }
+          toast({
+            title: "Auto-Reset",
+            description: "Microphone state was reset due to inactivity",
+          });
+        }
+      }, 2000);
+      return () => {
+        if (activeTimerRef.current) {
+          window.clearInterval(activeTimerRef.current);
+          activeTimerRef.current = null;
+        }
+      };
+    } else {
+      if (activeTimerRef.current) {
+        window.clearInterval(activeTimerRef.current);
+        activeTimerRef.current = null;
+      }
+    }
+  }, [isActive, isSpeaking, recognition]);
+
 
   const resetStory = () => {
     setCurrentGroupIndex(0);
@@ -441,7 +493,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsPending(false);
 
     try {
-      await speak(wordToRead, {
+            await speak(wordToRead, {
         voiceId: selectedVoice
       });
 
@@ -551,7 +603,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             value={selectedVoice}
             onChange={(e) => {
               const newVoiceId = e.target.value as typeof VOICE_OPTIONS[number]['id'];
-              setSelectedVoice(newVoiceId);              playWelcomeMessage(newVoiceId);
+              setSelectedVoice(newVoiceId);
+              playWelcomeMessage(newVoiceId);
             }}
             className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
