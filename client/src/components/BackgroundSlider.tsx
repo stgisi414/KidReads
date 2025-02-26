@@ -16,15 +16,32 @@ const VIBRANT_COLORS = [
   "#5856D6", // Bright Purple
 ];
 
+const getStorySnippet = (content: string) => {
+  // Get first 2 sentences or ~100 characters
+  const sentences = content.split(/[.!?]+/).filter(s => s.trim());
+  const snippet = sentences.slice(0, 2).join('. ').trim();
+  return snippet.length > 100 ? snippet.slice(0, 97) + '...' : snippet + '.';
+};
+
 export default function BackgroundSlider({ stories, onAccentColorChange }: BackgroundSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dominantColor, setDominantColor] = useState<string>(VIBRANT_COLORS[0]);
+  const [snippetOpacity, setSnippetOpacity] = useState(1);
 
   useEffect(() => {
     if (!stories || stories.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((current) => (current + 1) % stories.length);
+      // Start fade out
+      setSnippetOpacity(0);
+
+      // Change slide after fade out
+      setTimeout(() => {
+        setCurrentIndex((current) => (current + 1) % stories.length);
+        // Start fade in
+        setSnippetOpacity(1);
+      }, 500); // Half of the transition time
+
     }, 6000); // Change slide every 6 seconds
 
     return () => clearInterval(interval);
@@ -133,6 +150,26 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
           background: `linear-gradient(to bottom, ${dominantColor}22, ${dominantColor}44)`
         }}
       />
+      {/* Story Snippet Overlay */}
+      <div 
+        className="absolute inset-x-0 bottom-0 p-8 text-center transition-opacity duration-500"
+        style={{ opacity: snippetOpacity }}
+      >
+        <div className="max-w-3xl mx-auto">
+          <p 
+            className="text-xl md:text-2xl font-medium text-white drop-shadow-lg"
+            style={{
+              textShadow: `0 2px 4px ${dominantColor}88`,
+              backgroundColor: `${dominantColor}22`,
+              backdropFilter: 'blur(4px)',
+              padding: '1rem',
+              borderRadius: '0.5rem',
+            }}
+          >
+            {getStorySnippet(stories[currentIndex].content)}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
