@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import logoImage from "../assets/logo.png";
 import type { Story } from "@shared/schema";
 import BackgroundSlider from "@/components/BackgroundSlider";
+import SpeechBubble from "@/components/SpeechBubble";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
@@ -63,7 +64,7 @@ export default function Home() {
       <div className="absolute inset-0 -z-10 opacity-30">
         {stories && stories.length > 0 && (
           <BackgroundSlider 
-            stories={stories} 
+            stories={stories}
             onColorChange={setAccentColor}
           />
         )}
@@ -71,9 +72,11 @@ export default function Home() {
 
       <Card className="w-full max-w-lg mx-auto m-4 p-2">
         <div className="flex flex-col items-center justify-center text-center">
-          <img src={logoImage} alt="KidReads Logo" className="w-48 h-48 object-contain mb-4" />
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <img src={logoImage} alt="KidReads Logo" className="w-48 h-48 object-contain" />
+            <SpeechBubble text="What would you like to read about?" />
+          </div>
           <h1 className="text-4xl font-bold mb-2 sparkle-text">KidReads</h1>
-          <p className="text-xl text-gray-600 mb-6">What would you like to read about?</p>
 
           <VoiceInput
             onSubmit={handleStoryCreation}
