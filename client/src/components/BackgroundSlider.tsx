@@ -6,9 +6,19 @@ interface BackgroundSliderProps {
   onAccentColorChange?: (color: string) => void;
 }
 
+// Predefined vibrant colors
+const VIBRANT_COLORS = [
+  "#FF3B30", // Bright Red
+  "#4CD964", // Bright Green
+  "#007AFF", // Bright Blue
+  "#FFCC00", // Bright Yellow
+  "#FF9500", // Bright Orange
+  "#5856D6", // Bright Purple
+];
+
 export default function BackgroundSlider({ stories, onAccentColorChange }: BackgroundSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [dominantColor, setDominantColor] = useState<string>("#4CAF50"); // Default green
+  const [dominantColor, setDominantColor] = useState<string>(VIBRANT_COLORS[0]);
 
   useEffect(() => {
     if (!stories || stories.length <= 1) return;
@@ -23,7 +33,7 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
   useEffect(() => {
     if (!stories || stories.length === 0) return;
 
-    // Extract dominant color from current image
+    // Extract and enhance color from current image
     const img = new Image();
     img.crossOrigin = "Anonymous";
     img.src = stories[currentIndex].imageUrl;
@@ -49,12 +59,53 @@ export default function BackgroundSlider({ stories, onAccentColorChange }: Backg
           count++;
         }
 
-        // Calculate average and convert to hex
-        const color = `#${Math.round(r/count).toString(16).padStart(2, '0')}${Math.round(g/count).toString(16).padStart(2, '0')}${Math.round(b/count).toString(16).padStart(2, '0')}`;
-        setDominantColor(color);
-        onAccentColorChange?.(color);
+        // Calculate average RGB
+        r = Math.round(r/count);
+        g = Math.round(g/count);
+        b = Math.round(b/count);
+
+        // Calculate color brightness
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+        // Calculate color saturation
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const saturation = (max === 0) ? 0 : 1 - (min / max);
+
+        let finalColor;
+        if (brightness < 128 || saturation < 0.4) {
+          // If the color is too dark or desaturated, use a vibrant color
+          finalColor = VIBRANT_COLORS[currentIndex % VIBRANT_COLORS.length];
+        } else {
+          // Enhance the saturation of the extracted color
+          const factor = 1.5; // Saturation enhancement factor
+          const enhanceColor = (c: number, max: number) => {
+            const distance = max - c;
+            return c + (distance * factor);
+          };
+
+          if (max === r) {
+            g = Math.min(255, enhanceColor(g, r));
+            b = Math.min(255, enhanceColor(b, r));
+          } else if (max === g) {
+            r = Math.min(255, enhanceColor(r, g));
+            b = Math.min(255, enhanceColor(b, g));
+          } else {
+            r = Math.min(255, enhanceColor(r, b));
+            g = Math.min(255, enhanceColor(g, b));
+          }
+
+          finalColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        setDominantColor(finalColor);
+        onAccentColorChange?.(finalColor);
       } catch (error) {
         console.error('Error extracting color:', error);
+        // Fallback to vibrant color on error
+        const fallbackColor = VIBRANT_COLORS[currentIndex % VIBRANT_COLORS.length];
+        setDominantColor(fallbackColor);
+        onAccentColorChange?.(fallbackColor);
       }
     };
   }, [currentIndex, stories, onAccentColorChange]);
