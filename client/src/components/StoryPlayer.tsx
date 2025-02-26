@@ -274,7 +274,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("en-US-Neural2-H");
+  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>("ErXwobaYiN019PkySvjV");
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -508,8 +508,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
-      "en-US-Neural2-H": "Hi, I'm a male voice! Let's read together and have fun!",
-      "en-US-Neural2-F": "Hi, I'm a female voice! I'm ready to help you read!"
+      "ErXwobaYiN019PkySvjV": "Hi, I'm Josh! Let's read together and have fun!",
+      "EXAVITQu4vr4xnSDxMaL": "Hi, I'm Bella! I'm ready to help you read!"
     } as const;
 
     const message = welcomeMessages[voiceId];
