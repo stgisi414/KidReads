@@ -474,22 +474,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const { speak: elevenLabsSpeak } = useElevenLabs();
 
   // Speak function: two distinct implementations for child mode and adult mode
-  // With optimized audio-to-microphone transition
   const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
-      
-      // Start preparing the microphone transition - we'll do it 100ms before speech ends
-      const prepareMicrophoneTransition = () => {
-        // Set a timer to start the microphone as the speech is about to finish
-        setTimeout(async () => {
-          if (isSpeaking) {
-            // Start recording when audio is about to end 
-            // This creates a seamless transition from speaking to listening
-            await startRecording();
-          }
-        }, 100);
-      };
       
       // For adult mode with TRUE word-by-word INDIVIDUAL playback
       if (readingMode === 'adult' && currentGroupIndex < wordGroups.length) {
@@ -499,7 +486,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         if (!currentSentence.sentences || currentSentence.sentences.length === 0) {
           console.error("Missing nested sentence structure");
           await elevenLabsSpeak(text, { voiceId: options.voiceId });
-          prepareMicrophoneTransition();
           return;
         }
         
@@ -514,11 +500,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         for (let i = 0; i < words.length; i++) {
           // Update the current word index to highlight the appropriate word
           setCurrentWordIndex(i);
-          
-          // If this is the last word, prepare to transition to microphone
-          if (i === words.length - 1) {
-            prepareMicrophoneTransition();
-          }
           
           // Send ONLY the current word to ElevenLabs
           const currentWord = words[i];
@@ -537,8 +518,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         setCurrentWordIndex(-1);
       } else {
         // Child mode - unchanged, just read the individual word 
-        // Register the transition preparation right before the TTS call
-        prepareMicrophoneTransition();
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
       }
     } catch (error) {
@@ -798,21 +777,26 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         // For adult mode, read the whole sentence but highlight word by word
         console.log('Reading sentence:', currentGroup.text);
         
-        // Start speaking the whole sentence - recording will begin automatically
-        // due to our optimized transition in the speak function
+        // For adult mode, read the whole sentence but highlight word by word
         await speak(currentGroup.text, {
           voiceId: selectedVoice
         });
+        
+        // Add a small delay before starting the microphone
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await startRecording();
       } else {
         // Child mode - original behavior
         const wordToRead = `"${currentGroup.text}"`;
         console.log('Reading group:', wordToRead);
         
-        // Start speaking the word - recording will begin automatically
-        // due to our optimized transition in the speak function
         await speak(wordToRead, {
           voiceId: selectedVoice
         });
+        
+        // Add a small delay before starting the microphone
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await startRecording();
       }
     } catch (error) {
       console.error('Error in readWord:', error);
