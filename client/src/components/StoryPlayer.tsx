@@ -72,7 +72,6 @@ const FORBIDDEN_WORDS = [
   // --- Derogatory Body Descriptions (Context Dependent - Use with Caution) ---
   'fat', 'obese', 'skinny', 'anorexic', 'bulimic', 'ugly', 'hideous', 'disgusting' /*when referring to appearance*/, 'deformed', 'crippled', 'handicapped', //  Context is crucial; these can be used clinically or descriptively, but also hurtfully. Disability slurs in Hate section are more direct.
 
-
   // ========================= Hate/Discrimination =========================
   'hate', 'hated', 'hating', 'hates', 'racist', 'racism', 'nazi', 'fascist', 'bigot', 'bigotry', 'supremacist', 'supremacy', 'discrimination', 'discriminatory', 'segregation', 'genocide', 'ethnic cleansing', 'holocaust', 'dehumanization', 'othering', 'demonization of groups', 'scapegoating',
 
@@ -439,7 +438,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   // Process story words into groups
   useEffect(() => {
-    // Create word groups for child mode (existing logic)
+    // Create word groups for child mode
     const childGroups: WordGroup[] = [];
     const words = story.words;
     const hasPunctuation = (word: string) => /[.,!?]/.test(word);
@@ -471,7 +470,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
 
     // Create sentence groups for adult mode
-    const sentences: WordGroup[] = [];
+    const sentenceGroups: WordGroup[] = [];
     let currentSentence: string[] = [];
     let startIndex = 0;
 
@@ -480,7 +479,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
       // Check for end of sentence
       if (/[.!?]$/.test(word) || index === words.length - 1) {
-        sentences.push({
+        sentenceGroups.push({
           text: currentSentence.join(' '),
           words: currentSentence,
           startIndex: startIndex
@@ -490,8 +489,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       }
     });
 
-    setWordGroups(readingMode === 'child' ? childGroups : sentences);
-    setSentences(sentences);
+    setWordGroups(readingMode === 'child' ? childGroups : sentenceGroups);
+    setSentences(sentenceGroups);
   }, [story.words, readingMode]);
 
   const handleModeChange = (mode: 'child' | 'adult') => {
@@ -802,11 +801,48 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         )}
       </div>
 
-      {/* Celebration animation */}
+      {/* Celebration overlay */}
       {showCelebration && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="text-6xl animate-bounce">
-            🎉
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/50 z-[9999999]"
+          onClick={() => setShowCelebration(false)}
+        >
+          <div
+            className="bg-white p-8 rounded-lg shadow-xl max-w-md mx-4 text-center"
+            onClick={e => e.stopPropagation()}
+            onMouseEnter={playCompletionSound}
+          >
+            <h2 className="text-3xl font-bold mb-4">Amazing Job! 🌟</h2>
+            <p className="text-xl mb-6">You've completed the story!</p>
+            <div
+              className="text-6xl mb-6 cursor-pointer hover:scale-110 transition-transform"
+              onClick={playCompletionSound}
+            >
+              🎉
+            </div>
+            <div className="flex justify-center gap-4">
+              <Button
+                variant="outline"
+                onClick={handleShare}
+                className="flex items-center gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                Share
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLike}
+                className="flex items-center gap-2"
+                disabled={isLiked || isLoading}
+              >
+                <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-500' : ''}`} />
+                {isLiked ? 'Liked' : 'Like'}
+              </Button>
+              <Button onClick={resetStory}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Read Again
+              </Button>
+            </div>
           </div>
         </div>
       )}
