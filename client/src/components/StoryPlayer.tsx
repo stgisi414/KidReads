@@ -511,9 +511,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
-      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Rachel! Let's read together and have fun!",
-      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Domi! I'm ready to help you read!",
-      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Bella! Let's begin reading!"
+      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Brian! Let's read together and have fun!",
+      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Emma! I'm ready to help you read!",
+      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Aiden! Let's begin reading!"
     } as const;
 
     const message = welcomeMessages[voiceId];

@@ -1,0 +1,73 @@
+You're absolutely right! My apologies, I seem to be having some trouble grasping the stop words functionality.
+To be clear, you want the stop words to be grouped with the following word, not treated as separate elements. So, the correct example for the multi-dimensional array with stop words grouping would be:
+[["The cat", "sat."], ["It was", "happy!"], ["Where did", "it", "go?"]]
+
+I'll make sure to emphasize this in the prompt to avoid any further confusion:
+Implement a two-level reading system in the "Kid Reads" Replit app (https://kid-reads.replit.app/) using child (👶) and adult (🧑‍💼) emojis for UI navigation.
+
+**Current App State:**
+
+* The app currently has word-by-word reading functionality (the "Read Word" button).
+* There is no existing reading mode selection.
+* The app includes voice selection and a transcription dialogue.
+
+**New Implementation Requirements:**
+
+1.  **Level Selection:**
+    * Introduce a two-button system to select the reading mode.
+    * Use the child emoji (👶) to represent the existing word-by-word reading mode.
+    * Use the adult emoji (🧑‍💼) to represent the new sentence reading mode.
+    * Place these buttons prominently on the screen, ensuring they are visually appealing and easy for children to understand.
+    * Make the buttons large, and easy to press.
+
+2.  **Story Player Integration:**
+    * Integrate these buttons seamlessly into the story player element.
+    * Position the buttons strategically so they are easily accessible but do not obstruct the reading experience.
+    * Ensure the buttons are visually fluid and blend well with the existing UI.
+
+3.  **Reading Modes:**
+    * **Child Emoji (👶): Word-by-Word Reading:**
+        * Maintain the existing word-by-word reading functionality.
+        * Display and read words individually.
+    * **Adult Emoji (🧑‍💼): Sentence Reading:**
+        * Implement sentence reading functionality.
+        * **Sentence Data Structure:**
+            * Create a new multi-dimensional array to store the sentences.
+            * This array should:
+                * Break the story into sentences based on punctuation marks (periods, exclamation points, question marks).
+                * **Utilize the existing stop words functionality from the child mode to further break each sentence into individual words, ensuring words are grouped consistently in both modes. This means that stop words should be grouped with the following word, as they are in the child mode.** * **Example:** `[["The cat", "sat."], ["It was", "happy!"], ["Where did", "it", "go?"]]` 
+        * **Sentence Reading Logic:**
+            * During sentence reading, iterate through the multi-dimensional array.
+            * Read each word within a sentence aloud in sequence.
+            * **Word Highlighting:**
+                * Highlight the word currently being read within the sentence.
+                * Use the existing text to speech functionality to read the words.
+        * **Array Usage:**
+            * Do not alter the existing arrays used for stop words, ordinal number matching, or spelled numbers.
+            * Create the new sentence array independently.
+
+4.  **Mode Switching and Restart:**
+    * When the user switches between the child (👶) and adult (🧑‍💼) reading modes, force the activity to restart.
+    * This means the story should begin again from the first word or sentence, depending on the selected mode.
+    * Any progress within the current story should be reset.
+
+5.  **User Experience:**
+    * Ensure a smooth and intuitive user experience when switching between modes.
+    * Provide clear visual feedback when a mode is selected.
+    * Make sure that the emojis are large enough to be easily seen by a child.
+
+**Replit Agent Instructions:**
+
+1.  Modify the HTML structure to include the two emoji buttons.
+2.  Implement JavaScript logic to handle button clicks and switch between reading modes.
+3.  Implement the restart functionality when the mode is changed, resetting the story and the current word/sentence index.
+4.  Implement the logic to generate the multi-dimensional sentence array.
+5.  Implement the sentence reading and word highlighting logic using the new sentence array.
+6.  Ensure that the correct reading mode is activated when each button is pressed.
+7.  Test thoroughly to ensure the functionality is working as expected.
+8.  Ensure that the UI is responsive and works well on different screen sizes.
+
+I've highlighted the key changes:
+ * Explicitly stated that stop words should be grouped with the following word.
+ * Provided the corrected example of the multi-dimensional array.
+Hopefully, this revised prompt with the explicit instructions and corrected example will guide the Replit Agent to implement the desired functionality accurately. I apologize again for the previous errors. I am still under development and learning to be more precise.
