@@ -430,48 +430,54 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           return;
         }
         
-        // Clear any existing word timer
+        // Clean up any existing timer
         if (wordTimerRef.current) {
           clearInterval(wordTimerRef.current);
           wordTimerRef.current = null;
         }
         
-        // Reset the current word index
+        // Reset the current word index for highlighting
         setCurrentWordIndex(0);
         
         console.log("Reading with nested array:", currentSentence.text);
         console.log("Word structure:", currentSentence.sentences.map(s => s.text));
         
-        // Create an array to store audio elements
-        const audioElements: HTMLAudioElement[] = [];
+        // Calculate timing for each word
+        // Estimate audio duration based on sentence length and a fixed reading rate
+        // Average English speech is about 150 words per minute, or 2.5 words per second
+        // This gives about 400ms per word on average
+        const wordsCount = currentSentence.sentences.length;
         
-        // First, prepare all individual word audio in advance
-        for (let i = 0; i < currentSentence.sentences.length; i++) {
-          const wordObj = currentSentence.sentences[i];
-          setCurrentWordIndex(i); // Update current word index as we go
-          
-          try {
-            // Read the entire sentence together for fluent audio (but keep highlighting individual words)
-            if (i === 0) {
-              await elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
-              
-              // Force a slight delay between words for highlighting effect
-              if (currentSentence.sentences) {
-                await new Promise(resolve => setTimeout(resolve, 350 * currentSentence.sentences.length));
-              }
+        // Start reading the full sentence for fluid speech
+        // This starts the audio playback of the entire sentence
+        const readingPromise = elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
+        
+        // Set up sequential highlighting of words while the audio plays
+        // Adjust the timing based on sentence length to synchronize with speech
+        const avgTimePerWord = Math.max(300, Math.min(500, 3500 / wordsCount));
+        
+        // Start highlighting words one by one with a progressive timer
+        let wordIndex = 0;
+        
+        // Set interval to advance through words as speech progresses
+        wordTimerRef.current = window.setInterval(() => {
+          if (wordIndex < wordsCount) {
+            setCurrentWordIndex(wordIndex);
+            wordIndex++;
+          } else {
+            // Clear interval when done with the sentence
+            if (wordTimerRef.current) {
+              clearInterval(wordTimerRef.current);
+              wordTimerRef.current = null;
             }
-          } catch (err) {
-            console.error(`Error reading word ${i}:`, wordObj.text, err);
           }
-        }
+        }, avgTimePerWord);
         
-        // Reset word index at the end
-        if (currentSentence.sentences) {
-          setCurrentWordIndex(currentSentence.sentences.length - 1);
-        }
+        // Wait for the audio to complete
+        await readingPromise;
         
       } else {
-        // Child mode - just read the word without synchronized highlighting
+        // Child mode - just read the individual word without synchronized highlighting
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
       }
     } catch (error) {
@@ -482,10 +488,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         variant: "destructive"
       });
     } finally {
+      // Give a slight delay before marking as complete
       setTimeout(() => {
         setIsSpeaking(false);
         
-        // Make sure word timer is cleared
+        // Clean up any remaining timer
         if (wordTimerRef.current) {
           clearInterval(wordTimerRef.current);
           wordTimerRef.current = null;
