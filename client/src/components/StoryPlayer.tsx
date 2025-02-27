@@ -414,12 +414,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const { speak: elevenLabsSpeak } = useElevenLabs();
 
-  // Speech function with nested array implementation for adult mode ONLY
+  // Speak function: two distinct implementations for child mode and adult mode
   const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
       
-      // For adult mode with word-by-word highlighting using nested array structure
+      // For adult mode with TRUE word-by-word INDIVIDUAL playback
       if (readingMode === 'adult' && currentGroupIndex < wordGroups.length) {
         const currentSentence = wordGroups[currentGroupIndex];
         
@@ -430,50 +430,33 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           return;
         }
         
-        // Clean up any existing timer
-        if (wordTimerRef.current) {
-          clearInterval(wordTimerRef.current);
-          wordTimerRef.current = null;
-        }
-        
-        // Reset the current word index for highlighting
-        setCurrentWordIndex(0);
-        
-        console.log("Reading with nested array:", currentSentence.text);
-        console.log("Word structure:", currentSentence.sentences.map(s => s.text));
-        
         // Extract individual words from the sentence
         const words = currentSentence.sentences.map(s => s.text);
         
-        // Play the entire sentence for natural speech flow (synchronous)
-        const sentencePromise = elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
+        console.log("Reading with nested array:", currentSentence.text);
+        console.log("Word structure:", words);
         
-        // Initialize timing variables for word highlighting
-        // Character count is a rough proxy for speech duration
-        const avgWordLength = currentSentence.text.length / words.length;
-        const baseDuration = 250; // minimum ms per word
-        
-        // Function to determine timing for each word based on its length and position
-        const getWordDuration = (word: string, idx: number) => {
-          // Longer words and sentence-final words (with punctuation) get more time
-          const lengthFactor = Math.max(0.8, Math.min(1.5, word.length / avgWordLength));
-          // Words at the end of sentences tend to be spoken more slowly
-          const positionFactor = idx === words.length - 1 ? 1.4 : 1.0;
-          // Words with punctuation get a slight pause
-          const punctuationFactor = /[,.!?;:]$/.test(word) ? 1.2 : 1.0;
-          
-          return Math.round(baseDuration * lengthFactor * positionFactor * punctuationFactor);
-        };
-        
-        // Progressive highlighting of words while sentence is being spoken
+        // EXPLICITLY PLAY EACH WORD INDIVIDUALLY
+        // This means multiple calls to ElevenLabs, one for each word
         for (let i = 0; i < words.length; i++) {
+          // Update the current word index to highlight the appropriate word
           setCurrentWordIndex(i);
-          const duration = getWordDuration(words[i], i);
-          await new Promise(resolve => setTimeout(resolve, duration));
+          
+          // Send ONLY the current word to ElevenLabs
+          const currentWord = words[i];
+          console.log(`Playing individual word: "${currentWord}"`);
+          
+          // Each word gets its own individual API call and audio playback
+          await elevenLabsSpeak(currentWord, { voiceId: options.voiceId });
+          
+          // Small delay between words for more natural rhythm
+          if (i < words.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
         
-        // Wait for sentence audio to finish
-        await sentencePromise;
+        // Reset highlighting after all words played
+        setCurrentWordIndex(-1);
       } else {
         // Child mode - unchanged, just read the individual word 
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
@@ -486,16 +469,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         variant: "destructive"
       });
     } finally {
-      // Give a slight delay before marking as complete
       setTimeout(() => {
         setIsSpeaking(false);
-        
-        // Clean up any remaining timer
-        if (wordTimerRef.current) {
-          clearInterval(wordTimerRef.current);
-          wordTimerRef.current = null;
-        }
-      }, 500);
+      }, 300);
     }
   };
 
