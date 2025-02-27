@@ -419,35 +419,70 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         const currentSentence = wordGroups[currentGroupIndex];
         const words = currentSentence.words;
         
-        // Start the TTS for the full sentence
-        const ttsPromise = elevenLabsSpeak(text, { voiceId: options.voiceId });
-        
         // Clear any existing word timer
         if (wordTimerRef.current) {
           clearInterval(wordTimerRef.current);
+          wordTimerRef.current = null;
         }
         
-        // Estimate the average time per word
-        // Assuming approximately 2-3 words per second in normal speech
-        const avgTimePerWord = 300; // milliseconds per word
+        // Reset the current word index
+        setCurrentWordIndex(0);
+        
+        // Calculate estimated audio duration based on text length
+        // Average English speech is about 150 words per minute = 2.5 words per second
+        // So each word takes about 400ms on average
+        const wordsCount = words.length;
+        const estimatedTotalDuration = 4000; // Base duration in ms (4 seconds for shorter sentences)
+        
+        // Calculate time per word - faster for longer sentences, slower for shorter ones
+        const timePerWord = Math.max(300, Math.min(600, estimatedTotalDuration / wordsCount));
+        
+        // Create audio element to track audio playback
+        const audio = new Audio(); // This will be set by elevenLabsSpeak
         let wordIndex = 0;
         
-        // Set up timer to highlight words as they're being spoken
-        wordTimerRef.current = window.setInterval(() => {
-          if (wordIndex < words.length) {
-            setCurrentWordIndex(wordIndex);
-            wordIndex++;
-          } else {
-            // Clear the interval when all words are done
-            if (wordTimerRef.current) {
-              clearInterval(wordTimerRef.current);
-              wordTimerRef.current = null;
-            }
-          }
-        }, avgTimePerWord);
+        // Start the TTS for the full sentence
+        const audioBlob = await elevenLabsSpeak(text, { voiceId: options.voiceId }, true);
         
-        // Wait for TTS to complete
-        await ttsPromise;
+        if (audioBlob) {
+          const audioUrl = URL.createObjectURL(audioBlob);
+          audio.src = audioUrl;
+          
+          // Play the audio
+          await audio.play();
+          
+          // Set up timer for word highlighting synchronized with audio duration
+          const highlightInterval = timePerWord;
+          
+          // Start the word highlighting timer
+          wordTimerRef.current = window.setInterval(() => {
+            if (wordIndex < words.length) {
+              setCurrentWordIndex(wordIndex);
+              wordIndex++;
+            } else {
+              // Clear the interval when all words are done
+              if (wordTimerRef.current) {
+                clearInterval(wordTimerRef.current);
+                wordTimerRef.current = null;
+              }
+            }
+          }, highlightInterval);
+          
+          // Wait for audio to complete
+          await new Promise(resolve => {
+            audio.onended = () => {
+              if (wordTimerRef.current) {
+                clearInterval(wordTimerRef.current);
+                wordTimerRef.current = null;
+              }
+              URL.revokeObjectURL(audioUrl);
+              resolve(null);
+            };
+          });
+        } else {
+          // Fallback if we don't get a blob back
+          await new Promise(resolve => setTimeout(resolve, estimatedTotalDuration));
+        }
       } else {
         // Normal mode without word-by-word highlighting
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
@@ -593,7 +628,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     try {
       if (readingMode === 'adult') {
-        // Reset word index
+        // Reset word index explicitly at the beginning
         setCurrentWordIndex(0);
         
         // For adult mode, read the whole sentence but highlight word by word

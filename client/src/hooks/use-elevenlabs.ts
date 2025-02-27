@@ -20,17 +20,17 @@ export const useElevenLabs = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const speak = useCallback(async (text: string, options: ElevenLabsOptions = {}) => {
-    if (isPlaying || isLoading) return;
+  const speak = useCallback(async (text: string, options: ElevenLabsOptions = {}, returnBlob: boolean = false) => {
+    if (isPlaying || isLoading) return returnBlob ? null : undefined;
 
     setIsLoading(true);
     setIsPlaying(true);
     setError(null);
 
     const voiceId = options.voiceId || "ErXwobaYiN019PkySvjV"; // Josh - Good for children's stories (CHANGE THIS!)
-  const modelId = options.modelId || "eleven_flash_v2"; // Prioritize speed
-  const stability = options.stability || 0.3; // More expressive
-  const similarityBoost = options.similarityBoost || 0.65; // Slightly more natural
+    const modelId = options.modelId || "eleven_flash_v2"; // Prioritize speed
+    const stability = options.stability || 0.3; // More expressive
+    const similarityBoost = options.similarityBoost || 0.65; // Slightly more natural
 
     try {
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${options.voiceId}`, {
@@ -57,6 +57,15 @@ export const useElevenLabs = () => {
       }
 
       const audioBlob = await response.blob();
+      
+      // If we need to return the blob for custom handling (for word-by-word highlighting)
+      if (returnBlob) {
+        setIsLoading(false);
+        setIsPlaying(false);
+        return audioBlob;
+      }
+      
+      // Default behavior - play the audio and resolve when done
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
