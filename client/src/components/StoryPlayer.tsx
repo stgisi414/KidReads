@@ -680,8 +680,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       <div className="flex justify-center gap-4 mb-4">
         <Button
           variant={readingMode === 'child' ? 'default' : 'outline'}
-          size="lg"
-          className="text-2xl p-6"
+          size="sm"
+          className="text-lg px-4 py-2"
           onClick={() => handleModeChange('child')}
           disabled={isActive || isSpeaking || isPending}
         >
@@ -689,8 +689,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </Button>
         <Button
           variant={readingMode === 'adult' ? 'default' : 'outline'}
-          size="lg"
-          className="text-2xl p-6"
+          size="sm"
+          className="text-lg px-4 py-2"
           onClick={() => handleModeChange('adult')}
           disabled={isActive || isSpeaking || isPending}
         >
@@ -698,41 +698,45 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </Button>
       </div>
 
-      {/* Rest of the existing JSX */}
       <div className="p-1">
-        {/* Voice selection */}
-        <div className="flex justify-center gap-2 mb-4">
-          {VOICE_OPTIONS.map((voice) => (
-            <Button
-              key={voice.id}
-              variant={selectedVoice === voice.id ? 'default' : 'outline'}
-              className="text-lg"
-              onClick={() => {
-                setSelectedVoice(voice.id);
-                playWelcomeMessage(voice.id);
-              }}
-              disabled={isActive || isSpeaking || isPending}
-            >
+        {/* Voice selection dropdown */}
+        <select
+          value={selectedVoice}
+          onChange={(e) => {
+            const newVoiceId = e.target.value as typeof VOICE_OPTIONS[number]['id'];
+            setSelectedVoice(newVoiceId);
+            playWelcomeMessage(newVoiceId);
+          }}
+          className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary mb-4"
+          disabled={isActive || isSpeaking || isPending}
+        >
+          {VOICE_OPTIONS.map(voice => (
+            <option key={voice.id} value={voice.id}>
               {voice.name}
-            </Button>
+            </option>
           ))}
-        </div>
+        </select>
 
-        {/* Current word/sentence display */}
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">
-            {readingMode === 'child' ? "Repeat this word:" : "Repeat this sentence:"}
-          </h2>
-          <div className="text-3xl font-bold min-h-[3rem]">
-            {wordGroups[currentGroupIndex]?.text || ""}
-          </div>
+        {/* Story content display */}
+        <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap mb-4">
+          {wordGroups.map((group, groupIndex) => (
+            <span
+              key={group.startIndex}
+              className={`inline-block mx-1 ${
+                groupIndex === currentGroupIndex
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-600'
+              }`}
+            >
+              {group.text}
+            </span>
+          ))}
         </div>
 
         {/* Read button */}
         <div className="flex justify-center mb-4">
           <Button
             size="lg"
-            className="text-xl p-6"
             onClick={readWord}
             disabled={isActive || isSpeaking || isPending || currentGroupIndex >= wordGroups.length}
           >
@@ -743,7 +747,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             ) : (
               <>
                 <Play className="w-6 h-6 mr-2" />
-                {readingMode === 'child' ? "Read Word" : "Read Sentence"}
+                Read {readingMode === 'child' ? "Word" : "Sentence"}
               </>
             )}
           </Button>
