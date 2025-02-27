@@ -414,12 +414,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const { speak: elevenLabsSpeak } = useElevenLabs();
 
-  // TRUE nested array implementation for word-by-word highlighting
+  // Speech function with nested array implementation for adult mode ONLY
   const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
       
-      // For adult mode with word-by-word highlighting
+      // For adult mode with word-by-word highlighting using nested array structure
       if (readingMode === 'adult' && currentGroupIndex < wordGroups.length) {
         const currentSentence = wordGroups[currentGroupIndex];
         
@@ -445,28 +445,37 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         // Extract individual words from the sentence
         const words = currentSentence.sentences.map(s => s.text);
         
-        // Step 1: Read the full sentence first (but don't await it)
-        // This gives us fluid natural speech for the entire sentence
-        const audioPromise = elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
+        // Play the entire sentence for natural speech flow (synchronous)
+        const sentencePromise = elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
         
-        // Step 2: Calculate estimated timing for word highlighting
-        // Typical English speech is around 2-3 syllables per second
-        // We'll estimate an average word duration based on word count and sentence length
-        const estimatedSentenceDuration = currentSentence.text.length * 80; // ~80ms per character is a rough estimate
-        const wordHighlightInterval = Math.max(250, Math.min(600, estimatedSentenceDuration / words.length));
+        // Initialize timing variables for word highlighting
+        // Character count is a rough proxy for speech duration
+        const avgWordLength = currentSentence.text.length / words.length;
+        const baseDuration = 250; // minimum ms per word
         
-        // Step 3: Create sequential word highlighting using the timer
+        // Function to determine timing for each word based on its length and position
+        const getWordDuration = (word: string, idx: number) => {
+          // Longer words and sentence-final words (with punctuation) get more time
+          const lengthFactor = Math.max(0.8, Math.min(1.5, word.length / avgWordLength));
+          // Words at the end of sentences tend to be spoken more slowly
+          const positionFactor = idx === words.length - 1 ? 1.4 : 1.0;
+          // Words with punctuation get a slight pause
+          const punctuationFactor = /[,.!?;:]$/.test(word) ? 1.2 : 1.0;
+          
+          return Math.round(baseDuration * lengthFactor * positionFactor * punctuationFactor);
+        };
+        
+        // Progressive highlighting of words while sentence is being spoken
         for (let i = 0; i < words.length; i++) {
-          // Set the current word index and wait for the highlight interval
           setCurrentWordIndex(i);
-          await new Promise(resolve => setTimeout(resolve, wordHighlightInterval));
+          const duration = getWordDuration(words[i], i);
+          await new Promise(resolve => setTimeout(resolve, duration));
         }
         
-        // Step 4: Wait for the audio to complete (which should be roughly synchronized with our highlighting)
-        await audioPromise;
-        
+        // Wait for sentence audio to finish
+        await sentencePromise;
       } else {
-        // Child mode - just read the individual word without synchronized highlighting
+        // Child mode - unchanged, just read the individual word 
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
       }
     } catch (error) {
