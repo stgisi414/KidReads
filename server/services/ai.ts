@@ -377,21 +377,25 @@ export async function smartWordGrouping(text: string): Promise<string[]> {
   const prompt = {
     contents: [{
       parts: [{
-        text: `You are a reading assistant for young children learning to read. 
-        Given the following text, break it down into an array of words and word groups that make sense to be read together.
+        text: `You are a reading assistant helping young children learn to read. 
+        Given the following text, break it down into an array of word groups that make sense to be read together.
         
-        Rules for grouping:
-        1. Keep compound words together (e.g., "kung fu", "ice cream", "New York")
-        2. Keep idiomatic expressions together
-        3. Keep proper names together (e.g., "Mei Lin", "Santa Claus")
-        4. Keep numbers and their units together (e.g., "10 feet", "5 minutes")
-        5. Keep common phrases that are frequently used together
-        6. For simple prepositions (a, the, in, on, etc.) combined with a noun, keep them together
+        CRITICAL GROUPING RULES - MUST FOLLOW ALL OF THESE:
+        1. Always group articles (a, an, the) with the nouns they modify. Never leave "a", "an", or "the" as standalone units.
+        2. Group all compound words together (e.g., "kung fu", "ice cream", "New York").
+        3. Group all stop words with their following word (e.g., "in the", "of a", "to be").
+        4. Keep all proper names together (e.g., "Mei Lin", "Santa Claus").
+        5. Group adjectives with their nouns (e.g., "big dog", "happy child").
+        6. Keep idiomatic expressions and common phrases together.
+        7. Group numbers with their units (e.g., "10 feet", "5 minutes").
+        8. Group prepositions with their objects when possible.
         
         Input text: "${text}"
         
-        Output format: Return a JSON array of strings, where each string is either a single word or a group of words that should be read together.
-        Example output: ["Once", "upon a time", "there was", "a little", "girl", "named", "Mei Lin"]`
+        Output format: Return a JSON array of strings, where each string is a word or group of words that should be read together.
+        Example output format: ["Once upon", "a time", "there was", "a little", "girl", "named", "Mei Lin"]
+        
+        IMPORTANT: Check your output to ensure NO articles (a, an, the) are left as standalone entries.`
       }]
     }]
   };
