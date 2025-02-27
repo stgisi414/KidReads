@@ -21,7 +21,10 @@ const FORBIDDEN_WORDS = [
   'gun', 'guns',
   'weapon', 'weapons',
   'knife', 'knives',
-  'glock', 'ruger', // Specific gun brands
+  'glock', 'ruger',
+  'bullet', 'ammo',
+  'ammunition', 'bazooka', 'rocket launcher', 'sword', 
+  // Specific gun brands
   'm4', 'm16', 'm24', 'm249', 'm4a1', 'm4a1s', 'm4a1u', 'm4a1m', // Specific weapon types
   'ak47', 'ak47u', 'ak47m', 'ak47s', 'ak47m', // Specific weapon types
   'pistol', 'rifle',
@@ -64,7 +67,7 @@ const FORBIDDEN_WORDS = [
   'asshole', 'butthole',
   'cum', 'jizz', 'semen', 'ejaculate', 'ejaculation',
   'clitoris', 'labia', 'prostate', 'scrotum', 'cunt',
-  'scat', 'watersports', 'golden shower', 'fisting', 'analingus', 'fellatio', 'cunnilingus',
+  'scat', 'watersports', 'golden shower', 'fisting', 'analingus', 'fellatio', 'cunnilingus', 'poonanny', 'vulva', 'vulvar', 'vulvate', 'vulvature', 'vulvatured', 'vulvatureing', 'vulvatured',
 
   // --- Bodily Fluids/Excrement ---
   'blood', 'gore', 'bloody', 'gory', 'guts', 'viscera', 'entrails', 'marrow', 'pus', 'gangrene', 'sepsis', 'maggots', 'rot', 'decay', 'decompose', 'putrefy', 'cadaver', 'corpse', 'skeleton', 'skull', 'bones', 'innards', 'excrement', 'feces', 'vomit', 'mucus', 'phlegm', 'snot', 'bile', 'puke', 'poop', 'shit', 'shitty', 'shitty', 'shitty', 'shit', 'pee', 'peepee', 'peepee', 'peepee',

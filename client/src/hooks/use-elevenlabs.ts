@@ -28,7 +28,7 @@ export const useElevenLabs = () => {
     setError(null);
 
     const voiceId = options.voiceId || "ErXwobaYiN019PkySvjV"; // Josh - Good for children's stories (CHANGE THIS!)
-  const modelId = options.modelId || "eleven_turbo_v2"; // Prioritize speed
+  const modelId = options.modelId || "eleven_flash_v2"; // Prioritize speed
   const stability = options.stability || 0.3; // More expressive
   const similarityBoost = options.similarityBoost || 0.65; // Slightly more natural
 
