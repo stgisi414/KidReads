@@ -614,12 +614,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
               let currentSentence: string[] = [];
               let startIndex = 0;
               
-              // Group into sentences
+              // Group into sentences - preserve punctuation
               for (let i = 0; i < smartGroups.length; i++) {
                 const word = smartGroups[i];
                 currentSentence.push(word);
                 
                 if (/[.!?]$/.test(word) || i === smartGroups.length - 1) {
+                  // Create sentence text with proper spacing and preserving punctuation
                   const sentenceText = currentSentence.join(' ');
                   
                   sentenceGroups.push({

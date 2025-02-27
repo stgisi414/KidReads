@@ -473,13 +473,15 @@ export async function smartWordGrouping(text: string): Promise<string[]> {
         6. Keep idiomatic expressions and common phrases together.
         7. Group numbers with their units (e.g., "10 feet", "5 minutes").
         8. Group prepositions with their objects when possible.
+        9. IMPORTANT: Preserve all punctuation marks (periods, commas, etc.) at the end of words or phrases.
         
         Input text: "${text}"
         
         Output format: Return a JSON array of strings, where each string is a word or group of words that should be read together.
-        Example output format: ["Once upon", "a time", "there was", "a little", "girl", "named", "Mei Lin"]
+        Example output format: ["Once upon", "a time", "there was", "a little", "girl", "named", "Mei Lin."]
         
-        IMPORTANT: Check your output to ensure NO articles (a, an, the) are left as standalone entries.`
+        IMPORTANT: Check your output to ensure NO articles (a, an, the) are left as standalone entries.
+        IMPORTANT: Make sure to keep all punctuation marks (periods, commas, etc.) at the end of words or phrases.`
       }]
     }]
   };
