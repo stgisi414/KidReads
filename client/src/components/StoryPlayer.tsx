@@ -652,7 +652,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           setIsPending(false);
           stopRecording();
           toast({
-            title: "Auto-Reset",
+            title: "🔁 Auto-Reset",
             description: "Microphone state was reset due to inactivity"
           });
         }
@@ -716,6 +716,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           ))}
         </select>
 
+        <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700 mb-2">
+          <Heart className="h-5 w-5 text-red-500" />
+          <span>{story.likes || 0} likes</span>
+        </div>
+
         {/* Story content display */}
         <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap mb-4">
           {wordGroups.map((group, groupIndex) => (
@@ -740,19 +745,19 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             disabled={isActive || isSpeaking || isPending || currentGroupIndex >= wordGroups.length}
           >
             {isActive ? (
-              <div className="animate-pulse">Listening...</div>
+              <div className="animate-pulse">👂 Listening...</div>
             ) : isSpeaking ? (
-              <div className="animate-pulse">Speaking...</div>
+              <div className="animate-pulse">👄 Speaking...</div>
             ) : (
               <>
                 <Play className="w-6 h-6 mr-2" />
-                Read {readingMode === 'child' ? "Word" : "Sentence"}
+               Read {readingMode === 'child' ? "Word" : "Sentence"}
               </>
             )}
           </Button>
         </div>
 
-        {/* Progress and controls */}
+        {/* Progress and controls 
         <div className="flex justify-between items-center px-4">
           <Button
             variant="outline"
@@ -782,6 +787,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             </Button>
           </div>
         </div>
+        */}
 
         {/* Progress bar */}
         <div className="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -796,7 +802,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         {/* Last heard text (for debugging) */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 text-sm text-gray-500">
-            Last heard: "{lastHeard}"
+            🎙️ Last heard: "{lastHeard}"
           </div>
         )}
       </div>
