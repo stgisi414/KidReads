@@ -799,12 +799,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           />
         </div>
 
-        {/* Last heard text (for debugging) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 text-sm text-gray-500">
-            🎙️ Last heard: "{lastHeard}"
-          </div>
-        )}
+        {/* Last heard text */}
+        <div className="mt-4 text-sm text-gray-500">
+          🎙️ Last heard: "{lastHeard}"
+        </div>
       </div>
 
       {/* Celebration overlay */}
