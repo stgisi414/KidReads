@@ -428,73 +428,54 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         // Reset the current word index
         setCurrentWordIndex(0);
         
-        // Calculate estimated audio duration based on text length
-        // Average English speech is about 150 words per minute = 2.5 words per second
-        // So each word takes about 400ms on average
-        const wordsCount = words.length;
-        const estimatedTotalDuration = 4000; // Base duration in ms (4 seconds for shorter sentences)
-        
-        // Calculate time per word - faster for longer sentences, slower for shorter ones
-        const timePerWord = Math.max(300, Math.min(600, estimatedTotalDuration / wordsCount));
-        
-        // Create audio element to track audio playback
-        const audio = new Audio(); // This will be set by elevenLabsSpeak
-        let wordIndex = 0;
+        // Estimate the reading duration based on the total number of words and audio duration
+        // Average speed is about 150-170 words per minute in normal speech
+        // This equals to about 350-400ms per word
+        const averageWordDuration = 350; // ms per word
+        const estimatedDuration = text.length * 80; // Roughly 80ms per character
+        const wordTimeInterval = Math.min(Math.max(300, estimatedDuration / words.length), 500);
         
         // Start the TTS for the full sentence
-        const audioBlob = await elevenLabsSpeak(text, { voiceId: options.voiceId }, true);
+        await elevenLabsSpeak(text, { voiceId: options.voiceId });
         
-        if (audioBlob) {
-          const audioUrl = URL.createObjectURL(audioBlob);
-          audio.src = audioUrl;
-          
-          // Play the audio
-          await audio.play();
-          
-          // Set up timer for word highlighting synchronized with audio duration
-          const highlightInterval = timePerWord;
-          
-          // Start the word highlighting timer
-          wordTimerRef.current = window.setInterval(() => {
-            if (wordIndex < words.length) {
-              setCurrentWordIndex(wordIndex);
-              wordIndex++;
-            } else {
-              // Clear the interval when all words are done
-              if (wordTimerRef.current) {
-                clearInterval(wordTimerRef.current);
-                wordTimerRef.current = null;
-              }
+        // We'll highlight words one by one while audio is playing
+        let currentIndex = 0;
+        
+        // Set interval to advance through words
+        wordTimerRef.current = window.setInterval(() => {
+          if (currentIndex < words.length) {
+            setCurrentWordIndex(currentIndex);
+            currentIndex++;
+          } else {
+            // Clear interval when done
+            if (wordTimerRef.current) {
+              clearInterval(wordTimerRef.current);
+              wordTimerRef.current = null;
             }
-          }, highlightInterval);
-          
-          // Wait for audio to complete
-          await new Promise(resolve => {
-            audio.onended = () => {
-              if (wordTimerRef.current) {
-                clearInterval(wordTimerRef.current);
-                wordTimerRef.current = null;
-              }
-              URL.revokeObjectURL(audioUrl);
-              resolve(null);
-            };
-          });
-        } else {
-          // Fallback if we don't get a blob back
-          await new Promise(resolve => setTimeout(resolve, estimatedTotalDuration));
-        }
+          }
+        }, wordTimeInterval);
       } else {
-        // Normal mode without word-by-word highlighting
+        // Child mode - just read the word without synchronized highlighting
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
       }
+    } catch (error) {
+      console.error('Error in speak function:', error);
+      toast({
+        title: "Error",
+        description: "Failed to play audio. Please try again.",
+        variant: "destructive"
+      });
     } finally {
-      setIsSpeaking(false);
-      
-      // Clear word timer if it's still running
-      if (wordTimerRef.current) {
-        clearInterval(wordTimerRef.current);
-        wordTimerRef.current = null;
-      }
+      // Wait a moment to ensure all highlights have been shown
+      setTimeout(() => {
+        setIsSpeaking(false);
+        
+        // Make sure word timer is cleared
+        if (wordTimerRef.current) {
+          clearInterval(wordTimerRef.current);
+          wordTimerRef.current = null;
+        }
+      }, 200);
     }
   };
 

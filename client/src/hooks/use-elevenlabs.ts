@@ -20,8 +20,8 @@ export const useElevenLabs = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const speak = useCallback(async (text: string, options: ElevenLabsOptions = {}, returnBlob: boolean = false) => {
-    if (isPlaying || isLoading) return returnBlob ? null : undefined;
+  const speak = useCallback(async (text: string, options: ElevenLabsOptions = {}) => {
+    if (isPlaying || isLoading) return;
 
     setIsLoading(true);
     setIsPlaying(true);
@@ -57,15 +57,6 @@ export const useElevenLabs = () => {
       }
 
       const audioBlob = await response.blob();
-      
-      // If we need to return the blob for custom handling (for word-by-word highlighting)
-      if (returnBlob) {
-        setIsLoading(false);
-        setIsPlaying(false);
-        return audioBlob;
-      }
-      
-      // Default behavior - play the audio and resolve when done
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
