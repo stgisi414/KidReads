@@ -551,72 +551,168 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     stopRecordingRef.current = stopRecording;
   }, [stopRecording]);
 
+  // Use smart word grouping API for better compound word handling
+  const fetchSmartWordGroups = async (content: string): Promise<string[]> => {
+    try {
+      const response = await fetch('/api/smart-word-grouping', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: content }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get smart word groups');
+      }
+      
+      const data = await response.json();
+      return data.wordGroups;
+    } catch (error) {
+      console.error('Error fetching smart word groups:', error);
+      // Fallback: split by spaces
+      return content.split(/\s+/);
+    }
+  };
+  
   // Process story words into groups
   useEffect(() => {
-    // Create word groups for child mode
-    const childGroups: WordGroup[] = [];
-    const words = story.words;
-    const hasPunctuation = (word: string) => /[.,!?]/.test(word);
-
-    let i = 0;
-    while (i < words.length) {
-      const currentWord = words[i].toLowerCase();
-
-      // Check if current word is a stop word and there's a next word without breaking the groups at punctuation
-      if (STOP_WORDS.has(currentWord.replace(/[.,!?]$/, '')) &&
-        i + 1 < words.length &&
-        !hasPunctuation(words[i])) {
-        const group = {
-          text: `${words[i]} ${words[i + 1]}`,
-          words: [words[i], words[i + 1]],
-          startIndex: i
-        };
-        childGroups.push(group);
-        i += 2;
-      } else {
-        const group = {
-          text: words[i],
-          words: [words[i]],
-          startIndex: i
-        };
-        childGroups.push(group);
-        i += 1;
-      }
-    }
-
-    // Create sentence groups for adult mode with nested word structure
-    const sentenceGroups: WordGroup[] = [];
-    let currentSentence: string[] = [];
-    let startIndex = 0;
-    
-    // First, separate words into sentences
-    words.forEach((word, index) => {
-      currentSentence.push(word);
+    // Helper function to process the words
+    const processWords = async () => {
+      // Create word groups for child mode
+      const childGroups: WordGroup[] = [];
+      const words = story.words;
+      const hasPunctuation = (word: string) => /[.,!?]/.test(word);
       
-      // Check for end of sentence
-      if (/[.!?]$/.test(word) || index === words.length - 1) {
-        const sentenceText = currentSentence.join(' ');
-        
-        // Create sentence group with individual words as a nested array
-        sentenceGroups.push({
-          text: sentenceText,
-          words: currentSentence.slice(), // Clone array to prevent reference issues
-          startIndex: startIndex,
-          // Create a nested structure of individual words
-          sentences: currentSentence.map(w => ({
-            text: w,
-            words: [w]
-          }))
-        });
-        
-        currentSentence = [];
-        startIndex = index + 1;
+      // Try to get smart grouping for existing stories
+      try {
+        if (story.content) {
+          console.log('Attempting smart word grouping for better compound word detection...');
+          const response = await fetch('/api/smart-word-grouping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: story.content })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const smartGroups = data.wordGroups;
+            
+            if (smartGroups && smartGroups.length > 0) {
+              console.log('Using smart word groups:', smartGroups);
+              // Create child groups from smart words
+              for (let i = 0; i < smartGroups.length; i++) {
+                childGroups.push({
+                  text: smartGroups[i],
+                  words: [smartGroups[i]],
+                  startIndex: i
+                });
+              }
+              
+              // Create sentence groups for adult mode
+              const sentenceGroups: WordGroup[] = [];
+              let currentSentence: string[] = [];
+              let startIndex = 0;
+              
+              // Group into sentences
+              for (let i = 0; i < smartGroups.length; i++) {
+                const word = smartGroups[i];
+                currentSentence.push(word);
+                
+                if (/[.!?]$/.test(word) || i === smartGroups.length - 1) {
+                  const sentenceText = currentSentence.join(' ');
+                  
+                  sentenceGroups.push({
+                    text: sentenceText,
+                    words: [...currentSentence],
+                    startIndex: startIndex,
+                    sentences: currentSentence.map(w => ({
+                      text: w,
+                      words: [w]
+                    }))
+                  });
+                  
+                  currentSentence = [];
+                  startIndex = i + 1;
+                }
+              }
+              
+              setWordGroups(readingMode === 'child' ? childGroups : sentenceGroups);
+              setSentences(sentenceGroups);
+              return; // Exit early since we used smart grouping
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Smart word grouping failed, falling back to default:', error);
       }
-    });
+      
+      // Fallback to original grouping logic
+      console.log('Using fallback word grouping method');
+      let i = 0;
+      while (i < words.length) {
+        const currentWord = words[i].toLowerCase();
+  
+        // Check if current word is a stop word and there's a next word without breaking the groups at punctuation
+        if (STOP_WORDS.has(currentWord.replace(/[.,!?]$/, '')) &&
+           i + 1 < words.length &&
+           !hasPunctuation(words[i])) {
+          const group = {
+            text: `${words[i]} ${words[i + 1]}`,
+            words: [words[i], words[i + 1]],
+            startIndex: i
+          };
+          childGroups.push(group);
+          i += 2;
+        } else {
+          const group = {
+            text: words[i],
+            words: [words[i]],
+            startIndex: i
+          };
+          childGroups.push(group);
+          i += 1;
+        }
+      }
 
-    setWordGroups(readingMode === 'child' ? childGroups : sentenceGroups);
-    setSentences(sentenceGroups);
-  }, [story.words, readingMode]);
+      // Create sentence groups for adult mode with nested word structure
+      const sentenceGroups: WordGroup[] = [];
+      let currentSentence: string[] = [];
+      let startIndex = 0;
+      
+      // First, separate words into sentences
+      for (let index = 0; index < words.length; index++) {
+        const word = words[index];
+        currentSentence.push(word);
+        
+        // Check for end of sentence
+        if (/[.!?]$/.test(word) || index === words.length - 1) {
+          const sentenceText = currentSentence.join(' ');
+          
+          // Create sentence group with individual words as a nested array
+          sentenceGroups.push({
+            text: sentenceText,
+            words: [...currentSentence], // Clone array to prevent reference issues
+            startIndex: startIndex,
+            // Create a nested structure of individual words
+            sentences: currentSentence.map(w => ({
+              text: w,
+              words: [w]
+            }))
+          });
+          
+          currentSentence = [];
+          startIndex = index + 1;
+        }
+      }
+
+      setWordGroups(readingMode === 'child' ? childGroups : sentenceGroups);
+      setSentences(sentenceGroups);
+    };
+
+    // Process the words when component mounts or dependencies change
+    processWords();
+  }, [story, readingMode]);
 
   const handleModeChange = (mode: 'child' | 'adult') => {
     if (mode === readingMode) return;

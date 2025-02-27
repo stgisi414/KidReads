@@ -371,6 +371,102 @@ export async function compareWords(userWord: string, targetWord: string): Promis
   }
 }
 
+export async function smartWordGrouping(text: string): Promise<string[]> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+
+  const prompt = {
+    contents: [{
+      parts: [{
+        text: `You are a reading assistant for young children learning to read. 
+        Given the following text, break it down into an array of words and word groups that make sense to be read together.
+        
+        Rules for grouping:
+        1. Keep compound words together (e.g., "kung fu", "ice cream", "New York")
+        2. Keep idiomatic expressions together
+        3. Keep proper names together (e.g., "Mei Lin", "Santa Claus")
+        4. Keep numbers and their units together (e.g., "10 feet", "5 minutes")
+        5. Keep common phrases that are frequently used together
+        6. For simple prepositions (a, the, in, on, etc.) combined with a noun, keep them together
+        
+        Input text: "${text}"
+        
+        Output format: Return a JSON array of strings, where each string is either a single word or a group of words that should be read together.
+        Example output: ["Once", "upon a time", "there was", "a little", "girl", "named", "Mei Lin"]`
+      }]
+    }]
+  };
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(prompt)
+    });
+
+    if (!response.ok) {
+      console.error(`Error from Gemini API: ${response.status} ${response.statusText}`);
+      // Fallback: just split by spaces if API fails
+      return text.split(/\s+/);
+    }
+
+    const data = await response.json();
+    const content = data.candidates[0].content.parts[0].text.trim();
+    
+    let wordGroups: string[];
+    
+    try {
+      // Try to parse the JSON array from the response
+      // The response might be wrapped in backticks or have extra text
+      // Try to extract JSON from the response, handling multiline content
+      let jsonString = '';
+      let openBrackets = 0;
+      let started = false;
+
+      // Manual parsing of the JSON array to handle multiline content
+      for (let i = 0; i < content.length; i++) {
+        if (content[i] === '[') {
+          started = true;
+          openBrackets++;
+        }
+        
+        if (started) {
+          jsonString += content[i];
+        }
+        
+        if (content[i] === ']') {
+          openBrackets--;
+          if (openBrackets === 0 && started) {
+            break;
+          }
+        }
+      }
+
+      // If we found a JSON string, parse it
+      if (jsonString) {
+        wordGroups = JSON.parse(jsonString);
+      } else {
+        // If no JSON array found, try to find the array in the text
+        const cleanedContent = content.replace(/```json|```/g, '').trim();
+        wordGroups = JSON.parse(cleanedContent);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response as JSON:', parseError);
+      console.log('Raw response was:', content);
+      // Fallback to simple splitting if parsing fails
+      return text.split(/\s+/);
+    }
+
+    console.log('Smart word grouping result:', wordGroups);
+    return wordGroups;
+  } catch (error) {
+    console.error('Error in smart word grouping:', error);
+    // Fallback: just split by spaces if anything fails
+    return text.split(/\s+/);
+  }
+}
+
 export async function generateStory(topic: string): Promise<{content: string, words: string[]}> {
   // Validate topic first
   if (containsSensitiveContent(topic)) {
@@ -420,8 +516,19 @@ export async function generateStory(topic: string): Promise<{content: string, wo
       throw new Error("Generated content contains inappropriate content. Please try again with a different topic.");
     }
 
-    // Split into words, keeping punctuation attached to words
-    const words = content.match(/[\w']+(?:[.,!?])?/g) || [];
+    // Use smart word grouping to get a better word array with compound words
+    let words: string[];
+    
+    try {
+      // First try the smart AI-based word grouping
+      console.log('Using smart word grouping for story...');
+      words = await smartWordGrouping(content);
+      console.log('Smart grouping successful, produced groups:', words);
+    } catch (groupingError) {
+      console.error('Smart grouping failed, falling back to simple split:', groupingError);
+      // Fallback: Split into words, keeping punctuation attached to words
+      words = content.match(/[\w']+(?:[.,!?])?/g) || [];
+    }
 
     console.log('Generated story content:', { content, wordCount: words.length });
 

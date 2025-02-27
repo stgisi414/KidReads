@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
-import { generateStory, compareWords } from "./services/ai";
+import { generateStory, compareWords, smartWordGrouping } from "./services/ai";
 import fal from "@fal-ai/serverless-client";
 
 // Define types for FAL API response
@@ -126,6 +126,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Failed to compare words",
         similarity: 0
+      });
+    }
+  });
+  
+  // New endpoint for smart word grouping - for compound words and phrases
+  app.post("/api/smart-word-grouping", async (req, res) => {
+    try {
+      const { text } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ 
+          error: "Valid text string is required",
+          wordGroups: []
+        });
+      }
+      
+      console.log(`Processing text for smart grouping: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+      const wordGroups = await smartWordGrouping(text);
+      
+      console.log(`Smart grouping produced ${wordGroups.length} groups`);
+      res.json({ wordGroups });
+    } catch (error) {
+      console.error('Error in smart word grouping:', error);
+      res.status(500).json({ 
+        error: "Failed to group words",
+        wordGroups: []
       });
     }
   });
