@@ -414,7 +414,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const { speak: elevenLabsSpeak } = useElevenLabs();
 
-  // Update the speak function to use elevenLabsSpeak with multi-dimensional array structure
+  // TRUE nested array implementation for word-by-word highlighting
   const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
@@ -442,39 +442,28 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         console.log("Reading with nested array:", currentSentence.text);
         console.log("Word structure:", currentSentence.sentences.map(s => s.text));
         
-        // Calculate timing for each word
-        // Estimate audio duration based on sentence length and a fixed reading rate
-        // Average English speech is about 150 words per minute, or 2.5 words per second
-        // This gives about 400ms per word on average
-        const wordsCount = currentSentence.sentences.length;
+        // Extract individual words from the sentence
+        const words = currentSentence.sentences.map(s => s.text);
         
-        // Start reading the full sentence for fluid speech
-        // This starts the audio playback of the entire sentence
-        const readingPromise = elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
+        // Step 1: Read the full sentence first (but don't await it)
+        // This gives us fluid natural speech for the entire sentence
+        const audioPromise = elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
         
-        // Set up sequential highlighting of words while the audio plays
-        // Adjust the timing based on sentence length to synchronize with speech
-        const avgTimePerWord = Math.max(300, Math.min(500, 3500 / wordsCount));
+        // Step 2: Calculate estimated timing for word highlighting
+        // Typical English speech is around 2-3 syllables per second
+        // We'll estimate an average word duration based on word count and sentence length
+        const estimatedSentenceDuration = currentSentence.text.length * 80; // ~80ms per character is a rough estimate
+        const wordHighlightInterval = Math.max(250, Math.min(600, estimatedSentenceDuration / words.length));
         
-        // Start highlighting words one by one with a progressive timer
-        let wordIndex = 0;
+        // Step 3: Create sequential word highlighting using the timer
+        for (let i = 0; i < words.length; i++) {
+          // Set the current word index and wait for the highlight interval
+          setCurrentWordIndex(i);
+          await new Promise(resolve => setTimeout(resolve, wordHighlightInterval));
+        }
         
-        // Set interval to advance through words as speech progresses
-        wordTimerRef.current = window.setInterval(() => {
-          if (wordIndex < wordsCount) {
-            setCurrentWordIndex(wordIndex);
-            wordIndex++;
-          } else {
-            // Clear interval when done with the sentence
-            if (wordTimerRef.current) {
-              clearInterval(wordTimerRef.current);
-              wordTimerRef.current = null;
-            }
-          }
-        }, avgTimePerWord);
-        
-        // Wait for the audio to complete
-        await readingPromise;
+        // Step 4: Wait for the audio to complete (which should be roughly synchronized with our highlighting)
+        await audioPromise;
         
       } else {
         // Child mode - just read the individual word without synchronized highlighting
