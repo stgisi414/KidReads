@@ -286,6 +286,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isPending, setIsPending] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Added loading state
+  const [readingMode, setReadingMode] = useState<'child' | 'adult'>('child');
+  const [sentences, setSentences] = useState<WordGroup[]>([]);
+
 
   // Refs
   const stopRecordingRef = useRef<() => void>(() => {});
@@ -436,7 +439,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   // Process story words into groups
   useEffect(() => {
-    const groups: WordGroup[] = [];
+    // Create word groups for child mode (existing logic)
+    const childGroups: WordGroup[] = [];
     const words = story.words;
     const hasPunctuation = (word: string) => /[.,!?]/.test(word);
 
@@ -453,7 +457,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           words: [words[i], words[i + 1]],
           startIndex: i
         };
-        groups.push(group);
+        childGroups.push(group);
         i += 2;
       } else {
         const group = {
@@ -461,45 +465,47 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           words: [words[i]],
           startIndex: i
         };
-        groups.push(group);
+        childGroups.push(group);
         i += 1;
       }
     }
 
-    console.log('Created word groups:', groups);
-    setWordGroups(groups);
-  }, [story.words]);
+    // Create sentence groups for adult mode
+    const sentences: WordGroup[] = [];
+    let currentSentence: string[] = [];
+    let startIndex = 0;
 
-  useEffect(() => {
-    if (isActive && !isSpeaking) {
-      activeStartTimeRef.current = Date.now();
-      activeTimerRef.current = window.setInterval(() => {
-        const stuckDuration = Date.now() - activeStartTimeRef.current;
-        if (stuckDuration > 3000 && !isSpeaking) {
-          console.log('Detected stuck state, resetting button...');
-          setIsActive(false);
-          setIsPending(false);
-          stopRecording();
-          toast({
-            title: "Auto-Reset",
-            description: "Microphone state was reset due to inactivity"
-          });
-        }
-      }, 2000);
-      return () => {
-        if (activeTimerRef.current) {
-          window.clearInterval(activeTimerRef.current);
-          activeTimerRef.current = null;
-        }
-      };
-    } else {
-      if (activeTimerRef.current) {
-        window.clearInterval(activeTimerRef.current);
-        activeTimerRef.current = null;
+    words.forEach((word, index) => {
+      currentSentence.push(word);
+
+      // Check for end of sentence
+      if (/[.!?]$/.test(word) || index === words.length - 1) {
+        sentences.push({
+          text: currentSentence.join(' '),
+          words: currentSentence,
+          startIndex: startIndex
+        });
+        currentSentence = [];
+        startIndex = index + 1;
       }
-    }
-  }, [isActive, isSpeaking, stopRecording]);
+    });
 
+    setWordGroups(readingMode === 'child' ? childGroups : sentences);
+    setSentences(sentences);
+  }, [story.words, readingMode]);
+
+  const handleModeChange = (mode: 'child' | 'adult') => {
+    if (mode === readingMode) return;
+
+    setReadingMode(mode);
+    setCurrentGroupIndex(0);
+    setShowCelebration(false);
+    setLastHeard("");
+    setIsActive(false);
+
+    // Update word groups based on mode
+    setWordGroups(mode === 'adult' ? sentences : wordGroups);
+  };
 
   const resetStory = () => {
     setCurrentGroupIndex(0);
@@ -525,7 +531,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       }
     }
   }, [speak]);
-
 
   const readWord = async () => {
     if (isActive || isSpeaking || isPending) return;
@@ -637,126 +642,170 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   };
 
+  useEffect(() => {
+    if (isActive && !isSpeaking) {
+      activeStartTimeRef.current = Date.now();
+      activeTimerRef.current = window.setInterval(() => {
+        const stuckDuration = Date.now() - activeStartTimeRef.current;
+        if (stuckDuration > 3000 && !isSpeaking) {
+          console.log('Detected stuck state, resetting button...');
+          setIsActive(false);
+          setIsPending(false);
+          stopRecording();
+          toast({
+            title: "Auto-Reset",
+            description: "Microphone state was reset due to inactivity"
+          });
+        }
+      }, 2000);
+      return () => {
+        if (activeTimerRef.current) {
+          window.clearInterval(activeTimerRef.current);
+          activeTimerRef.current = null;
+        }
+      };
+    } else {
+      if (activeTimerRef.current) {
+        window.clearInterval(activeTimerRef.current);
+        activeTimerRef.current = null;
+      }
+    }
+  }, [isActive, isSpeaking, stopRecording]);
+
   return (
     <div className="text-center relative">
       <audio ref={audioRef} src={lessonCompleteSound} preload="auto" />
-      <div className="p-1">
-        <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-700 mb-2">
-          <Heart className="h-5 w-5 text-red-500" />
-          <span>{story.likes || 0} likes</span>
-        </div>
 
-        <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap">
-          {wordGroups.map((group, groupIndex) => (
-            <span
-              key={group.startIndex}
-              className={`inline-block mx-1 ${
-                groupIndex === currentGroupIndex
-                  ? 'text-2xl font-semibold text-primary'
-                  : 'text-gray-600'
-              }`}
+      {/* Mode Selection Buttons */}
+      <div className="flex justify-center gap-4 mb-4">
+        <Button
+          variant={readingMode === 'child' ? 'default' : 'outline'}
+          size="lg"
+          className="text-2xl p-6"
+          onClick={() => handleModeChange('child')}
+          disabled={isActive || isSpeaking || isPending}
+        >
+          👶 Word Mode
+        </Button>
+        <Button
+          variant={readingMode === 'adult' ? 'default' : 'outline'}
+          size="lg"
+          className="text-2xl p-6"
+          onClick={() => handleModeChange('adult')}
+          disabled={isActive || isSpeaking || isPending}
+        >
+          🧑‍💼 Sentence Mode
+        </Button>
+      </div>
+
+      {/* Rest of the existing JSX */}
+      <div className="p-1">
+        {/* Voice selection */}
+        <div className="flex justify-center gap-2 mb-4">
+          {VOICE_OPTIONS.map((voice) => (
+            <Button
+              key={voice.id}
+              variant={selectedVoice === voice.id ? 'default' : 'outline'}
+              className="text-lg"
+              onClick={() => {
+                setSelectedVoice(voice.id);
+                playWelcomeMessage(voice.id);
+              }}
+              disabled={isActive || isSpeaking || isPending}
             >
-              {group.text}
-            </span>
+              {voice.name}
+            </Button>
           ))}
         </div>
 
-        <div className="mt-4">
-          <select
-            value={selectedVoice}
-            onChange={(e) => {
-              const newVoiceId = e.target.value as typeof VOICE_OPTIONS[number]['id'];
-              setSelectedVoice(newVoiceId);
-              playWelcomeMessage(newVoiceId);
-            }}
-            className="w-full max-w-sm mx-auto block px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary mb-4"
-          >
-            {VOICE_OPTIONS.map(voice => (
-              <option key={voice.id} value={voice.id}>
-                {voice.name}
-              </option>
-            ))}
-          </select>
-
-          <Button
-            size="lg"
-            onClick={readWord}
-            disabled={isActive || isSpeaking || isPending}
-            className={`w-full max-w-sm mx-auto ${isActive ? "animate-pulse bg-green-500" : ""}`}
-          >
-            <Play className="mr-2 h-4 w-4" />
-            {isActive ? "Listening..." : isSpeaking ? "Speaking..." : "Read Word"}
-          </Button>
-
-          {lastHeard && (
-            <div className="text-sm text-gray-600">
-              Last heard: "{lastHeard}"
-            </div>
-          )}
-
-          {currentGroupIndex === wordGroups.length - 1 && (
-            <p className="mt-4 text-green-600">Last word! Keep going!</p>
-          )}
-
-          <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">🎙️ Live Transcript</h3>
-            <p className="text-gray-600 min-h-[2rem] transition-all">
-              {isActive ? (
-                transcript ?
-                  <span className="animate-pulse">{transcript}</span> :
-                  <span className="animate-pulse">Listening...</span>
-              ) : (
-                transcript || "Ready to listen..."
-              )}
-            </p>
+        {/* Current word/sentence display */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">
+            {readingMode === 'child' ? "Repeat this word:" : "Repeat this sentence:"}
+          </h2>
+          <div className="text-3xl font-bold min-h-[3rem]">
+            {wordGroups[currentGroupIndex]?.text || ""}
           </div>
         </div>
 
-        {showCelebration && (
-          <div
-            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
-            onClick={() => setShowCelebration(false)}
+        {/* Read button */}
+        <div className="flex justify-center mb-4">
+          <Button
+            size="lg"
+            className="text-xl p-6"
+            onClick={readWord}
+            disabled={isActive || isSpeaking || isPending || currentGroupIndex >= wordGroups.length}
           >
-            <div
-              className="bg-white p-8 rounded-lg shadow-xl max-w-md mx-4 text-center"
-              onClick={e => e.stopPropagation()}
-              onMouseEnter={playCompletionSound}
+            {isActive ? (
+              <div className="animate-pulse">Listening...</div>
+            ) : isSpeaking ? (
+              <div className="animate-pulse">Speaking...</div>
+            ) : (
+              <>
+                <Play className="w-6 h-6 mr-2" />
+                {readingMode === 'child' ? "Read Word" : "Read Sentence"}
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Progress and controls */}
+        <div className="flex justify-between items-center px-4">
+          <Button
+            variant="outline"
+            onClick={resetStory}
+            disabled={isActive || isSpeaking || isPending}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Start Over
+          </Button>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              disabled={isActive || isSpeaking || isPending}
             >
-              <h2 className="text-3xl font-bold mb-4">Amazing Job! 🌟</h2>
-              <p className="text-xl mb-6">You've completed the story!</p>
-              <div
-                className="text-6xl mb-6 cursor-pointer hover:scale-110 transition-transform"
-                onClick={playCompletionSound}
-              >
-                🎉
-              </div>
-              <div className="flex justify-center gap-4">
-                <Button
-                  variant="outline"
-                  onClick={handleShare}
-                  className="flex items-center gap-2"
-                >
-                  <Share2 className="h-4 w-4" />
-                  Share
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleLike}
-                  className="flex items-center gap-2"
-                  disabled={isLiked || isLoading}
-                >
-                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-500' : ''}`} />
-                  {isLiked ? 'Liked' : 'Like'}
-                </Button>
-                <Button onClick={resetStory}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Read Again
-                </Button>
-              </div>
-            </div>
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleLike}
+              disabled={isLiked || isLoading || isActive || isSpeaking || isPending}
+            >
+              <Heart className={`w-4 h-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
+              {isLiked ? 'Liked!' : 'Like'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
+            style={{
+              width: `${(currentGroupIndex / wordGroups.length) * 100}%`
+            }}
+          />
+        </div>
+
+        {/* Last heard text (for debugging) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 text-sm text-gray-500">
+            Last heard: "{lastHeard}"
           </div>
         )}
       </div>
+
+      {/* Celebration animation */}
+      {showCelebration && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="text-6xl animate-bounce">
+            🎉
+          </div>
+        </div>
+      )}
     </div>
   );
 }
