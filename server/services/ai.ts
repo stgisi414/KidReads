@@ -86,6 +86,8 @@ const HOMOPHONES: Record<string, string[]> = {
   'wu': ['woo'],
   
   // Common English homophones
+  'would': ['wood'],
+  'wood': ['would'],
   'their': ['there', "they're"],
   'there': ['their', "they're"],
   "they're": ['their', 'there'],
@@ -370,6 +372,16 @@ export async function compareWords(userWord: string, targetWord: string): Promis
     
     if (cleanedUserWord !== userWord) {
       console.log(`Cleaned repeated words: "${userWord}" → "${cleanedUserWord}"`);
+    }
+    
+    // Special handling for "would" and "wood" pair
+    const word1Lower = cleanedUserWord.toLowerCase();
+    const word2Lower = targetWord.toLowerCase();
+    
+    if ((word1Lower === "would" && word2Lower === "wood") || 
+        (word1Lower === "wood" && word2Lower === "would")) {
+      console.log(`Special case match: "${cleanedUserWord}" sounds like "${targetWord}"`);
+      return 1.0;
     }
     
     // First, try local comparison with number normalization
