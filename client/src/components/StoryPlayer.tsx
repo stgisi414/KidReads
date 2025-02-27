@@ -205,6 +205,11 @@ interface WordGroup {
   text: string;
   words: string[];
   startIndex: number;
+  // For nested structure in adult mode
+  sentences?: Array<{
+    text: string;
+    words: string[];
+  }>;
 }
 
 // Check if content contains any forbidden words
@@ -279,10 +284,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastHeard, setLastHeard] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(() => {
+  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[number]['id']>(
     // Try to get saved voice from cookie, default to Brian if not found
-    return Cookies.get('preferredVoice') || "UGTtbzgh3HObxRjWaSpr";
-  });
+    (Cookies.get('preferredVoice') as typeof VOICE_OPTIONS[number]['id']) || "UGTtbzgh3HObxRjWaSpr"
+  );
   const [wordGroups, setWordGroups] = useState<WordGroup[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -409,7 +414,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const { speak: elevenLabsSpeak } = useElevenLabs();
 
-  // Update the speak function to use elevenLabsSpeak directly
+  // Update the speak function to use elevenLabsSpeak with multi-dimensional array structure
   const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
@@ -417,7 +422,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       // For adult mode with word-by-word highlighting
       if (readingMode === 'adult' && currentGroupIndex < wordGroups.length) {
         const currentSentence = wordGroups[currentGroupIndex];
-        const words = currentSentence.words;
+        
+        // Make sure we have the nested structure
+        if (!currentSentence.sentences || currentSentence.sentences.length === 0) {
+          console.error("Missing nested sentence structure");
+          await elevenLabsSpeak(text, { voiceId: options.voiceId });
+          return;
+        }
         
         // Clear any existing word timer
         if (wordTimerRef.current) {
@@ -428,32 +439,37 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         // Reset the current word index
         setCurrentWordIndex(0);
         
-        // Estimate the reading duration based on the total number of words and audio duration
-        // Average speed is about 150-170 words per minute in normal speech
-        // This equals to about 350-400ms per word
-        const averageWordDuration = 350; // ms per word
-        const estimatedDuration = text.length * 80; // Roughly 80ms per character
-        const wordTimeInterval = Math.min(Math.max(300, estimatedDuration / words.length), 500);
+        console.log("Reading with nested array:", currentSentence.text);
+        console.log("Word structure:", currentSentence.sentences.map(s => s.text));
         
-        // Start the TTS for the full sentence
-        await elevenLabsSpeak(text, { voiceId: options.voiceId });
+        // Create an array to store audio elements
+        const audioElements: HTMLAudioElement[] = [];
         
-        // We'll highlight words one by one while audio is playing
-        let currentIndex = 0;
-        
-        // Set interval to advance through words
-        wordTimerRef.current = window.setInterval(() => {
-          if (currentIndex < words.length) {
-            setCurrentWordIndex(currentIndex);
-            currentIndex++;
-          } else {
-            // Clear interval when done
-            if (wordTimerRef.current) {
-              clearInterval(wordTimerRef.current);
-              wordTimerRef.current = null;
+        // First, prepare all individual word audio in advance
+        for (let i = 0; i < currentSentence.sentences.length; i++) {
+          const wordObj = currentSentence.sentences[i];
+          setCurrentWordIndex(i); // Update current word index as we go
+          
+          try {
+            // Read the entire sentence together for fluent audio (but keep highlighting individual words)
+            if (i === 0) {
+              await elevenLabsSpeak(currentSentence.text, { voiceId: options.voiceId });
+              
+              // Force a slight delay between words for highlighting effect
+              if (currentSentence.sentences) {
+                await new Promise(resolve => setTimeout(resolve, 350 * currentSentence.sentences.length));
+              }
             }
+          } catch (err) {
+            console.error(`Error reading word ${i}:`, wordObj.text, err);
           }
-        }, wordTimeInterval);
+        }
+        
+        // Reset word index at the end
+        if (currentSentence.sentences) {
+          setCurrentWordIndex(currentSentence.sentences.length - 1);
+        }
+        
       } else {
         // Child mode - just read the word without synchronized highlighting
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
@@ -466,7 +482,6 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         variant: "destructive"
       });
     } finally {
-      // Wait a moment to ensure all highlights have been shown
       setTimeout(() => {
         setIsSpeaking(false);
         
@@ -475,7 +490,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           clearInterval(wordTimerRef.current);
           wordTimerRef.current = null;
         }
-      }, 200);
+      }, 500);
     }
   };
 
@@ -533,21 +548,31 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       }
     }
 
-    // Create sentence groups for adult mode
+    // Create sentence groups for adult mode with nested word structure
     const sentenceGroups: WordGroup[] = [];
     let currentSentence: string[] = [];
     let startIndex = 0;
-
+    
+    // First, separate words into sentences
     words.forEach((word, index) => {
       currentSentence.push(word);
-
+      
       // Check for end of sentence
       if (/[.!?]$/.test(word) || index === words.length - 1) {
+        const sentenceText = currentSentence.join(' ');
+        
+        // Create sentence group with individual words as a nested array
         sentenceGroups.push({
-          text: currentSentence.join(' '),
-          words: currentSentence,
-          startIndex: startIndex
+          text: sentenceText,
+          words: currentSentence.slice(), // Clone array to prevent reference issues
+          startIndex: startIndex,
+          // Create a nested structure of individual words
+          sentences: currentSentence.map(w => ({
+            text: w,
+            words: [w]
+          }))
         });
+        
         currentSentence = [];
         startIndex = index + 1;
       }
@@ -816,11 +841,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         {/* Story content display */}
         <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap mb-4">
           {wordGroups.map((group, groupIndex) => {
-            if (readingMode === 'adult' && groupIndex === currentGroupIndex) {
-              // For adult mode, highlight individual words of the current sentence
+            if (readingMode === 'adult' && groupIndex === currentGroupIndex && group.sentences) {
+              // For adult mode, highlight individual words of the current sentence using the nested structure
               return (
                 <span key={group.startIndex} className="inline mx-1">
-                  {group.words.map((word, wordIdx) => (
+                  {group.sentences?.map((sentence, wordIdx) => (
                     <span
                       key={`${group.startIndex}-${wordIdx}`}
                       className={`inline-block mx-[2px] ${
@@ -829,7 +854,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                           : 'text-gray-600'
                       }`}
                     >
-                      {word}{' '}
+                      {sentence.text}{wordIdx < (group.sentences?.length || 0) - 1 ? ' ' : ''}
                     </span>
                   ))}
                 </span>
