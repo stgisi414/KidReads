@@ -290,13 +290,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isLoading, setIsLoading] = useState(false); // Added loading state
   const [readingMode, setReadingMode] = useState<'child' | 'adult'>('child');
   const [sentences, setSentences] = useState<WordGroup[]>([]);
-
+  const [currentWordIndex, setCurrentWordIndex] = useState<number>(0);
 
   // Refs
   const stopRecordingRef = useRef<() => void>(() => {});
   const activeTimerRef = useRef<number | null>(null);
   const activeStartTimeRef = useRef<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wordTimerRef = useRef<number | null>(null);
 
   const handleRecognitionEnd = useCallback(() => {
     setIsActive(false);
@@ -412,9 +413,53 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
-      await elevenLabsSpeak(text, { voiceId: options.voiceId });
+      
+      // For adult mode with word-by-word highlighting
+      if (readingMode === 'adult' && currentGroupIndex < wordGroups.length) {
+        const currentSentence = wordGroups[currentGroupIndex];
+        const words = currentSentence.words;
+        
+        // Start the TTS for the full sentence
+        const ttsPromise = elevenLabsSpeak(text, { voiceId: options.voiceId });
+        
+        // Clear any existing word timer
+        if (wordTimerRef.current) {
+          clearInterval(wordTimerRef.current);
+        }
+        
+        // Estimate the average time per word
+        // Assuming approximately 2-3 words per second in normal speech
+        const avgTimePerWord = 300; // milliseconds per word
+        let wordIndex = 0;
+        
+        // Set up timer to highlight words as they're being spoken
+        wordTimerRef.current = window.setInterval(() => {
+          if (wordIndex < words.length) {
+            setCurrentWordIndex(wordIndex);
+            wordIndex++;
+          } else {
+            // Clear the interval when all words are done
+            if (wordTimerRef.current) {
+              clearInterval(wordTimerRef.current);
+              wordTimerRef.current = null;
+            }
+          }
+        }, avgTimePerWord);
+        
+        // Wait for TTS to complete
+        await ttsPromise;
+      } else {
+        // Normal mode without word-by-word highlighting
+        await elevenLabsSpeak(text, { voiceId: options.voiceId });
+      }
     } finally {
       setIsSpeaking(false);
+      
+      // Clear word timer if it's still running
+      if (wordTimerRef.current) {
+        clearInterval(wordTimerRef.current);
+        wordTimerRef.current = null;
+      }
     }
   };
 
@@ -501,6 +546,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
     setReadingMode(mode);
     setCurrentGroupIndex(0);
+    setCurrentWordIndex(0);
     setShowCelebration(false);
     setLastHeard("");
     setIsActive(false);
@@ -511,6 +557,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const resetStory = () => {
     setCurrentGroupIndex(0);
+    setCurrentWordIndex(0);
     setShowCelebration(false);
     setLastHeard("");
     setIsActive(false);
@@ -540,22 +587,42 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     const currentGroup = wordGroups[currentGroupIndex];
     if (!currentGroup) return;
 
-    const wordToRead = `"${currentGroup.text}"`;
-    console.log('Reading group:', wordToRead);
-
     setIsActive(true);
     setLastHeard("");
     setIsPending(false);
 
     try {
-      await speak(wordToRead, {
-        voiceId: selectedVoice
-      });
+      if (readingMode === 'adult') {
+        // Reset word index
+        setCurrentWordIndex(0);
+        
+        // For adult mode, read the whole sentence but highlight word by word
+        console.log('Reading sentence:', currentGroup.text);
+        
+        // Start speaking the whole sentence
+        await speak(currentGroup.text, {
+          voiceId: selectedVoice
+        });
+        
+        // After speaking finishes, wait a bit before starting recording
+        if (!isMobileDevice) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        await startRecording();
+      } else {
+        // Child mode - original behavior
+        const wordToRead = `"${currentGroup.text}"`;
+        console.log('Reading group:', wordToRead);
+        
+        await speak(wordToRead, {
+          voiceId: selectedVoice
+        });
 
-      if (!isMobileDevice) {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        if (!isMobileDevice) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        await startRecording();
       }
-      await startRecording();
     } catch (error) {
       console.error('Error in readWord:', error);
       setIsActive(false);
@@ -572,6 +639,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     return () => {
       if (isRecording) {
         stopRecording();
+      }
+      
+      // Clean up word timer on unmount
+      if (wordTimerRef.current) {
+        clearInterval(wordTimerRef.current);
+        wordTimerRef.current = null;
       }
     };
   }, [isRecording, stopRecording]);
@@ -726,18 +799,41 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
         {/* Story content display */}
         <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap mb-4">
-          {wordGroups.map((group, groupIndex) => (
-            <span
-              key={group.startIndex}
-              className={`inline-block mx-1 ${
-                groupIndex === currentGroupIndex
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-600'
-              }`}
-            >
-              {group.text}
-            </span>
-          ))}
+          {wordGroups.map((group, groupIndex) => {
+            if (readingMode === 'adult' && groupIndex === currentGroupIndex) {
+              // For adult mode, highlight individual words of the current sentence
+              return (
+                <span key={group.startIndex} className="inline mx-1">
+                  {group.words.map((word, wordIdx) => (
+                    <span
+                      key={`${group.startIndex}-${wordIdx}`}
+                      className={`inline-block mx-[2px] ${
+                        wordIdx === currentWordIndex && isSpeaking
+                          ? 'text-blue-600 font-semibold'
+                          : 'text-gray-600'
+                      }`}
+                    >
+                      {word}{' '}
+                    </span>
+                  ))}
+                </span>
+              );
+            } else {
+              // Child mode or non-current sentences
+              return (
+                <span
+                  key={group.startIndex}
+                  className={`inline-block mx-1 ${
+                    groupIndex === currentGroupIndex
+                      ? 'text-blue-600 font-semibold'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  {group.text}
+                </span>
+              );
+            }
+          })}
         </div>
 
         {/* Read button */}
