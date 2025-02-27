@@ -5,6 +5,18 @@ import { insertStorySchema } from "@shared/schema";
 import { generateStory, compareWords } from "./services/ai";
 import fal from "@fal-ai/serverless-client";
 
+// Define types for FAL API response
+interface FalImage {
+  url: string;
+  width?: number;
+  height?: number;
+}
+
+interface FalResponse {
+  images?: FalImage[];
+  [key: string]: any;
+}
+
 if (!process.env.FAL_AI_API_KEY) {
   throw new Error("FAL_AI_API_KEY is required");
 }
@@ -29,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             prompt: `A children's book illustration of ${topic}, cute, colorful, simple style`,
             negative_prompt: "text, words, letters, scary, violent, religious symbols, political symbols, inappropriate content",
           }
-        });
+        }) as FalResponse;
 
         if (!result?.images?.[0]?.url) {
           throw new Error('Failed to generate illustration');

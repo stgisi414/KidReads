@@ -311,7 +311,39 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   }, [isMobileDevice]);
 
-  const handleTranscriptionUpdate = useCallback((transcript: string) => {
+  const compareWordsWithAI = async (userWord: string, targetWord: string): Promise<number> => {
+    try {
+      // Only use AI comparison in adult mode to preserve performance in child mode
+      if (readingMode !== 'adult') {
+        return calculateWordSimilarity(userWord, targetWord);
+      }
+      
+      console.log('Using AI comparison for words:', { userWord, targetWord });
+      const response = await fetch('/api/compare-words', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userWord, targetWord }),
+      });
+      
+      if (!response.ok) {
+        console.error('Error comparing words with AI:', response.statusText);
+        // Fall back to local comparison if API call fails
+        return calculateWordSimilarity(userWord, targetWord);
+      }
+      
+      const result = await response.json();
+      console.log('AI similarity result:', result);
+      return result.similarity;
+    } catch (error) {
+      console.error('Error using AI comparison:', error);
+      // Fall back to local comparison if API call fails
+      return calculateWordSimilarity(userWord, targetWord);
+    }
+  };
+
+  const handleTranscriptionUpdate = useCallback(async (transcript: string) => {
     if (isPending) return;
 
     const heardText = transcript.toLowerCase().trim();
@@ -324,8 +356,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     console.log('Comparing:', { heard: heardText, expected: expectedText });
 
     const similarityThreshold = isMobileDevice ? 0.4 : 0.5;
-    const similarity = calculateWordSimilarity(heardText, expectedText);
-    console.log('Similarity:', similarity);
+    
+    // Use AI comparison in adult mode, local comparison in child mode
+    const similarity = readingMode === 'adult' 
+      ? await compareWordsWithAI(heardText, expectedText)
+      : calculateWordSimilarity(heardText, expectedText);
+      
+    console.log(`Similarity (${readingMode} mode):`, similarity);
 
     if (similarity >= similarityThreshold ||
       heardText === expectedText ||
@@ -400,7 +437,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         });
       }
     }
-  }, [currentGroupIndex, wordGroups, isPending, isMobileDevice]);
+  }, [currentGroupIndex, wordGroups, isPending, isMobileDevice, readingMode, toast]);
 
   const { startRecording, stopRecording, isRecording, transcript } = useSpeechRecognition({
     language: "en-US",
