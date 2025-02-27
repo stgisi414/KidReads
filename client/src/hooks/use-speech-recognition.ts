@@ -120,10 +120,11 @@ export function useSpeechRecognition({
       console.log("Speech recognition ended");
       setIsRecording(false);
 
-      // Set a small timeout before calling onRecognitionEnd
+      // Set a longer timeout before calling onRecognitionEnd to give more time
+      // for processing and showing feedback to the user
       timeoutRef.current = window.setTimeout(() => {
         onRecognitionEnd?.();
-      }, 100);
+      }, 500); // Increased from 100ms to 500ms
     };
 
     recognitionRef.current = recognition;

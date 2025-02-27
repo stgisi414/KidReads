@@ -305,10 +305,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const wordTimerRef = useRef<number | null>(null);
 
   const handleRecognitionEnd = useCallback(() => {
-    setIsActive(false);
-    if (!isMobileDevice) {
-      setTimeout(() => setIsPending(false), 300);
-    }
+    // Keep active state longer to show the user their input is still being processed
+    setTimeout(() => {
+      setIsActive(false);
+      // Add additional delay before resetting the pending state
+      if (!isMobileDevice) {
+        setTimeout(() => setIsPending(false), 500);
+      }
+    }, 1000); // Extended from immediate to 1000ms delay
   }, [isMobileDevice]);
 
   const compareWordsWithAI = async (userWord: string, targetWord: string): Promise<number> => {
@@ -778,10 +782,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           voiceId: selectedVoice
         });
         
-        // After speaking finishes, wait a bit before starting recording
-        if (!isMobileDevice) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
+        // After speaking finishes, wait longer before starting recording
+        // Extended delay to give user enough time to process and prepare to speak
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Extended from 300ms to 1500ms
         await startRecording();
       } else {
         // Child mode - original behavior
@@ -792,9 +795,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           voiceId: selectedVoice
         });
 
-        if (!isMobileDevice) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
+        // Also extend the delay in child mode to give user time to prepare
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Extended from 300ms to 1500ms
         await startRecording();
       }
     } catch (error) {
@@ -896,7 +898,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       activeStartTimeRef.current = Date.now();
       activeTimerRef.current = window.setInterval(() => {
         const stuckDuration = Date.now() - activeStartTimeRef.current;
-        if (stuckDuration > 3000 && !isSpeaking) {
+        // Extended the stuck detection time from 3000ms to 8000ms
+        // This allows the microphone to listen longer before auto-resetting
+        if (stuckDuration > 8000 && !isSpeaking) {
           console.log('Detected stuck state, resetting button...');
           setIsActive(false);
           setIsPending(false);
