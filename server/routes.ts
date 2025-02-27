@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
-import { generateStory } from "./services/ai";
+import { generateStory, compareWords } from "./services/ai";
 import fal from "@fal-ai/serverless-client";
 
 if (!process.env.FAL_AI_API_KEY) {
@@ -89,6 +89,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error liking story:', error);
       res.status(500).json({ error: "Failed to like story" });
+    }
+  });
+
+  // New endpoint for AI-powered word comparison - for adult mode
+  app.post("/api/compare-words", async (req, res) => {
+    try {
+      const { userWord, targetWord } = req.body;
+      
+      if (!userWord || !targetWord) {
+        return res.status(400).json({ 
+          error: "Both userWord and targetWord are required",
+          similarity: 0
+        });
+      }
+      
+      console.log(`Comparing words: "${userWord}" vs "${targetWord}"`);
+      const similarity = await compareWords(userWord, targetWord);
+      
+      console.log(`Similarity score: ${similarity}`);
+      res.json({ similarity });
+    } catch (error) {
+      console.error('Error comparing words:', error);
+      res.status(500).json({ 
+        error: "Failed to compare words",
+        similarity: 0
+      });
     }
   });
 

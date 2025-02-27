@@ -67,6 +67,64 @@ function containsForbiddenContent(text: string): boolean {
   );
 }
 
+export async function compareWords(userWord: string, targetWord: string): Promise<number> {
+  try {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+
+    const prompt = {
+      contents: [{
+        parts: [{
+          text: `You are an advanced reading assistant helping children learn to read. 
+          
+          Compare these two words and determine if they match semantically (meaning they're the same word, accounting for potential misspellings, plurals, or slight variations).
+
+          User's spoken word: "${userWord}"
+          Target word in the text: "${targetWord}"
+          
+          Return only a similarity score between 0 and 1, where:
+          - 1 means they're the same word or extremely close variations
+          - 0.9 means they're the same word with minor variations (like plurals or slight misspellings)
+          - 0.7-0.8 means they're semantically related or similar words
+          - 0.5-0.6 means they're somewhat related 
+          - 0-0.4 means they're completely different words
+          
+          Output only the numerical score, nothing else.`
+        }]
+      }]
+    };
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(prompt)
+    });
+
+    if (!response.ok) {
+      console.error(`Gemini API error: ${response.status} ${response.statusText}`);
+      return 0; // Return 0 similarity on error
+    }
+
+    const data = await response.json();
+    const content = data.candidates[0].content.parts[0].text.trim();
+    
+    // Parse the similarity score from the response
+    // We expect just a number, but handle potential formatting
+    const score = parseFloat(content);
+    
+    if (isNaN(score) || score < 0 || score > 1) {
+      console.warn("Invalid similarity score from API:", content);
+      return 0; // Return 0 similarity for invalid response
+    }
+    
+    return score;
+  } catch (error) {
+    console.error('Error comparing words:', error);
+    return 0; // Return 0 similarity on error
+  }
+}
+
 export async function generateStory(topic: string): Promise<{content: string, words: string[]}> {
   // Validate topic first
   if (containsSensitiveContent(topic)) {
