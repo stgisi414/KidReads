@@ -223,6 +223,48 @@ function getHomophones(word: string): string[] {
 }
 
 // Compare two words, handling special cases for better matching
+// Sound-alike checking specifically for common pronunciation patterns
+function soundsLike(word1: string, word2: string): boolean {
+  // Common sound pattern replacements to check
+  const commonPairs = [
+    ['would', 'wood'],
+    ['hear', 'here'],
+    ['there', 'their'],
+    ['to', 'too'],
+    ['for', 'four'],
+    ['by', 'buy'],
+    ['wear', 'where'],
+    ['new', 'knew'],
+    ['blue', 'blew'],
+    ['hole', 'whole'],
+    ['wait', 'weight'],
+    ['made', 'maid'],
+    ['sun', 'son'],
+    ['our', 'hour'],
+    ['sea', 'see'],
+    ['write', 'right'],
+    ['no', 'know'],
+    ['two', 'too'],
+    ['your', 'you\'re'],
+    ['knight', 'night'],
+    ['so', 'sew']
+  ];
+  
+  // Convert both words to lowercase for comparison
+  const w1 = word1.toLowerCase();
+  const w2 = word2.toLowerCase();
+  
+  // Check direct pairs
+  for (const [word1, word2] of commonPairs) {
+    if ((w1 === word1 && w2 === word2) || (w1 === word2 && w2 === word1)) {
+      console.log(`Sound pattern match: "${w1}" sounds like "${w2}"`);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 function compareWordsLocally(word1: string, word2: string): number {
   // Normalize both words
   const normalizedWord1 = word1.toLowerCase().replace(/[.,!?]$/, '');
@@ -230,6 +272,11 @@ function compareWordsLocally(word1: string, word2: string): number {
   
   // Direct match after normalization
   if (normalizedWord1 === normalizedWord2) {
+    return 1.0;
+  }
+  
+  // Check for specific sound-alike patterns (especially for would/wood)
+  if (soundsLike(normalizedWord1, normalizedWord2)) {
     return 1.0;
   }
   
