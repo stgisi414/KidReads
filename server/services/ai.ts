@@ -572,6 +572,7 @@ export async function generateStory(topic: string): Promise<{content: string, wo
       parts: [{
         text: `Write a very short, simple story (2-3 sentences) about ${topic} for a young child learning to read. 
         Use simple words and basic sentence structure.
+        Make sure to use periods at the end of each sentence.
         The story should be engaging but easy to understand.
         Do not include any religious, political, or controversial content.
         Keep the content appropriate for young children.`
