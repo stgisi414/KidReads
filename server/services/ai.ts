@@ -298,14 +298,39 @@ function compareWordsLocally(word1: string, word2: string): number {
   return Math.max(0, similarityFromDistance);
 }
 
+// Helper function to clean up repeated words in speech recognition
+function cleanRepeatedWords(input: string): string {
+  // Check if the input has multiple words
+  const words = input.split(/\s+/);
+  if (words.length <= 1) return input;
+  
+  // Process words to remove adjacent duplicates
+  const cleanedWords: string[] = [];
+  for (let i = 0; i < words.length; i++) {
+    // Only add if this word isn't the same as the previous one
+    if (i === 0 || words[i].toLowerCase() !== words[i-1].toLowerCase()) {
+      cleanedWords.push(words[i]);
+    }
+  }
+  
+  return cleanedWords.join(' ');
+}
+
 export async function compareWords(userWord: string, targetWord: string): Promise<number> {
   try {
+    // Clean up any repeated words in the user input
+    const cleanedUserWord = cleanRepeatedWords(userWord);
+    
+    if (cleanedUserWord !== userWord) {
+      console.log(`Cleaned repeated words: "${userWord}" → "${cleanedUserWord}"`);
+    }
+    
     // First, try local comparison with number normalization
-    const localSimilarity = compareWordsLocally(userWord, targetWord);
+    const localSimilarity = compareWordsLocally(cleanedUserWord, targetWord);
     
     // If we're very confident in the local match, return it immediately
     if (localSimilarity >= 0.9) {
-      console.log(`Local comparison gave high confidence match (${localSimilarity}) between "${userWord}" and "${targetWord}"`);
+      console.log(`Local comparison gave high confidence match (${localSimilarity}) between "${cleanedUserWord}" and "${targetWord}"`);
       return localSimilarity;
     }
     
@@ -320,7 +345,7 @@ export async function compareWords(userWord: string, targetWord: string): Promis
           Compare these two words and determine if they match semantically (meaning they're the same word, accounting for potential misspellings, plurals, or slight variations).
           Pay special attention to number words that may be written in different formats (e.g., "seven" vs "7").
 
-          User's spoken word: "${userWord}"
+          User's spoken word: "${cleanedUserWord}"
           Target word in the text: "${targetWord}"
           
           Return only a similarity score between 0 and 1, where:

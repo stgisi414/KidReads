@@ -53,6 +53,23 @@ export function useSpeechRecognition({
       }
     };
 
+    // Helper function to clean up repeated words from speech recognition
+    const cleanRepeatedWords = (input: string): string => {
+      // Split by spaces
+      const words = input.split(/\s+/);
+      if (words.length <= 1) return input;
+      
+      // Remove adjacent duplicates
+      const cleanedWords: string[] = [];
+      for (let i = 0; i < words.length; i++) {
+        if (i === 0 || words[i].toLowerCase() !== words[i-1].toLowerCase()) {
+          cleanedWords.push(words[i]);
+        }
+      }
+      
+      return cleanedWords.join(' ');
+    };
+
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       // Process all results, combining them
       const currentTranscript = Array.from(event.results)
@@ -62,10 +79,18 @@ export function useSpeechRecognition({
       // Log the raw transcription results
       console.log("Speech recognition raw transcript:", currentTranscript);
       
-      // Clean up transcript: lowercase, extra spaces, punctuation
-      const cleanedTranscript = currentTranscript.trim();
+      // Step 1: Trim the transcript
+      const trimmedTranscript = currentTranscript.trim();
       
-      console.log("Speech recognition cleaned transcript:", cleanedTranscript);
+      // Step 2: Remove repeated words (like "may may")
+      const cleanedTranscript = cleanRepeatedWords(trimmedTranscript);
+      
+      // Log the processing steps
+      if (trimmedTranscript !== cleanedTranscript) {
+        console.log("Removed repeated words:", trimmedTranscript, "→", cleanedTranscript);
+      }
+      
+      console.log("Speech recognition final transcript:", cleanedTranscript);
       setTranscript(cleanedTranscript);
 
       // For interim results, set a timeout to ensure we get complete phrases
