@@ -355,12 +355,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
     console.log('Comparing:', { heard: heardText, expected: expectedText });
 
+    // Lower threshold on mobile devices and for child mode to be more forgiving
     const similarityThreshold = isMobileDevice ? 0.4 : 0.5;
     
-    // Use AI comparison in adult mode, local comparison in child mode
-    const similarity = readingMode === 'adult' 
-      ? await compareWordsWithAI(heardText, expectedText)
-      : calculateWordSimilarity(heardText, expectedText);
+    // Always use AI comparison for better matching, regardless of mode
+    // This ensures homophone matching works in both child and adult modes
+    const similarity = await compareWordsWithAI(heardText, expectedText);
       
     console.log(`Similarity (${readingMode} mode):`, similarity);
 

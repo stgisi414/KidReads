@@ -67,6 +67,67 @@ function containsForbiddenContent(text: string): boolean {
   );
 }
 
+// Dictionary of common homophones (words that sound the same but are spelled differently)
+const HOMOPHONES: Record<string, string[]> = {
+  // Names and common words that cause recognition issues
+  'mei': ['may', 'mae'],
+  'may': ['mei', 'mae'],
+  'mae': ['may', 'mei'],
+  'lee': ['li', 'leigh'],
+  'li': ['lee', 'leigh'],
+  'leigh': ['lee', 'li'],
+  'chen': ['chin', 'chan'],
+  'juan': ['wan', 'won'],
+  'nguyen': ['win', 'when'],
+  'liu': ['lou', 'loo'],
+  'wong': ['wang'],
+  'zhao': ['chow', 'chou'],
+  'xu': ['shoe', 'shoo'],
+  'wu': ['woo'],
+  
+  // Common English homophones
+  'their': ['there', "they're"],
+  'there': ['their', "they're"],
+  "they're": ['their', 'there'],
+  'to': ['too', 'two'],
+  'too': ['to', 'two'],
+  'two': ['to', 'too'],
+  'sea': ['see'],
+  'see': ['sea'],
+  'blue': ['blew'],
+  'blew': ['blue'],
+  'red': ['read'],
+  'read': ['red'],
+  'write': ['right', 'rite'],
+  'right': ['write', 'rite'],
+  'rite': ['right', 'write'],
+  'where': ['wear', 'ware'],
+  'wear': ['where', 'ware'],
+  'ware': ['where', 'wear'],
+  'knight': ['night'],
+  'night': ['knight'],
+  'know': ['no'],
+  'no': ['know'],
+  'bare': ['bear'],
+  'bear': ['bare'],
+  'pare': ['pair', 'pear'],
+  'pair': ['pare', 'pear'],
+  'pear': ['pare', 'pair'],
+  'here': ['hear'],
+  'hear': ['here'],
+  'four': ['for', 'fore'],
+  'for': ['four', 'fore'],
+  'fore': ['four', 'for'],
+  'deer': ['dear'],
+  'dear': ['deer'],
+  'cell': ['sell'],
+  'sell': ['cell'],
+  'wait': ['weight'],
+  'weight': ['wait'],
+  'hole': ['whole'],
+  'whole': ['hole']
+};
+
 // Helper function for number normalization
 function normalizeNumbers(word: string): string[] {
   // Dictionary mapping words to their numerical equivalents
@@ -108,6 +169,26 @@ function normalizeNumbers(word: string): string[] {
   return [normalizedWord];
 }
 
+// Get all possible homophone variants of a word
+function getHomophones(word: string): string[] {
+  const normalizedWord = word.toLowerCase().replace(/[.,!?]$/, '');
+  
+  // Check if we have this word in our homophone dictionary
+  if (HOMOPHONES[normalizedWord]) {
+    return [normalizedWord, ...HOMOPHONES[normalizedWord]];
+  }
+  
+  // Check if this word is a homophone variant of another word
+  for (const [mainWord, variants] of Object.entries(HOMOPHONES)) {
+    if (variants.includes(normalizedWord)) {
+      return [normalizedWord, mainWord, ...variants.filter(v => v !== normalizedWord)];
+    }
+  }
+  
+  // If no homophones found, return just the original word
+  return [normalizedWord];
+}
+
 // Compare two words, handling special cases for better matching
 function compareWordsLocally(word1: string, word2: string): number {
   // Normalize both words
@@ -119,6 +200,20 @@ function compareWordsLocally(word1: string, word2: string): number {
     return 1.0;
   }
   
+  // Check for homophone matches (e.g., "Mei" vs "may")
+  const word1Homophones = getHomophones(normalizedWord1);
+  const word2Homophones = getHomophones(normalizedWord2);
+  
+  // Check for homophone matches first
+  for (const form1 of word1Homophones) {
+    for (const form2 of word2Homophones) {
+      if (form1 === form2) {
+        console.log(`Homophone match found: "${normalizedWord1}" sounds like "${normalizedWord2}"`);
+        return 1.0; // Perfect match between homophones
+      }
+    }
+  }
+  
   // Check for numerical equivalence (e.g., "seven" vs "7")
   const word1Forms = normalizeNumbers(normalizedWord1);
   const word2Forms = normalizeNumbers(normalizedWord2);
@@ -127,6 +222,7 @@ function compareWordsLocally(word1: string, word2: string): number {
   for (const form1 of word1Forms) {
     for (const form2 of word2Forms) {
       if (form1 === form2) {
+        console.log(`Number form match found: "${normalizedWord1}" equals "${normalizedWord2}"`);
         return 1.0; // Perfect match between normalized forms
       }
     }
@@ -137,6 +233,14 @@ function compareWordsLocally(word1: string, word2: string): number {
     return 0.9;
   }
   if (normalizedWord2.endsWith('s') && normalizedWord2.slice(0, -1) === normalizedWord1) {
+    return 0.9;
+  }
+  
+  // Possessive check (apostrophe s)
+  if (normalizedWord1.endsWith("'s") && normalizedWord1.slice(0, -2) === normalizedWord2) {
+    return 0.9;
+  }
+  if (normalizedWord2.endsWith("'s") && normalizedWord2.slice(0, -2) === normalizedWord1) {
     return 0.9;
   }
   
