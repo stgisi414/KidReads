@@ -313,11 +313,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const compareWordsWithAI = async (userWord: string, targetWord: string): Promise<number> => {
     try {
-      // Only use AI comparison in adult mode to preserve performance in child mode
-      if (readingMode !== 'adult') {
-        return calculateWordSimilarity(userWord, targetWord);
-      }
-      
+      // Always use AI comparison regardless of mode for better matching
       console.log('Using AI comparison for words:', { userWord, targetWord });
       const response = await fetch('/api/compare-words', {
         method: 'POST',
@@ -346,23 +342,45 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const handleTranscriptionUpdate = useCallback(async (transcript: string) => {
     if (isPending) return;
 
-    const heardText = transcript.toLowerCase().trim();
+    // Preserve original case for reference in logs
+    const originalHeard = transcript.trim();
+    
+    // Now lowercase for actual comparison
+    const heardText = originalHeard.toLowerCase();
     setLastHeard(heardText);
 
     const currentGroup = wordGroups[currentGroupIndex];
     if (!currentGroup) return;
 
-    const expectedText = currentGroup.text.toLowerCase().replace(/[.,!?]$/, '').trim();
-    console.log('Comparing:', { heard: heardText, expected: expectedText });
+    // Preserve original case for reference in logs
+    const originalExpected = currentGroup.text.replace(/[.,!?]$/, '').trim();
+    
+    // Now lowercase for actual comparison
+    const expectedText = originalExpected.toLowerCase();
+    
+    // Log all variations for debugging
+    console.log('Comparison details:', { 
+      originalHeard,
+      heardText,
+      originalExpected, 
+      expectedText,
+      currentWordIndex,
+      readingMode
+    });
 
     // Lower threshold on mobile devices and for child mode to be more forgiving
-    const similarityThreshold = isMobileDevice ? 0.4 : 0.5;
+    const similarityThreshold = isMobileDevice ? 0.4 : 0.45;
+    
+    // Explicit debug for proper names - log this special case
+    if (expectedText.match(/^[A-Z][a-z]+$/) && /^[a-z]+$/.test(heardText)) {
+      console.log('Detected potential proper name comparison:', { originalExpected, heardText });
+    }
     
     // Always use AI comparison for better matching, regardless of mode
     // This ensures homophone matching works in both child and adult modes
     const similarity = await compareWordsWithAI(heardText, expectedText);
       
-    console.log(`Similarity (${readingMode} mode):`, similarity);
+    console.log(`Similarity score (${readingMode} mode):`, similarity);
 
     if (similarity >= similarityThreshold ||
       heardText === expectedText ||

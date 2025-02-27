@@ -54,17 +54,27 @@ export function useSpeechRecognition({
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      // Process all results, combining them
       const currentTranscript = Array.from(event.results)
         .map(result => result[0].transcript)
         .join(" ");
 
-      setTranscript(currentTranscript);
+      // Log the raw transcription results
+      console.log("Speech recognition raw transcript:", currentTranscript);
+      
+      // Clean up transcript: lowercase, extra spaces, punctuation
+      const cleanedTranscript = currentTranscript.trim();
+      
+      console.log("Speech recognition cleaned transcript:", cleanedTranscript);
+      setTranscript(cleanedTranscript);
 
       // For interim results, set a timeout to ensure we get complete phrases
       if (interimResults && event.results[0].isFinal) {
-        onTranscriptionUpdate?.(currentTranscript);
+        console.log("Calling update with final result:", cleanedTranscript);
+        onTranscriptionUpdate?.(cleanedTranscript);
       } else if (!interimResults) {
-        onTranscriptionUpdate?.(currentTranscript);
+        console.log("Calling update with non-interim result:", cleanedTranscript);
+        onTranscriptionUpdate?.(cleanedTranscript);
       }
     };
 

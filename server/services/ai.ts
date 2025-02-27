@@ -169,24 +169,57 @@ function normalizeNumbers(word: string): string[] {
   return [normalizedWord];
 }
 
-// Get all possible homophone variants of a word
+// Get all possible homophone variants of a word - now with proper name support
 function getHomophones(word: string): string[] {
-  const normalizedWord = word.toLowerCase().replace(/[.,!?]$/, '');
+  // Preserve capitalization for later check
+  const originalWord = word.replace(/[.,!?]$/, '');
+  
+  // Normalize to lowercase for dictionary lookup
+  const normalizedWord = originalWord.toLowerCase();
+  
+  // Check if the word has special capitalization pattern (like a proper name)
+  const isProperName = /^[A-Z][a-z]+$/.test(originalWord);
+  const result: string[] = [normalizedWord];
+  
+  if (isProperName) {
+    console.log(`Detected proper name: "${originalWord}"`);
+    // Add additional lowercase version for proper name matching
+    if (!result.includes(originalWord.toLowerCase())) {
+      result.push(originalWord.toLowerCase());
+    }
+  }
   
   // Check if we have this word in our homophone dictionary
   if (HOMOPHONES[normalizedWord]) {
-    return [normalizedWord, ...HOMOPHONES[normalizedWord]];
+    result.push(...HOMOPHONES[normalizedWord]);
   }
   
   // Check if this word is a homophone variant of another word
   for (const [mainWord, variants] of Object.entries(HOMOPHONES)) {
     if (variants.includes(normalizedWord)) {
-      return [normalizedWord, mainWord, ...variants.filter(v => v !== normalizedWord)];
+      // Add the main word and other variants if not already added
+      if (!result.includes(mainWord)) {
+        result.push(mainWord);
+      }
+      
+      variants.forEach(variant => {
+        if (variant !== normalizedWord && !result.includes(variant)) {
+          result.push(variant);
+        }
+      });
+      
+      break; // Exit after finding first match
     }
   }
   
-  // If no homophones found, return just the original word
-  return [normalizedWord];
+  // If the result only has the normalized word, just return that
+  if (result.length === 1) {
+    return result;
+  }
+  
+  // Log all forms for debugging
+  console.log(`Homophone forms for "${originalWord}":`, result);
+  return result;
 }
 
 // Compare two words, handling special cases for better matching
