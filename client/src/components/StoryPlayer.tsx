@@ -300,7 +300,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isLoading, setIsLoading] = useState(false); // Added loading state
   const [readingMode, setReadingMode] = useState<'child' | 'adult' | 'phoneme'>('child');
   const [sentences, setSentences] = useState<WordGroup[]>([]);
+  const [phonemeGroups, setPhonemeGroups] = useState<WordGroup[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState<number>(0);
+  const [currentPhonemeIndex, setCurrentPhonemeIndex] = useState<number>(0);
 
   // Refs
   const stopRecordingRef = useRef<() => void>(() => {});
@@ -478,7 +480,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const { speak: elevenLabsSpeak } = useElevenLabs();
 
-  // Speak function: two distinct implementations for child mode and adult mode
+  // Speak function: three implementations for child mode, adult mode, and phoneme mode
   const speak = async (text: string, options: { voiceId: string }) => {
     try {
       setIsSpeaking(true);
@@ -521,7 +523,46 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         
         // Reset highlighting after all words played
         setCurrentWordIndex(-1);
-      } else {
+      } 
+      // For phoneme mode with phoneme-by-phoneme playback
+      else if (readingMode === 'phoneme' && currentGroupIndex < wordGroups.length) {
+        const currentWord = wordGroups[currentGroupIndex];
+        
+        // Make sure we have the phoneme structure
+        if (!currentWord.phonemes || currentWord.phonemes.length === 0) {
+          console.error("Missing phoneme structure");
+          await elevenLabsSpeak(text, { voiceId: options.voiceId });
+          return;
+        }
+        
+        console.log("Reading with phonemes:", currentWord.text);
+        console.log("Phoneme structure:", currentWord.phonemes);
+        
+        // First, play the whole word
+        await elevenLabsSpeak(currentWord.text, { voiceId: options.voiceId });
+        
+        // Then play each phoneme individually
+        for (let i = 0; i < currentWord.phonemes.length; i++) {
+          // Update the current phoneme index to highlight the appropriate phoneme
+          setCurrentPhonemeIndex(i);
+          
+          // Send ONLY the current phoneme to ElevenLabs
+          const currentPhoneme = currentWord.phonemes[i];
+          console.log(`Playing individual phoneme: "${currentPhoneme.text}"`);
+          
+          // Play phoneme with slightly slower pace
+          await elevenLabsSpeak(currentPhoneme.text, { voiceId: options.voiceId });
+          
+          // Slightly longer delay between phonemes for clarity
+          if (i < currentWord.phonemes.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        }
+        
+        // Reset highlighting after all phonemes played
+        setCurrentPhonemeIndex(-1);
+      } 
+      else {
         // Child mode - unchanged, just read the individual word 
         await elevenLabsSpeak(text, { voiceId: options.voiceId });
       }
@@ -553,7 +594,10 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         variant: "default"
       });
     }
-  }, [story, toast]);
+    
+    // Load phoneme breakdown data when story changes
+    fetchPhonemeGroups();
+  }, [story, toast, fetchPhonemeGroups]);
 
   // Store the stopRecording function in a ref
   useEffect(() => {
@@ -754,12 +798,23 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setReadingMode(mode);
     setCurrentGroupIndex(0);
     setCurrentWordIndex(0);
+    setCurrentPhonemeIndex(0);
     setShowCelebration(false);
     setLastHeard("");
     setIsActive(false);
 
     // Update word groups based on mode
-    setWordGroups(mode === 'adult' ? sentences : wordGroups);
+    if (mode === 'adult') {
+      setWordGroups(sentences);
+    } else if (mode === 'phoneme') {
+      // If phoneme groups not loaded yet, they will be loaded in the useEffect
+      if (phonemeGroups.length > 0) {
+        setWordGroups(phonemeGroups);
+      }
+    } else {
+      // Default child mode
+      setWordGroups(childGroups);
+    }
   };
 
   const resetStory = () => {
@@ -770,6 +825,84 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsActive(false);
     setIsLiked(false); // Reset like state
   };
+
+  // Get phoneme breakdowns for words in Phoneme mode
+  const fetchPhonemeGroups = useCallback(async () => {
+    if (!story.content) return;
+    
+    try {
+      console.log('Fetching phoneme breakdowns for story content...');
+      const response = await fetch('/api/phoneme-breakdown', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: story.content }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get phoneme breakdowns');
+      }
+      
+      const data = await response.json();
+      const phonemeData = data.phonemes || {};
+      
+      console.log('Received phoneme breakdown:', phonemeData);
+      
+      // Create word groups with phoneme breakdowns
+      const phonemeGroups: WordGroup[] = [];
+      
+      // Process each word and its phonemes
+      const words = story.words;
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i].replace(/[.,!?]$/, ''); // Remove punctuation for lookup
+        const cleanWord = word.toLowerCase(); // Convert to lowercase for lookup
+        
+        if (phonemeData[cleanWord]) {
+          const phonemes = phonemeData[cleanWord];
+          
+          // Create phoneme objects for the word
+          const phonemeObjects = phonemes.map(phoneme => ({
+            text: phoneme,
+            phonemes: [phoneme]
+          }));
+          
+          phonemeGroups.push({
+            text: words[i], // Keep original word with punctuation
+            words: [words[i]],
+            startIndex: i,
+            phonemes: phonemeObjects
+          });
+        } else {
+          // If no phoneme breakdown available, use the word as is
+          phonemeGroups.push({
+            text: words[i],
+            words: [words[i]],
+            startIndex: i,
+            phonemes: [{
+              text: words[i],
+              phonemes: [words[i]]
+            }]
+          });
+        }
+      }
+      
+      setPhonemeGroups(phonemeGroups);
+      
+      // If currently in phoneme mode, update the word groups
+      if (readingMode === 'phoneme') {
+        setWordGroups(phonemeGroups);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching phoneme breakdowns:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load phoneme breakdowns. Some features may be limited.",
+        variant: "destructive"
+      });
+    }
+  }, [story, readingMode, toast]);
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
@@ -1015,8 +1148,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         {/* Story content display */}
         <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap mb-4">
           {wordGroups.map((group, groupIndex) => {
+            // Adult mode - sentence display with individual word highlighting
             if (readingMode === 'adult' && groupIndex === currentGroupIndex && group.sentences) {
-              // For adult mode, highlight individual words of the current sentence using the nested structure
               return (
                 <span key={group.startIndex} className="inline mx-1">
                   {group.sentences?.map((sentence, wordIdx) => (
@@ -1033,8 +1166,34 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                   ))}
                 </span>
               );
-            } else {
-              // Child mode or non-current sentences
+            } 
+            // Phoneme mode - word display with individual phoneme highlighting
+            else if (readingMode === 'phoneme' && groupIndex === currentGroupIndex && group.phonemes) {
+              return (
+                <span key={group.startIndex} className="inline-flex flex-col mx-1 border-2 border-blue-300 rounded-md p-2 bg-blue-50">
+                  {/* Display the whole word first */}
+                  <span className="font-bold text-2xl mb-2 text-blue-600">{group.text}</span>
+                  
+                  {/* Display phonemes below */}
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {group.phonemes.map((phoneme, phoneIdx) => (
+                      <span
+                        key={`${group.startIndex}-ph-${phoneIdx}`}
+                        className={`inline-block px-2 py-1 rounded-md ${
+                          phoneIdx === currentPhonemeIndex && isSpeaking
+                            ? 'bg-green-200 text-green-800 font-bold'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {phoneme.text}
+                      </span>
+                    ))}
+                  </div>
+                </span>
+              );
+            } 
+            // Child mode or non-current groups
+            else {
               return (
                 <span
                   key={group.startIndex}
@@ -1065,7 +1224,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             ) : (
               <>
                 <Play className="w-6 h-6 mr-2" />
-               Read {readingMode === 'child' ? "Word" : "Sentence"}
+                {readingMode === 'child' && "Read Word"}
+                {readingMode === 'adult' && "Read Sentence"}
+                {readingMode === 'phoneme' && "Read Phonemes"}
               </>
             )}
           </Button>
