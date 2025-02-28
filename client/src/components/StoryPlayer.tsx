@@ -298,7 +298,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isPending, setIsPending] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Added loading state
-  const [readingMode, setReadingMode] = useState<'child' | 'adult'>('child');
+  const [readingMode, setReadingMode] = useState<'child' | 'adult' | 'phoneme'>('child');
   const [sentences, setSentences] = useState<WordGroup[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState<number>(0);
 
@@ -584,6 +584,30 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     }
   };
   
+  // Get phoneme breakdown for each word in the story
+  const fetchPhonemeBreakdown = async (content: string): Promise<Record<string, string[]>> => {
+    try {
+      const response = await fetch('/api/phoneme-breakdown', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: content }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get phoneme breakdown');
+      }
+      
+      const data = await response.json();
+      return data.phonemes;
+    } catch (error) {
+      console.error('Error fetching phoneme breakdown:', error);
+      // Fallback: empty object
+      return {};
+    }
+  };
+  
   // Process story words into groups
   useEffect(() => {
     // Helper function to process the words
@@ -724,7 +748,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     processWords();
   }, [story, readingMode]);
 
-  const handleModeChange = (mode: 'child' | 'adult') => {
+  const handleModeChange = (mode: 'child' | 'adult' | 'phoneme') => {
     if (mode === readingMode) return;
 
     setReadingMode(mode);
@@ -952,6 +976,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           disabled={isActive || isSpeaking || isPending}
         >
           🧑‍💼 Sentence Mode
+        </Button>
+        <Button
+          variant={readingMode === 'phoneme' ? 'default' : 'outline'}
+          size="sm"
+          className="text-lg px-4 py-2"
+          onClick={() => handleModeChange('phoneme')}
+          disabled={isActive || isSpeaking || isPending}
+        >
+          🔤 Phoneme Mode
         </Button>
       </div>
 
