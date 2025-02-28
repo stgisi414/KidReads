@@ -210,6 +210,11 @@ interface WordGroup {
     text: string;
     words: string[];
   }>;
+  // For phoneme mode
+  phonemes?: Array<{
+    text: string;
+    phonemes: string[];
+  }>;
 }
 
 // Check if content contains any forbidden words

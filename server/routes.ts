@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
-import { generateStory, compareWords, smartWordGrouping } from "./services/ai";
+import { generateStory, compareWords, smartWordGrouping, getPhonemesBreakdown } from "./services/ai";
 import fal from "@fal-ai/serverless-client";
 
 // Define types for FAL API response
@@ -152,6 +152,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Failed to group words",
         wordGroups: []
+      });
+    }
+  });
+  
+  // New endpoint for phoneme breakdown - for phoneme mode
+  app.post("/api/phoneme-breakdown", async (req, res) => {
+    try {
+      const { text } = req.body;
+      
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ 
+          error: "Valid text string is required",
+          phonemes: {}
+        });
+      }
+      
+      console.log(`Processing text for phoneme breakdown: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+      const phonemes = await getPhonemesBreakdown(text);
+      
+      console.log(`Phoneme breakdown produced entries for ${Object.keys(phonemes).length} words`);
+      res.json({ phonemes });
+    } catch (error) {
+      console.error('Error in phoneme breakdown:', error);
+      res.status(500).json({ 
+        error: "Failed to break down phonemes",
+        phonemes: {}
       });
     }
   });

@@ -455,6 +455,97 @@ export async function compareWords(userWord: string, targetWord: string): Promis
   }
 }
 
+export async function getPhonemesBreakdown(text: string): Promise<Record<string, string[]>> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+  
+  const prompt = {
+    contents: [{
+      parts: [{
+        text: `You are a language expert helping children learn to read.
+        
+        I'll provide a story text. Break down each word into its phonemes (sound units).
+        
+        Story text: "${text}"
+        
+        Return a JSON object where:
+        - Each key is a word from the text (including any punctuation)
+        - Each value is an array of phonemes for that word
+        
+        For example, for the word "seat", the phonemes would be ["s", "ea", "t"].
+        For "hello", they would be ["h", "e", "ll", "o"].
+        For words like "the", they might be ["th", "e"].
+        
+        Focus on common phonetic patterns in English (digraphs like "th", "sh", "ch", vowel combinations like "ea", "oo", etc.)
+        
+        Ensure the format is exactly a JSON object without any additional text.`
+      }]
+    }]
+  };
+  
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(prompt)
+    });
+
+    if (!response.ok) {
+      console.error(`Error from Gemini API: ${response.status} ${response.statusText}`);
+      // Return empty object if API fails
+      return {};
+    }
+
+    const data = await response.json();
+    const content = data.candidates[0].content.parts[0].text.trim();
+    
+    try {
+      // Try to extract JSON from the response
+      let jsonString = '';
+      let openBraces = 0;
+      let started = false;
+
+      // Manual parsing to extract the JSON object, accounting for multiline responses
+      for (let i = 0; i < content.length; i++) {
+        if (content[i] === '{') {
+          started = true;
+          openBraces++;
+        }
+        
+        if (started) {
+          jsonString += content[i];
+        }
+        
+        if (content[i] === '}') {
+          openBraces--;
+          if (openBraces === 0 && started) {
+            break;
+          }
+        }
+      }
+      
+      // If we found a JSON string, parse it
+      if (jsonString) {
+        return JSON.parse(jsonString);
+      } else {
+        // If no JSON object found, try to find it in the text
+        const cleanedContent = content.replace(/```json|```/g, '').trim();
+        return JSON.parse(cleanedContent);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response as JSON:', parseError);
+      console.log('Raw response was:', content);
+      // Return empty object if parsing fails
+      return {};
+    }
+  } catch (error) {
+    console.error('Error getting phonemes breakdown:', error);
+    // Return empty object if anything fails
+    return {};
+  }
+}
+
 export async function smartWordGrouping(text: string): Promise<string[]> {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
 
