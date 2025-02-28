@@ -1,0 +1,34 @@
+Agent V2, your task is to **add a new "Phoneme Mode" to the Kid Reads app's reading modes, while maintaining the existing "Sentence Mode" and "Word Mode."**
+
+**Deliverable:**
+
+A functional Kid Reads app with three reading modes: "Sentence Mode," "Word Mode," and the new "Phoneme Mode."  All reading mode buttons should retain their existing emojis and text labels, with a new button added for "Phoneme Mode."
+
+**Task: Implement the "Phoneme Mode" with the following specifications:**
+
+1.  **Phoneme Breakdown using Gemini API:**
+    *   Utilize the Gemini API to process the entire story text.
+    *   For each word in the story text, use the Gemini API to generate a phoneme breakdown.
+    *   The phoneme breakdown should represent each word as an array of phonemes.
+    *   Example: The word "seat" should be represented as `["s", "ea", "t"]`.
+
+2.  **Multi-Dimensional Nested Array Structure:**
+    *   Organize the phoneme breakdowns for the entire story text into a multi-dimensional nested array.
+    *   The structure should clearly associate each word in the story with its corresponding phoneme array.  Consider how this array will be used to drive the highlighting in "Phoneme Mode."
+
+3.  **Integration into Reading Modes:**
+    *   Create a new "Phoneme Mode" button in the reading mode selection interface. Ensure this button includes an appropriate emoji and text label, consistent with the existing "Sentence Mode" and "Word Mode" buttons.
+    *   When "Phoneme Mode" is activated, the app should use the generated phoneme array to highlight the text.  *(Please clarify how you envision the highlighting to work in Phoneme Mode. Will it highlight phoneme by phoneme as the audio plays?)*
+
+4.  **Maintain Existing Modes:**
+    *   Ensure that the existing "Sentence Mode" and "Word Mode" continue to function correctly and without any regressions after adding the "Phoneme Mode."
+    *   Do not alter the functionality or appearance of the "Sentence Mode" and "Word Mode" buttons, except for ensuring they coexist with the new "Phoneme Mode" button.
+
+**Constraints and Considerations:**
+
+*   **Gemini API Usage:** You are expected to use the Gemini API for the phoneme breakdown.  Ensure proper API calls and handling of responses.
+*   **Data Structure:**  Design an efficient and accessible multi-dimensional nested array to store the phoneme data.
+*   **User Interface:** Maintain a consistent user interface for reading mode selection, ensuring clarity and ease of use for children.
+*   **Testing:** Thoroughly test all three reading modes ("Sentence," "Word," and "Phoneme") on different stories to ensure they function as expected and that the phoneme highlighting is accurate and helpful.
+
+Please proceed with implementing the "Phoneme Mode" as described, focusing on accurate phoneme breakdown, proper data structure, seamless integration into the UI, and maintaining the existing reading modes.
