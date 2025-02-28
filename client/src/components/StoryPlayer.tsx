@@ -887,7 +887,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsLiked(false); // Reset like state
   };
   
-  // Function to read a word slowly while highlighting each phoneme in sequence
+  // Function to read individual phonemes with proper highlighting
   const phonemePlayback = async (word: WordGroup, voiceId: string) => {
     if (!word.phonemes || word.phonemes.length === 0) return;
     
@@ -898,33 +898,25 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       // Add a slight pause between whole word and phoneme-by-phoneme reading
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Set up slow reading with phoneme highlighting
-      const totalPlaybackTime = 2000; // ms - total time for slow reading
-      const phonemeCount = word.phonemes.length;
-      const timePerPhoneme = totalPlaybackTime / phonemeCount;
-      
-      // Start a second, slower reading of the word with phoneme highlighting
-      console.log(`Starting slow phoneme playback for "${word.text}" with ${phonemeCount} phonemes`);
-      
-      // Send slower, exaggerated pronunciation to ElevenLabs
-      // Add spaces between each character to slow down the reading
-      const slowWord = word.text.split('').join(' ');
-      const slowPrompt = `Read this very slowly: ${slowWord}`;
-      
-      // Start playing the slow pronunciation
-      const audioPromise = elevenLabsSpeak(slowPrompt, { voiceId });
-      
-      // While audio is playing, highlight each phoneme in sequence
-      for (let i = 0; i < phonemeCount; i++) {
+      // Then play and highlight each phoneme individually
+      for (let i = 0; i < word.phonemes.length; i++) {
+        // Update the current phoneme index to highlight the appropriate phoneme
         setCurrentPhonemeIndex(i);
-        console.log(`Highlighting phoneme ${i+1}/${phonemeCount}: "${word.phonemes[i].text}"`);
-        await new Promise(resolve => setTimeout(resolve, timePerPhoneme));
+        
+        // Send ONLY the current phoneme to ElevenLabs
+        const currentPhoneme = word.phonemes[i];
+        console.log(`Playing individual phoneme: "${currentPhoneme.text}"`);
+        
+        // Play phoneme with slightly slower pace
+        await elevenLabsSpeak(currentPhoneme.text, { voiceId });
+        
+        // Slightly longer delay between phonemes for clarity
+        if (i < word.phonemes.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
       }
       
-      // Wait for audio to finish
-      await audioPromise;
-      
-      // Reset highlighting
+      // Reset highlighting after all phonemes played
       setCurrentPhonemeIndex(-1);
       
     } catch (error) {
