@@ -585,6 +585,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     Cookies.set('preferredVoice', selectedVoice, { expires: 365 }); // Expires in 1 year
   }, [selectedVoice]);
 
+
+
   // Check for inappropriate content when story is loaded
   useEffect(() => {
     if (containsForbiddenContent(story.topic) || containsForbiddenContent(story.content)) {
@@ -813,7 +815,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       }
     } else {
       // Default child mode
-      setWordGroups(childGroups);
+      setWordGroups(wordGroups);
     }
   };
 
