@@ -526,7 +526,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         // Reset highlighting after all words played
         setCurrentWordIndex(-1);
       } 
-      // For phoneme mode with phoneme-by-phoneme playback
+      // For phoneme mode with sequential highlighting during slow playback
       else if (readingMode === 'phoneme' && currentGroupIndex < wordGroups.length) {
         const currentWord = wordGroups[currentGroupIndex];
         
@@ -540,29 +540,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         console.log("Reading with phonemes:", currentWord.text);
         console.log("Phoneme structure:", currentWord.phonemes);
         
-        // First, play the whole word
-        await elevenLabsSpeak(currentWord.text, { voiceId: options.voiceId });
-        
-        // Then play each phoneme individually
-        for (let i = 0; i < currentWord.phonemes.length; i++) {
-          // Update the current phoneme index to highlight the appropriate phoneme
-          setCurrentPhonemeIndex(i);
-          
-          // Send ONLY the current phoneme to ElevenLabs
-          const currentPhoneme = currentWord.phonemes[i];
-          console.log(`Playing individual phoneme: "${currentPhoneme.text}"`);
-          
-          // Play phoneme with slightly slower pace
-          await elevenLabsSpeak(currentPhoneme.text, { voiceId: options.voiceId });
-          
-          // Slightly longer delay between phonemes for clarity
-          if (i < currentWord.phonemes.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 200));
-          }
-        }
-        
-        // Reset highlighting after all phonemes played
-        setCurrentPhonemeIndex(-1);
+        await phonemePlayback(currentWord, options.voiceId);
       } 
       else {
         // Child mode - unchanged, just read the individual word 
@@ -902,10 +880,58 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const resetStory = () => {
     setCurrentGroupIndex(0);
     setCurrentWordIndex(0);
+    setCurrentPhonemeIndex(0);
     setShowCelebration(false);
     setLastHeard("");
     setIsActive(false);
     setIsLiked(false); // Reset like state
+  };
+  
+  // Function to read a word slowly while highlighting each phoneme in sequence
+  const phonemePlayback = async (word: WordGroup, voiceId: string) => {
+    if (!word.phonemes || word.phonemes.length === 0) return;
+    
+    try {
+      // First read the whole word to demonstrate proper pronunciation
+      await elevenLabsSpeak(word.text, { voiceId });
+      
+      // Add a slight pause between whole word and phoneme-by-phoneme reading
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Set up slow reading with phoneme highlighting
+      const totalPlaybackTime = 2000; // ms - total time for slow reading
+      const phonemeCount = word.phonemes.length;
+      const timePerPhoneme = totalPlaybackTime / phonemeCount;
+      
+      // Start a second, slower reading of the word with phoneme highlighting
+      console.log(`Starting slow phoneme playback for "${word.text}" with ${phonemeCount} phonemes`);
+      
+      // Send slower, exaggerated pronunciation to ElevenLabs
+      // Add spaces between each character to slow down the reading
+      const slowWord = word.text.split('').join(' ');
+      const slowPrompt = `Read this very slowly: ${slowWord}`;
+      
+      // Start playing the slow pronunciation
+      const audioPromise = elevenLabsSpeak(slowPrompt, { voiceId });
+      
+      // While audio is playing, highlight each phoneme in sequence
+      for (let i = 0; i < phonemeCount; i++) {
+        setCurrentPhonemeIndex(i);
+        console.log(`Highlighting phoneme ${i+1}/${phonemeCount}: "${word.phonemes[i].text}"`);
+        await new Promise(resolve => setTimeout(resolve, timePerPhoneme));
+      }
+      
+      // Wait for audio to finish
+      await audioPromise;
+      
+      // Reset highlighting
+      setCurrentPhonemeIndex(-1);
+      
+    } catch (error) {
+      console.error('Error in phoneme playback:', error);
+      // Reset the phoneme index even if there was an error
+      setCurrentPhonemeIndex(-1);
+    }
   };
 
 
