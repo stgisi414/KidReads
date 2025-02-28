@@ -201,6 +201,11 @@ const STOP_WORDS = new Set([
   'zero', 'one', 'two', 'three', 'four', 'five', 'six',
 ]);
 
+interface PhonemeObject {
+  text: string;
+  phonemes: string[];
+}
+
 interface WordGroup {
   text: string;
   words: string[];
@@ -211,10 +216,7 @@ interface WordGroup {
     words: string[];
   }>;
   // For phoneme mode
-  phonemes?: Array<{
-    text: string;
-    phonemes: string[];
-  }>;
+  phonemes?: PhonemeObject[];
 }
 
 // Check if content contains any forbidden words
@@ -585,6 +587,84 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     Cookies.set('preferredVoice', selectedVoice, { expires: 365 }); // Expires in 1 year
   }, [selectedVoice]);
 
+  // Get phoneme breakdowns for words in Phoneme mode
+  const fetchPhonemeGroups = useCallback(async () => {
+    if (!story.content) return;
+    
+    try {
+      console.log('Fetching phoneme breakdowns for story content...');
+      const response = await fetch('/api/phoneme-breakdown', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: story.content }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get phoneme breakdowns');
+      }
+      
+      const data = await response.json();
+      const phonemeData = data.phonemes || {};
+      
+      console.log('Received phoneme breakdown:', phonemeData);
+      
+      // Create word groups with phoneme breakdowns
+      const newPhonemeGroups: WordGroup[] = [];
+      
+      // Process each word and its phonemes
+      const words = story.words;
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i].replace(/[.,!?]$/, ''); // Remove punctuation for lookup
+        const cleanWord = word.toLowerCase(); // Convert to lowercase for lookup
+        
+        if (phonemeData[cleanWord]) {
+          const phonemes = phonemeData[cleanWord];
+          
+          // Create phoneme objects for the word
+          const phonemeObjects = phonemes.map((phoneme: string) => ({
+            text: phoneme,
+            phonemes: [phoneme]
+          }));
+          
+          newPhonemeGroups.push({
+            text: words[i], // Keep original word with punctuation
+            words: [words[i]],
+            startIndex: i,
+            phonemes: phonemeObjects
+          });
+        } else {
+          // If no phoneme breakdown available, use the word as is
+          newPhonemeGroups.push({
+            text: words[i],
+            words: [words[i]],
+            startIndex: i,
+            phonemes: [{
+              text: words[i],
+              phonemes: [words[i]]
+            }]
+          });
+        }
+      }
+      
+      setPhonemeGroups(newPhonemeGroups);
+      
+      // If currently in phoneme mode, update the word groups
+      if (readingMode === 'phoneme') {
+        setWordGroups(newPhonemeGroups);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching phoneme breakdowns:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load phoneme breakdowns. Some features may be limited.",
+        variant: "destructive"
+      });
+    }
+  }, [story, readingMode, toast]);
+
 
 
   // Check for inappropriate content when story is loaded
@@ -828,83 +908,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsLiked(false); // Reset like state
   };
 
-  // Get phoneme breakdowns for words in Phoneme mode
-  const fetchPhonemeGroups = useCallback(async () => {
-    if (!story.content) return;
-    
-    try {
-      console.log('Fetching phoneme breakdowns for story content...');
-      const response = await fetch('/api/phoneme-breakdown', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: story.content }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to get phoneme breakdowns');
-      }
-      
-      const data = await response.json();
-      const phonemeData = data.phonemes || {};
-      
-      console.log('Received phoneme breakdown:', phonemeData);
-      
-      // Create word groups with phoneme breakdowns
-      const phonemeGroups: WordGroup[] = [];
-      
-      // Process each word and its phonemes
-      const words = story.words;
-      for (let i = 0; i < words.length; i++) {
-        const word = words[i].replace(/[.,!?]$/, ''); // Remove punctuation for lookup
-        const cleanWord = word.toLowerCase(); // Convert to lowercase for lookup
-        
-        if (phonemeData[cleanWord]) {
-          const phonemes = phonemeData[cleanWord];
-          
-          // Create phoneme objects for the word
-          const phonemeObjects = phonemes.map(phoneme => ({
-            text: phoneme,
-            phonemes: [phoneme]
-          }));
-          
-          phonemeGroups.push({
-            text: words[i], // Keep original word with punctuation
-            words: [words[i]],
-            startIndex: i,
-            phonemes: phonemeObjects
-          });
-        } else {
-          // If no phoneme breakdown available, use the word as is
-          phonemeGroups.push({
-            text: words[i],
-            words: [words[i]],
-            startIndex: i,
-            phonemes: [{
-              text: words[i],
-              phonemes: [words[i]]
-            }]
-          });
-        }
-      }
-      
-      setPhonemeGroups(phonemeGroups);
-      
-      // If currently in phoneme mode, update the word groups
-      if (readingMode === 'phoneme') {
-        setWordGroups(phonemeGroups);
-      }
-      
-    } catch (error) {
-      console.error('Error fetching phoneme breakdowns:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load phoneme breakdowns. Some features may be limited.",
-        variant: "destructive"
-      });
-    }
-  }, [story, readingMode, toast]);
+
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
@@ -1178,7 +1182,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                   
                   {/* Display phonemes below */}
                   <div className="flex flex-wrap gap-2 justify-center">
-                    {group.phonemes.map((phoneme, phoneIdx) => (
+                    {group.phonemes.map((phoneme: PhonemeObject, phoneIdx) => (
                       <span
                         key={`${group.startIndex}-ph-${phoneIdx}`}
                         className={`inline-block px-2 py-1 rounded-md ${
