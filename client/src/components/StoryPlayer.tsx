@@ -1115,35 +1115,48 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       <audio ref={audioRef} src={lessonCompleteSound} preload="auto" />
 
       {/* Mode Selection Buttons */}
-      <div className="flex justify-center gap-4 mb-4">
-        <Button
-          variant={readingMode === 'child' ? 'default' : 'outline'}
-          size="sm"
-          className="text-lg px-4 py-2"
-          onClick={() => handleModeChange('child')}
-          disabled={isActive || isSpeaking || isPending}
-        >
-          👶 Word Mode
-        </Button>
-        <Button
-          variant={readingMode === 'adult' ? 'default' : 'outline'}
-          size="sm"
-          className="text-lg px-4 py-2"
-          onClick={() => handleModeChange('adult')}
-          disabled={isActive || isSpeaking || isPending}
-        >
-          🧑‍💼 Sentence Mode
-        </Button>
-        <Button
-          variant={readingMode === 'phoneme' ? 'default' : 'outline'}
-          size="sm"
-          className="text-lg px-4 py-2"
-          onClick={() => handleModeChange('phoneme')}
-          disabled={isActive || isSpeaking || isPending}
-        >
-          🔤 Phoneme Mode
-        </Button>
+      <div className="overflow-x-auto mb-4 max-w-full px-2 scrollbar-hide">
+        <div className="flex gap-4 min-w-max justify-center">
+          <Button
+            variant={readingMode === 'child' ? 'default' : 'outline'}
+            size="sm"
+            className="text-lg px-4 py-2 whitespace-nowrap"
+            onClick={() => handleModeChange('child')}
+            disabled={isActive || isSpeaking || isPending}
+          >
+            👶 Word Mode
+          </Button>
+          <Button
+            variant={readingMode === 'adult' ? 'default' : 'outline'}
+            size="sm"
+            className="text-lg px-4 py-2 whitespace-nowrap"
+            onClick={() => handleModeChange('adult')}
+            disabled={isActive || isSpeaking || isPending}
+          >
+            🧑‍💼 Sentence Mode
+          </Button>
+          <Button
+            variant={readingMode === 'phoneme' ? 'default' : 'outline'}
+            size="sm"
+            className="text-lg px-4 py-2 whitespace-nowrap"
+            onClick={() => handleModeChange('phoneme')}
+            disabled={isActive || isSpeaking || isPending}
+          >
+            🔤 Phoneme Mode
+          </Button>
+        </div>
       </div>
+
+      <style jsx global>{`
+        /* Hide scrollbar while keeping functionality */
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+      `}</style>
 
       <div className="p-1">
         {/* Voice selection dropdown */}
