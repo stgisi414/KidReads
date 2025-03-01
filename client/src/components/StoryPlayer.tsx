@@ -1146,6 +1146,21 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           </Button>
         </div>
       </div>
+      
+      {/* Under Construction Card for Phoneme Mode */}
+      {readingMode === 'phoneme' && (
+        <div className="max-w-2xl mx-auto mb-4 p-4 border-2 border-yellow-400 bg-yellow-50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">🚧</div>
+            <div>
+              <h3 className="font-bold text-yellow-800">Phoneme Mode - Under Construction</h3>
+              <p className="text-sm text-yellow-700">
+                We're working on improving this feature. Some words may not display proper phoneme breakdowns yet.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         /* Hide scrollbar while keeping functionality */
