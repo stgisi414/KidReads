@@ -174,9 +174,9 @@ interface StoryPlayerProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: "UGTtbzgh3HObxRjWaSpr", name: "🧑 Brian" },
-  { id: "pPdl9cQBQq4p6mRkZy2Z", name: "🧑‍🦱 Emma" },
-  { id: "dyTPmGzuLaJM15vpN3DS", name: "🧒 Aiden" }
+  { id: "UGTtbzgh3HObxRjWaSpr", name: "🧑🏾 Knox" },
+  { id: "pPdl9cQBQq4p6mRkZy2Z", name: "👩‍🦱 Venna" },
+  { id: "dyTPmGzuLaJM15vpN3DS", name: "👦 Titus" }
 ] as const;
 
 // Define stop words that should be grouped with the following word
@@ -930,9 +930,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const playWelcomeMessage = useCallback(async (voiceId: typeof VOICE_OPTIONS[number]['id']) => {
     const welcomeMessages = {
-      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Brian! Let's read together and have fun!",
-      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Emma! I'm ready to help you read!",
-      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Aiden! Let's begin reading!"
+      "UGTtbzgh3HObxRjWaSpr": "Hi, I'm Knox! Let's read together and have fun!",
+      "pPdl9cQBQq4p6mRkZy2Z": "Hi, I'm Venna! I'm ready to help you read!",
+      "dyTPmGzuLaJM15vpN3DS": "Hi, I'm Titus! Let's begin reading!"
     } as const;
 
     const message = welcomeMessages[voiceId];
