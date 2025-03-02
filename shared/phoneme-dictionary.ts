@@ -37,7 +37,7 @@ export function buildElevenLabsPhoneDictionary(): Record<string, string> {
     "t": "<phoneme alphabet=\"ipa\" ph=\"t\">t</phoneme>",
     "d": "<phoneme alphabet=\"ipa\" ph=\"d\">d</phoneme>",
     "k": "<phoneme alphabet=\"ipa\" ph=\"k\">k</phoneme>",
-    "ɡ": "<phoneme alphabet=\"ipa\" ph=\"ɡ\">ɡ</phoneme>",
+    "ɡ": "<phoneme alphabet=\"ipa\" ph=\"ɡ\">guh</phoneme>",
     "tʃ": "<phoneme alphabet=\"ipa\" ph=\"tʃ\">tʃ</phoneme>", // Example: "church"
     "dʒ": "<phoneme alphabet=\"ipa\" ph=\"dʒ\">dʒ</phoneme>", // Example: "judge"
     "f": "<phoneme alphabet=\"ipa\" ph=\"f\">f</phoneme>",
