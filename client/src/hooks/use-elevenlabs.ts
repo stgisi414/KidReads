@@ -47,10 +47,10 @@ export const useElevenLabs = () => {
     const modelId = options.modelId || "eleven_turbo_v2"; // Prioritize
     const stability = options.stability || 0.3; // More expressive
     const similarityBoost = options.similarityBoost || 0.65; // Slightly more natural
-    
+
     // Format text with IPA phoneme tags if needed
     let formattedText = text;
-    
+
     // Check if this is a phoneme that should be wrapped in SSML
     if (options.useIPAPhonemes !== false && isSinglePhoneme(text)) {
       console.log(`Converting phoneme "${text}" to IPA SSML format`);
@@ -106,3 +106,13 @@ export const useElevenLabs = () => {
 
   return { speak, isLoading, error, isPlaying };
 };
+
+/**
+ * Wraps an IPA symbol in the appropriate ElevenLabs SSML phoneme tag
+ * with breaks before and after for better clarity
+ * @param ipaSymbol IPA symbol to wrap in SSML
+ * @returns SSML string with phoneme tag and breaks
+ */
+export function wrapIPAInSSML(ipaSymbol: string): string {
+  return `<break time="0.2s" /><phoneme alphabet="ipa" ph="${ipaSymbol}">${ipaSymbol}</phoneme><break time="0.2s" />`;
+}

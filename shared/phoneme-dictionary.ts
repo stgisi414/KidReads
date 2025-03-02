@@ -8,18 +8,18 @@
 export function buildElevenLabsPhoneDictionary(): Record<string, string> {
   const phoneDictionary: Record<string, string> = {
     // Vowels (using IPA symbols)
-    "i": "<phoneme alphabet=\"ipa\" ph=\"i\">i</phoneme>", 
-    "ɪ": "<phoneme alphabet=\"ipa\" ph=\"ɪ\">ɪ</phoneme>",  // Example: "bit"
-    "e": "<phoneme alphabet=\"ipa\" ph=\"e\">e</phoneme>",  // Example: "bed"
-    "æ": "<phoneme alphabet=\"ipa\" ph=\"æ\">æ</phoneme>",  // Example: "cat"
-    "ɑ": "<phoneme alphabet=\"ipa\" ph=\"ɑ\">ɑ</phoneme>",  // Example: "father"
-    "ɒ": "<phoneme alphabet=\"ipa\" ph=\"ɒ\">ɒ</phoneme>",  // Example: "lot"
-    "ɔ": "<phoneme alphabet=\"ipa\" ph=\"ɔ\">ɔ</phoneme>",  // Example: "caught"
-    "ʊ": "<phoneme alphabet=\"ipa\" ph=\"ʊ\">ʊ</phoneme>",  // Example: "put"
-    "u": "<phoneme alphabet=\"ipa\" ph=\"u\">u</phoneme>",  // Example: "food"
-    "ʌ": "<phoneme alphabet=\"ipa\" ph=\"ʌ\">ʌ</phoneme>",  // Example: "cut"
-    "ɜ": "<phoneme alphabet=\"ipa\" ph=\"ɜ\">ɜ</phoneme>",  // Example: "bird"
-    "ə": "<phoneme alphabet=\"ipa\" ph=\"ə\">ə</phoneme>",  // Example: "about"
+    "i": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"i\">i</phoneme><break time=\"0.2s\" />", 
+    "ɪ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ɪ\">ɪ</phoneme><break time=\"0.2s\" />",  // Example: "bit"
+    "e": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"e\">e</phoneme><break time=\"0.2s\" />",  // Example: "bed"
+    "æ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"æ\">æ</phoneme><break time=\"0.2s\" />",  // Example: "cat"
+    "ɑ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ɑ\">ɑ</phoneme><break time=\"0.2s\" />",  // Example: "father"
+    "ɒ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ɒ\">ɒ</phoneme><break time=\"0.2s\" />",  // Example: "lot"
+    "ɔ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ɔ\">ɔ</phoneme><break time=\"0.2s\" />",  // Example: "caught"
+    "ʊ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ʊ\">ʊ</phoneme><break time=\"0.2s\" />",  // Example: "put"
+    "u": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"u\">u</phoneme><break time=\"0.2s\" />",  // Example: "food"
+    "ʌ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ʌ\">ʌ</phoneme><break time=\"0.2s\" />",  // Example: "cut"
+    "ɜ": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ɜ\">ɜ</phoneme><break time=\"0.2s\" />",  // Example: "bird"
+    "ə": "<break time=\"0.2s\" /><phoneme alphabet=\"ipa\" ph=\"ə\">ə</phoneme><break time=\"0.2s\" />",  // Example: "about"
 
     // Diphthongs (combinations of vowel sounds)
     "eɪ": "<phoneme alphabet=\"ipa\" ph=\"eɪ\">eɪ</phoneme>", // Example: "say"

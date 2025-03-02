@@ -917,7 +917,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         
         // Slightly longer delay between phonemes for clarity
         if (i < word.phonemes.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300)); // Increased for better clarity
+          await new Promise(resolve => setTimeout(resolve, 500)); // Increased even more for better clarity with SSML breaks
         }
       }
       
