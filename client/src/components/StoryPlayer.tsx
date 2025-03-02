@@ -565,12 +565,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     Cookies.set('preferredVoice', selectedVoice, { expires: 365 }); // Expires in 1 year
   }, [selectedVoice]);
 
-  // Get phoneme breakdowns for words in Phoneme mode
+  // Get IPA phoneme breakdowns for words in Phoneme mode
   const fetchPhonemeGroups = useCallback(async () => {
     if (!story.content) return;
     
     try {
-      console.log('Fetching phoneme breakdowns for story content...');
+      console.log('Fetching IPA phoneme breakdowns for story content...');
       const response = await fetch('/api/phoneme-breakdown', {
         method: 'POST',
         headers: {
@@ -586,7 +586,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       const data = await response.json();
       const phonemeData = data.phonemes || {};
       
-      console.log('Received phoneme breakdown:', phonemeData);
+      console.log('Received IPA phoneme breakdown:', phonemeData);
       
       // Create word groups with phoneme breakdowns
       const newPhonemeGroups: WordGroup[] = [];
@@ -600,9 +600,9 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         if (phonemeData[cleanWord]) {
           const phonemes = phonemeData[cleanWord];
           
-          // Create phoneme objects for the word
+          // Create phoneme objects for the word, using the IPA symbols directly
           const phonemeObjects = phonemes.map((phoneme: string) => ({
-            text: phoneme,
+            text: phoneme, // The IPA symbol itself
             phonemes: [phoneme]
           }));
           
@@ -613,7 +613,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             phonemes: phonemeObjects
           });
         } else {
-          // If no phoneme breakdown available, use the word as is
+          // If no phoneme breakdown available, use the word as is but mark it
+          console.log(`No IPA phoneme breakdown found for word: ${cleanWord}`);
           newPhonemeGroups.push({
             text: words[i],
             words: [words[i]],
@@ -887,7 +888,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsLiked(false); // Reset like state
   };
   
-  // Function to read individual phonemes with proper highlighting
+  // Function to read individual phonemes with proper highlighting using IPA phonemes
   const phonemePlayback = async (word: WordGroup, voiceId: string) => {
     if (!word.phonemes || word.phonemes.length === 0) return;
     
@@ -903,16 +904,19 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         // Update the current phoneme index to highlight the appropriate phoneme
         setCurrentPhonemeIndex(i);
         
-        // Send ONLY the current phoneme to ElevenLabs
+        // Send ONLY the current phoneme to ElevenLabs, using IPA phoneme tags
         const currentPhoneme = word.phonemes[i];
-        console.log(`Playing individual phoneme: "${currentPhoneme.text}"`);
+        console.log(`Playing individual phoneme: "${currentPhoneme.text}" using IPA`);
         
-        // Play phoneme with slightly slower pace
-        await elevenLabsSpeak(currentPhoneme.text, { voiceId });
+        // Play phoneme with slightly slower pace, adding the useIPAPhonemes flag
+        await elevenLabsSpeak(currentPhoneme.text, { 
+          voiceId,
+          useIPAPhonemes: true, // Enable IPA phoneme formatting
+        });
         
         // Slightly longer delay between phonemes for clarity
         if (i < word.phonemes.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 300)); // Increased for better clarity
         }
       }
       

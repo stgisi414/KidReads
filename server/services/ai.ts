@@ -461,23 +461,38 @@ export async function getPhonemesBreakdown(text: string): Promise<Record<string,
   const prompt = {
     contents: [{
       parts: [{
-        text: `You are a language expert helping children learn to read.
+        text: `You are a language expert helping children learn to read using International Phonetic Alphabet (IPA).
         
-        I'll provide a story text. Break down each word into its phonemes (sound units).
+        I'll provide a story text. Break down each word into its IPA phonemes (sound units).
         
         Story text: "${text}"
         
         Return a JSON object where:
-        - Each key is a word from the text (including any punctuation)
-        - Each value is an array of phonemes for that word
+        - Each key is a word from the text (lowercase, without punctuation)
+        - Each value is an array of IPA phonemes for that word
         
-        For example, for the word "seat", the phonemes would be ["/s/", "/ea/", "/t/"].
-        For "loved", the phonemes would be ["/l/", "/uh/", "/v/", "/d/"].
-        For "Lily", the phonemes would be ["/l/", "/ĭ/", "/l/", "/ee/"].
-        For "hello", they would be ["/h/", "/e/", "/ll/", "/o/"].
-        For words like "the", they might be ["/th/", "/e/"].
+        USE THESE EXACT IPA SYMBOLS:
+        Vowels: i (ee in feet), ɪ (i in bit), e (e in bed), æ (a in cat), ɑ (a in father), 
+               ɒ (o in lot), ɔ (aw in caught), ʊ (oo in foot), u (oo in food), 
+               ʌ (u in cut), ɜ (ur in bird), ə (a in about)
         
-        Focus on common phonetic patterns in English (digraphs like "/th/", "/sh/", "/ch/", vowel combinations like "/ea/", "/oo/", etc.)
+        Diphthongs: eɪ (ay in day), aɪ (i in price), ɔɪ (oy in boy), aʊ (ow in cow), 
+                   oʊ (o in go), ɪə (ear in near), eə (air in square), ʊə (ure in cure)
+        
+        Consonants: p, b, t, d, k, ɡ, tʃ (ch in chair), dʒ (j in joy), 
+                   f, v, θ (th in thin), ð (th in this), s, z, ʃ (sh in ship), 
+                   ʒ (s in measure), h, m, n, ŋ (ng in sing), l, ɹ (r in red), 
+                   j (y in yes), w
+        
+        Examples using IPA:
+        - "seat" would be ["s", "i", "t"]
+        - "loved" would be ["l", "ʌ", "v", "d"]
+        - "Lily" would be ["l", "ɪ", "l", "i"]
+        - "hello" would be ["h", "ə", "l", "oʊ"]
+        - "the" would be ["ð", "ə"]
+        
+        Do not add any extra characters like slashes or other formatting to the phonemes.
+        Keep each phoneme as a pure IPA symbol or combination (like "tʃ" for the "ch" sound).
         
         Ensure the format is exactly a JSON object without any additional text.`
       }]

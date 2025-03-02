@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
+import { buildElevenLabsPhoneDictionary, wrapIPAInSSML } from "../../../shared/phoneme-dictionary";
 
 interface ElevenLabsOptions {
   voiceId?: string;
   modelId?: string;
   stability?: number;
   similarityBoost?: number;
+  useIPAPhonemes?: boolean; // New option to use IPA phonemes
 }
 
 interface ElevenLabsError {
@@ -14,6 +16,20 @@ interface ElevenLabsError {
   };
   message?: string;
 }
+
+// Initialize the phoneme dictionary
+const phonemeDictionary = buildElevenLabsPhoneDictionary();
+
+/**
+ * Checks if text is a single IPA phoneme that should use SSML formatting
+ * @param text Text to check
+ * @returns true if it's a single phoneme that exists in our dictionary
+ */
+const isSinglePhoneme = (text: string): boolean => {
+  // Remove any whitespace and check if it exists in our phoneme dictionary
+  const cleanText = text.trim();
+  return cleanText.length <= 3 && Object.keys(phonemeDictionary).includes(cleanText);
+};
 
 export const useElevenLabs = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,9 +47,19 @@ export const useElevenLabs = () => {
     const modelId = options.modelId || "eleven_flash_v2"; // Prioritize speed
     const stability = options.stability || 0.3; // More expressive
     const similarityBoost = options.similarityBoost || 0.65; // Slightly more natural
+    
+    // Format text with IPA phoneme tags if needed
+    let formattedText = text;
+    
+    // Check if this is a phoneme that should be wrapped in SSML
+    if (options.useIPAPhonemes !== false && isSinglePhoneme(text)) {
+      console.log(`Converting phoneme "${text}" to IPA SSML format`);
+      // Get the phoneme tag directly from dictionary or generate it
+      formattedText = phonemeDictionary[text.trim()] || wrapIPAInSSML(text.trim());
+    }
 
     try {
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${options.voiceId}`, {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: 'POST',
         headers: {
           'Accept': 'audio/mpeg',
@@ -41,7 +67,7 @@ export const useElevenLabs = () => {
           'xi-api-key': "sk_dfba85b4b9aa4632fce2fc4403b701910ca1febd112518f0",
         },
         body: JSON.stringify({
-          text,
+          text: formattedText,
           model_id: modelId,
           voice_settings: {
             stability: stability,
