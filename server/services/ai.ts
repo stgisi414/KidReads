@@ -471,11 +471,13 @@ export async function getPhonemesBreakdown(text: string): Promise<Record<string,
         - Each key is a word from the text (including any punctuation)
         - Each value is an array of phonemes for that word
         
-        For example, for the word "seat", the phonemes would be ["s", "ea", "t"].
-        For "hello", they would be ["h", "e", "ll", "o"].
-        For words like "the", they might be ["th", "e"].
+        For example, for the word "seat", the phonemes would be ["/s/", "/ea/", "/t/"].
+        For "loved", the phonemes would be ["/l/", "/uh/", "/v/", "/d/"].
+        For "Lily", the phonemes would be ["/l/", "/ĭ/", "/l/", "/ee/"].
+        For "hello", they would be ["/h/", "/e/", "/ll/", "/o/"].
+        For words like "the", they might be ["/th/", "/e/"].
         
-        Focus on common phonetic patterns in English (digraphs like "th", "sh", "ch", vowel combinations like "ea", "oo", etc.)
+        Focus on common phonetic patterns in English (digraphs like "/th/", "/sh/", "/ch/", vowel combinations like "/ea/", "/oo/", etc.)
         
         Ensure the format is exactly a JSON object without any additional text.`
       }]
