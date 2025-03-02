@@ -55,7 +55,7 @@ export function buildElevenLabsPhoneDictionary(): Record<string, string> {
     "l": "<phoneme alphabet=\"ipa\" ph=\"l\">l</phoneme>",
     "ɹ": "<phoneme alphabet=\"ipa\" ph=\"ɹ\">ɹ</phoneme>", // Example: "red"
     "j": "<phoneme alphabet=\"ipa\" ph=\"j\">j</phoneme>", // Example: "yes"
-    "w": "<phoneme alphabet=\"ipa\" ph=\"w\">w</phoneme>"
+    "w": "<phoneme alphabet=\"ipa\" ph=\"w\">wuh</phoneme>"
   };
 
   return phoneDictionary;
