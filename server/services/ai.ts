@@ -173,45 +173,6 @@ function normalizeNumbers(word: string): string[] {
 
 // Get all possible homophone variants of a word - now with proper name support
 function getHomophones(word: string): string[] {
-  // Common homophones in English
-  const homophoneSets = {
-    'to': ['to', 'too', 'two', '2'], // Added '2' as homophone for 'to'
-    'for': ['for', 'four', '4'],
-    'be': ['be', 'bee'],
-    'sea': ['sea', 'see'],
-    'write': ['write', 'right', 'rite'],
-    'there': ['there', 'their', "they're"],
-    'new': ['new', 'knew'],
-    'blue': ['blue', 'blew'],
-    'would': ['would', 'wood'],
-    'by': ['by', 'buy', 'bye'],
-    'hear': ['hear', 'here'],
-    'some': ['some', 'sum'],
-    'one': ['one', 'won', '1'],
-    'son': ['son', 'sun'],
-    'eight': ['eight', 'ate', '8'],
-    'night': ['night', 'knight'],
-    'meat': ['meat', 'meet'],
-    'way': ['way', 'weigh'],
-    'rain': ['rain', 'reign', 'rein'],
-    'read': ['read', 'red'],
-    // Add more common homophones as needed
-  };
-  
-  // Convert word to lowercase for lookup
-  const normalizedWord = word.toLowerCase();
-  
-  // Look for the word in our homophone sets
-  for (const [key, values] of Object.entries(homophoneSets)) {
-    if (values.includes(normalizedWord)) {
-      return values;
-    }
-  }
-  
-  // If not found in any set, return just the original word
-  return [normalizedWord];
-}
-function getHomophones(word: string): string[] {
   // Preserve capitalization for later check
   const originalWord = word.replace(/[.,!?]$/, '');
   
