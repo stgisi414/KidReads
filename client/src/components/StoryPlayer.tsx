@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import lessonCompleteSound from "../assets/lesson_complete.mp3";
 import Cookies from 'js-cookie';
+import './StoryPlayer.css';
 
 // List of forbidden words and topics for content filtering
 const FORBIDDEN_WORDS = [
@@ -1166,16 +1167,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         </div>
       )}
 
-      <style jsx global>{`
-        /* Hide scrollbar while keeping functionality */
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-        }
-      `}</style>
+      {/* Scrollbar styling moved to StoryPlayer.css */}
 
       <div className="p-1">
         {/* Voice selection dropdown */}
