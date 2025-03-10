@@ -47,8 +47,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           input: {
             // Include both the topic and the actual story content in the prompt
             // This makes the illustration more relevant to the specific story
-            prompt: `A children's book illustration showing "${content}". The illustration should be cute, colorful, simple style, and match the story about ${topic}`,
-            negative_prompt: "text, words, letters, scary, violent, religious symbols, political symbols, inappropriate content",
+            prompt: `A children's book illustration that visually depicts the story: "${content}". The image should be cute, colorful, with a simple style, no text or captions, purely visual storytelling for a story about ${topic}`,
+            negative_prompt: "text, words, letters, typography, writing, captions, labels, fonts, characters, scary, violent, religious symbols, political symbols, inappropriate content, (text:1.5), (words:1.5), (letters:1.5), (typography:1.5), (writing:1.5), (captions:1.5)",
           }
         }) as FalResponse;
 
