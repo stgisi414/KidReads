@@ -38,13 +38,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Generating story for topic:', topic);
 
       try {
+        // First generate the story
         const { content, words } = await generateStory(topic);
         console.log('Generated story:', { content, wordCount: words.length });
 
-        console.log('Generating illustration for topic:', topic);
+        // Then use the generated story content to create a more tailored illustration prompt
+        console.log('Generating illustration for story about:', topic);
         const result = await fal.subscribe("fal-ai/recraft-20b", {
           input: {
-            prompt: `A children's book illustration of ${topic}, cute, colorful, simple style`,
+            // Include both the topic and the actual story content in the prompt
+            // This makes the illustration more relevant to the specific story
+            prompt: `A children's book illustration showing "${content}". The illustration should be cute, colorful, simple style, and match the story about ${topic}`,
             negative_prompt: "text, words, letters, scary, violent, religious symbols, political symbols, inappropriate content",
           }
         }) as FalResponse;
