@@ -181,6 +181,13 @@ const VOICE_OPTIONS = [
   { id: "dyTPmGzuLaJM15vpN3DS", name: "👦 Titus" }
 ] as const;
 
+// Mapping from ElevenLabs voice IDs to Google Cloud TTS voice IDs
+const ELEVENLABS_TO_GOOGLE_VOICE_MAP: Record<string, string> = {
+  "UGTtbzgh3HObxRjWaSpr": "en-US-Neural2-D", // Knox -> Male voice
+  "pPdl9cQBQq4p6mRkZy2Z": "en-US-Neural2-F", // Venna -> Female voice
+  "dyTPmGzuLaJM15vpN3DS": "en-US-Neural2-A"  // Titus -> Child-like voice
+} as const;
+
 // Define stop words that should be grouped with the following word
 const STOP_WORDS = new Set([
   // Articles
@@ -483,6 +490,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
 
   const { speak: elevenLabsSpeak } = useElevenLabs();
+  const { speak: googleTTSSpeak } = useGoogleTTS();
 
   // Speak function: three implementations for child mode, adult mode, and phoneme mode
   const speak = async (text: string, options: { voiceId: string }) => {
@@ -896,23 +904,29 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     
     try {
       // First read the whole word to demonstrate proper pronunciation
+      // Use ElevenLabs for the whole word since it can handle regular words well
       await elevenLabsSpeak(word.text, { voiceId });
       
       // Add a slight pause between whole word and phoneme-by-phoneme reading
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Then play and highlight each phoneme individually
+      // Then play and highlight each phoneme individually using Google TTS
       for (let i = 0; i < word.phonemes.length; i++) {
         // Update the current phoneme index to highlight the appropriate phoneme
         setCurrentPhonemeIndex(i);
         
-        // Send ONLY the current phoneme to ElevenLabs, using IPA phoneme tags
+        // Send ONLY the current phoneme to Google TTS, using IPA phoneme tags
         const currentPhoneme = word.phonemes[i];
-        console.log(`Playing individual phoneme: "${currentPhoneme.text}" using IPA`);
+        console.log(`Playing individual phoneme: "${currentPhoneme.text}" using Google TTS with IPA`);
         
-        // Play phoneme with slightly slower pace, adding the useIPAPhonemes flag
-        await elevenLabsSpeak(currentPhoneme.text, { 
-          voiceId,
+        // Map ElevenLabs voice ID to Google voice
+        // Default to a standard voice if no mapping exists
+        const googleVoiceId = ELEVENLABS_TO_GOOGLE_VOICE_MAP[voiceId] || "en-US-Wavenet-F";
+        
+        // Play phoneme with Google TTS, enabling IPA phoneme formatting
+        await googleTTSSpeak(currentPhoneme.text, { 
+          voiceId: googleVoiceId,
+          languageCode: "en-US",
           useIPAPhonemes: true, // Enable IPA phoneme formatting
         });
         
