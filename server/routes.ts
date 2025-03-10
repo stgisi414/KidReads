@@ -38,11 +38,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Generating story for topic:', topic);
 
       try {
-        // First generate the story
         const { content, words } = await generateStory(topic);
         console.log('Generated story:', { content, wordCount: words.length });
 
-        // Then use the generated story content to create a more tailored illustration prompt
+        // Use the generated story content to create a more tailored illustration prompt
         console.log('Generating illustration for story about:', topic);
         const result = await fal.subscribe("fal-ai/recraft-20b", {
           input: {
