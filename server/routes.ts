@@ -26,9 +26,9 @@ fal.config({
   credentials: process.env.FAL_AI_API_KEY,
 });
 
-// Initialize the Google TTS client
+// Initialize the Google TTS client using the service account credentials file
 const ttsClient = new TextToSpeechClient({
-  apiKey: process.env.GOOGLE_AI_API_KEY
+  keyFilename: './google-credentials.json'
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
