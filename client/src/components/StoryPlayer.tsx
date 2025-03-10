@@ -4,6 +4,7 @@ import { Play, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useElevenLabs } from "@/hooks/use-elevenlabs";
+import { useGoogleTTS } from "@/hooks/use-google-tts";
 import type { Story } from "@shared/schema";
 import { Share2, Heart } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";

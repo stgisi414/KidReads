@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
 import { generateStory, compareWords, smartWordGrouping, getPhonemesBreakdown } from "./services/ai";
 import fal from "@fal-ai/serverless-client";
+import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 
 // Define types for FAL API response
 interface FalImage {
@@ -23,6 +24,11 @@ if (!process.env.FAL_AI_API_KEY) {
 
 fal.config({
   credentials: process.env.FAL_AI_API_KEY,
+});
+
+// Initialize the Google TTS client
+const ttsClient = new TextToSpeechClient({
+  apiKey: process.env.GOOGLE_AI_API_KEY
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -178,6 +184,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Failed to break down phonemes",
         phonemes: {}
+      });
+    }
+  });
+  
+  // Google Cloud Text-to-Speech API endpoint
+  app.post("/api/tts", async (req, res) => {
+    try {
+      const { text, voice, audioConfig, useSSML } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ 
+          error: "Text is required for speech synthesis"
+        });
+      }
+      
+      console.log(`Google TTS request for: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+      console.log(`Using voice: ${voice.name}, Language: ${voice.languageCode}`);
+      
+      // Google Cloud TTS request
+      const request = {
+        input: useSSML ? { ssml: text } : { text },
+        voice: voice,
+        audioConfig: audioConfig || { audioEncoding: 'LINEAR16' }
+      };
+      
+      // Make request to Google Cloud TTS
+      const [response] = await ttsClient.synthesizeSpeech(request);
+      
+      if (!response.audioContent) {
+        throw new Error('No audio content received from Google TTS');
+      }
+      
+      // Convert audio content to base64
+      const audioBase64 = Buffer.from(response.audioContent as Uint8Array).toString('base64');
+      
+      // Send back the audio content
+      res.json({ audioContent: audioBase64 });
+    } catch (error) {
+      console.error('Error in Google TTS:', error);
+      res.status(500).json({ 
+        error: "Failed to synthesize speech"
       });
     }
   });
