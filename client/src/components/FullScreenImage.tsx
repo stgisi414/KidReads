@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import "./FullScreenImage.css";
 
 interface FullScreenImageProps {
   imageUrl: string;
@@ -37,14 +37,8 @@ export default function FullScreenImage({ imageUrl, alt }: FullScreenImageProps)
 
       {/* Fullscreen overlay */}
       {isFullScreen && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          style={{ animation: 'fadeIn 0.2s ease-in-out' }}
-        >
-          <div 
-            className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center"
-            style={{ animation: 'zoomIn 0.3s ease-in-out' }}
-          >
+        <div className="fullscreen-overlay">
+          <div className="fullscreen-container">
             <img
               src={imageUrl}
               alt={alt}
@@ -71,18 +65,6 @@ export default function FullScreenImage({ imageUrl, alt }: FullScreenImageProps)
           </div>
         </div>
       )}
-
-      {/* Add keyframe animations for our CSS animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes zoomIn {
-          from { transform: scale(0.9); }
-          to { transform: scale(1); }
-        }
-      `}</style>
     </div>
   );
 }
