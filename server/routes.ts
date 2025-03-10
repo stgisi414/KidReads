@@ -42,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Generated story:', { content, wordCount: words.length });
 
         console.log('Generating illustration for topic:', topic);
-        const result = await fal.subscribe("fal-ai/fast-lightning-sdxl", {
+        const result = await fal.subscribe("fal-ai/recraft-20b", {
           input: {
             prompt: `A children's book illustration of ${topic}, cute, colorful, simple style`,
             negative_prompt: "text, words, letters, scary, violent, religious symbols, political symbols, inappropriate content",

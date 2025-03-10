@@ -674,12 +674,12 @@ export async function generateStory(topic: string): Promise<{content: string, wo
     throw new Error("Sorry, this topic contains inappropriate content. Please try a different topic.");
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
 
   const prompt = {
     contents: [{
       parts: [{
-        text: `Write a very short, simple story (2-3 sentences) about ${topic} for a young child learning to read. 
+        text: `Write a very short, simple and engaging story (2-3 sentences) about ${topic} for a young child learning to read. 
         Use simple words and basic sentence structure.
         Make sure to use periods at the end of each sentence.
         The story should be engaging but easy to understand.
