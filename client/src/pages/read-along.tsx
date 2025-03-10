@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Home } from "lucide-react";
 import StoryPlayer from "@/components/StoryPlayer";
+import FullScreenImage from "@/components/FullScreenImage";
 import type { Story } from "@shared/schema";
 
 export default function ReadAlong() {
@@ -100,11 +101,10 @@ export default function ReadAlong() {
           <img src={logoImage} alt="Back" className="h-8 w-8" />
           Return Home
         </Button>
-        <div className="aspect-video rounded-t-lg overflow-hidden p-4">
-          <img
-            src={story.imageUrl}
+        <div className="p-4">
+          <FullScreenImage
+            imageUrl={story.imageUrl}
             alt={story.topic}
-            className="w-full h-full object-cover border-2 border-gray-200 border-dashed rounded-lg"
           />
         </div>
         <StoryPlayer story={story} />
