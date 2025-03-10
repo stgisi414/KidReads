@@ -170,7 +170,6 @@ function normalizeNumbers(word: string): string[] {
   // If it's neither, just return the original word
   return [normalizedWord];
 }
-
 // Get all possible homophone variants of a word - now with proper name support
 function getHomophones(word: string): string[] {
   // Preserve capitalization for later check
