@@ -604,27 +604,47 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       // Process each word and its phonemes
       const words = story.words;
       for (let i = 0; i < words.length; i++) {
-        const word = words[i].replace(/[.,!?]$/, ''); // Remove punctuation for lookup
-        const cleanWord = word.toLowerCase(); // Convert to lowercase for lookup
+        // Support multi-word phrases by splitting the word group
+        const wordGroup = words[i];
+        const cleanWordGroup = wordGroup.replace(/[.,!?]$/, '').toLowerCase(); // Remove punctuation and lowercase
         
-        if (phonemeData[cleanWord]) {
-          const phonemes = phonemeData[cleanWord];
-          
-          // Create phoneme objects for the word, using the IPA symbols directly
-          const phonemeObjects = phonemes.map((phoneme: string) => ({
-            text: phoneme, // The IPA symbol itself
-            phonemes: [phoneme]
-          }));
-          
+        // Split multiple words in a group to handle phoneme lookup
+        const individualWords = cleanWordGroup.split(/\s+/);
+        const allPhonemesForGroup: PhonemeObject[] = [];
+        let allWordsHavePhonemes = true;
+        
+        // Process each individual word in the group
+        for (const individualWord of individualWords) {
+          if (phonemeData[individualWord]) {
+            const phonemes = phonemeData[individualWord];
+            
+            // Create phoneme objects for the word, using the IPA symbols directly
+            const phonemeObjects = phonemes.map((phoneme: string) => ({
+              text: phoneme, // The IPA symbol itself
+              phonemes: [phoneme]
+            }));
+            
+            // Add each phoneme to the group's collection
+            allPhonemesForGroup.push(...phonemeObjects);
+          } else {
+            // Mark that this word group is incomplete
+            allWordsHavePhonemes = false;
+            console.log(`No IPA phoneme breakdown found for word: ${individualWord} in group: ${cleanWordGroup}`);
+            break;
+          }
+        }
+        
+        if (allWordsHavePhonemes && allPhonemesForGroup.length > 0) {
+          // All words in the group have phonemes
           newPhonemeGroups.push({
             text: words[i], // Keep original word with punctuation
             words: [words[i]],
             startIndex: i,
-            phonemes: phonemeObjects
+            phonemes: allPhonemesForGroup
           });
         } else {
-          // If no phoneme breakdown available, use the word as is but mark it
-          console.log(`No IPA phoneme breakdown found for word: ${cleanWord}`);
+          // If any word in the group doesn't have phonemes, use the word group as is
+          console.log(`Using word group without phoneme breakdown: ${cleanWordGroup}`);
           newPhonemeGroups.push({
             text: words[i],
             words: [words[i]],
