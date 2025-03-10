@@ -1292,7 +1292,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             ) : (
               <>
                 <Play className="w-6 h-6 mr-2" />
-                {readingMode === 'child' && "Read Word"}
+                {readingMode === 'child' && "Read Along"}
                 {readingMode === 'adult' && "Read Sentence"}
                 {readingMode === 'phoneme' && "Read Phonemes"}
               </>
