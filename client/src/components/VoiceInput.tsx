@@ -131,18 +131,27 @@ export default function VoiceInput({ onSubmit, isLoading, accentColor }: VoiceIn
 
   return (
     <div className="space-y-4">
-      <Button
-        size="lg"
-        className="w-full"
+      <button
+        className={`w-full py-3 px-4 font-heading text-lg font-bold transition-all relative overflow-hidden ${
+          isListening 
+            ? 'bg-red-500 text-white'
+            : 'sparkle-button'
+        } ${
+          isLoading || !recognition 
+            ? 'opacity-50 cursor-not-allowed' 
+            : 'cursor-pointer'
+        }`}
         onClick={toggleListening}
         disabled={isLoading || !recognition}
       >
-        {isListening ? (
-          <><MicOff className="mr-2 h-4 w-4" /> Stop Listening</>
-        ) : (
-          <><Mic className="mr-2 h-4 w-4" /> Start Speaking</>
-        )}
-      </Button>
+        <span className="flex items-center justify-center">
+          {isListening ? (
+            <><MicOff className="mr-2 h-5 w-5" /> Stop Listening</>
+          ) : (
+            <><Mic className="mr-2 h-5 w-5" /> Start Speaking</>
+          )}
+        </span>
+      </button>
 
       {!recognition && (
         <p className="text-sm text-yellow-600">

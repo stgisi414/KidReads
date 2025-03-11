@@ -74,6 +74,27 @@
   transition: all 0.2s ease;
 }
 
+/* Sparkle button styling */
+.sparkle-button {
+  background-image: linear-gradient(90deg, #4CAF50 0%, #2196F3 25%, #9C27B0 50%, #E91E63 75%, #4CAF50 100%);
+  background-size: 200% auto;
+  color: white;
+  text-shadow: 0px 1px 2px rgba(0,0,0,0.2);
+  border-radius: 8px;
+  animation: sparkle 3s linear infinite;
+  transition: all 0.3s ease;
+}
+
+.sparkle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.sparkle-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
 .story-actions-button:hover {
   background: rgba(0, 0, 0, 0.05);
 }
