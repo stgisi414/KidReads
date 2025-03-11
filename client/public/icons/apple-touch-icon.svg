@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background Circle -->
+  <!-- Background -->
   <rect width="180" height="180" rx="45" fill="#4f46e5"/>
   
   <!-- Book Shape -->
-  <path d="M57 53C57 49.134 60.134 46 64 46H116C119.866 46 123 49.134 123 53V127C123 130.866 119.866 134 116 134H64C60.134 134 57 130.866 57 127V53Z" fill="white"/>
+  <path d="M40 45C40 42.2386 42.2386 40 45 40H135C137.761 40 140 42.2386 140 45V135C140 137.761 137.761 140 135 140H45C42.2386 140 40 137.761 40 135V45Z" fill="white"/>
   
   <!-- Book Lines -->
-  <rect x="64" y="63" width="52" height="3" rx="1.5" fill="#E5E7EB"/>
-  <rect x="64" y="73" width="52" height="3" rx="1.5" fill="#E5E7EB"/>
-  <rect x="64" y="83" width="52" height="3" rx="1.5" fill="#E5E7EB"/>
-  <rect x="64" y="93" width="52" height="3" rx="1.5" fill="#E5E7EB"/>
-  <rect x="64" y="103" width="52" height="3" rx="1.5" fill="#E5E7EB"/>
-  <rect x="64" y="113" width="35" height="3" rx="1.5" fill="#E5E7EB"/>
+  <rect x="50" y="60" width="80" height="4" rx="2" fill="#E5E7EB"/>
+  <rect x="50" y="75" width="80" height="4" rx="2" fill="#E5E7EB"/>
+  <rect x="50" y="90" width="80" height="4" rx="2" fill="#E5E7EB"/>
+  <rect x="50" y="105" width="80" height="4" rx="2" fill="#E5E7EB"/>
+  <rect x="50" y="120" width="50" height="4" rx="2" fill="#E5E7EB"/>
   
-  <!-- Sound Wave Icon (representing speech) -->
-  <path d="M138 90C138 95.523 133.523 100 128 100C122.477 100 118 95.523 118 90C118 84.477 122.477 80 128 80C133.523 80 138 84.477 138 90Z" fill="#FEF3C7"/>
-  <path d="M128 85V95M124 86V94M132 86V94" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Sound Wave Icons (representing speech) -->
+  <path d="M150 90C150 96.6274 144.627 102 138 102C131.373 102 126 96.6274 126 90C126 83.3726 131.373 78 138 78C144.627 78 150 83.3726 150 90Z" fill="#FEF3C7"/>
+  <path d="M138 84V96M132 86V94M144 86V94" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
   
   <!-- Microphone Icon (representing speech recognition) -->
-  <path d="M42 90C42 95.523 46.477 100 52 100C57.523 100 62 95.523 62 90C62 84.477 57.523 80 52 80C46.477 80 42 84.477 42 90Z" fill="#FEF3C7"/>
-  <path d="M52 85V95M47 90H57" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 90C30 96.6274 35.3726 102 42 102C48.6274 102 54 96.6274 54 90C54 83.3726 48.6274 78 42 78C35.3726 78 30 83.3726 30 90Z" fill="#FEF3C7"/>
+  <path d="M42 84V96M36 90H48" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
