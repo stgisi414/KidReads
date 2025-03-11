@@ -266,6 +266,13 @@ const normalizeNumber = (word: string): string[] => {
 };
 
 const calculateWordSimilarity = (word1: string, word2: string): number => {
+  // Special case for "chi" and "Kai" matching
+  if ((word1.toLowerCase() === "chi" && word2.toLowerCase() === "kai") || 
+      (word1.toLowerCase() === "kai" && word2.toLowerCase() === "chi")) {
+    console.log('Special case match in local comparison: "chi" with "Kai"');
+    return 1.0; // Perfect match
+  }
+  
   const forms1 = normalizeNumber(word1.toLowerCase().trim());
   const forms2 = normalizeNumber(word2.toLowerCase().trim());
 
@@ -337,6 +344,13 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   const compareWordsWithAI = async (userWord: string, targetWord: string): Promise<number> => {
     try {
+      // Special case override for "chi" and "Kai" matching
+      if ((userWord.toLowerCase() === "chi" && targetWord.toLowerCase() === "kai") || 
+          (userWord.toLowerCase() === "kai" && targetWord.toLowerCase() === "chi")) {
+        console.log('Special case match: "chi" with "Kai"');
+        return 1.0; // Perfect match
+      }
+      
       // Always use AI comparison regardless of mode for better matching
       console.log('Using AI comparison for words:', { userWord, targetWord });
       const response = await fetch('/api/compare-words', {
