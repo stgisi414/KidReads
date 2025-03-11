@@ -28,8 +28,17 @@ const isSinglePhoneme = (text: string): boolean => {
  * @param ipaSymbol IPA symbol to wrap in SSML
  * @returns SSML string with phoneme tag and breaks
  */
-const wrapGoogleIPAInSSML = (ipaSymbol: string): string => {
-  return `<break time="200ms"/><phoneme alphabet="ipa" ph="${ipaSymbol}">${ipaSymbol}</phoneme><break time="200ms"/>`;
+/**
+ * Wraps an IPA symbol in the appropriate Google TTS SSML phoneme tag
+ * with breaks before and after for better clarity. Uses English equivalent for the content.
+ * @param ipaSymbol IPA symbol to wrap in SSML
+ * @param englishEquivalent Optional English character representation to use as the text content
+ * @returns SSML string with phoneme tag and breaks
+ */
+const wrapGoogleIPAInSSML = (ipaSymbol: string, englishEquivalent?: string): string => {
+  // Use the English equivalent if provided, otherwise use the IPA symbol
+  const textContent = englishEquivalent || ipaSymbol;
+  return `<break time="200ms"/><phoneme alphabet="ipa" ph="${ipaSymbol}">${textContent}</phoneme><break time="200ms"/>`;
 };
 
 export const useGoogleTTS = () => {
