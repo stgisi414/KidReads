@@ -211,8 +211,9 @@ const STOP_WORDS = new Set([
 ]);
 
 interface PhonemeObject {
-  text: string;
-  phonemes: string[];
+  text: string;   // In the updated version this will be the IPA phoneme
+  display: string; // This will be the English letter representation
+  phonemes: string[]; // Keep for backward compatibility
 }
 
 interface WordGroup {
@@ -618,10 +619,11 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           if (phonemeData[individualWord]) {
             const phonemes = phonemeData[individualWord];
             
-            // Create phoneme objects for the word, using the IPA symbols directly
-            const phonemeObjects = phonemes.map((phoneme: string) => ({
-              text: phoneme, // The IPA symbol itself
-              phonemes: [phoneme]
+            // Create phoneme objects for the word using both IPA and display text
+            const phonemeObjects = phonemes.map((phoneme: PhonemeMapping) => ({
+              text: phoneme.ipa, // The IPA symbol
+              display: phoneme.display, // The English letter representation
+              phonemes: [phoneme.ipa] // Keep for backward compatibility
             }));
             
             // Add each phoneme to the group's collection

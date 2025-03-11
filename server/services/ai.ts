@@ -454,7 +454,12 @@ export async function compareWords(userWord: string, targetWord: string): Promis
   }
 }
 
-export async function getPhonemesBreakdown(text: string): Promise<Record<string, string[]>> {
+export interface PhonemeMapping {
+  ipa: string;      // IPA phoneme
+  display: string;  // English letter representation
+}
+
+export async function getPhonemesBreakdown(text: string): Promise<Record<string, PhonemeMapping[]>> {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
   
   const prompt = {
@@ -462,13 +467,15 @@ export async function getPhonemesBreakdown(text: string): Promise<Record<string,
       parts: [{
         text: `You are a language expert helping children learn to read using International Phonetic Alphabet (IPA).
         
-        I'll provide a story text. Break down each word into its IPA phonemes (sound units).
+        I'll provide a story text. Break down each word into letters and their corresponding IPA phonemes.
         
         Story text: "${text}"
         
         Return a JSON object where:
         - Each key is a word from the text (lowercase, without punctuation)
-        - Each value is an array of IPA phonemes for that word
+        - Each value is an array of objects, with each object containing:
+          - "ipa": the IPA phoneme for that part of the word
+          - "display": the corresponding English letter(s) from the original word
         
         USE THESE EXACT IPA SYMBOLS:
         Vowels: i (ee in feet), ɪ (i in bit), e (e in bed), æ (a in cat), ɑ (a in father), 
@@ -483,15 +490,16 @@ export async function getPhonemesBreakdown(text: string): Promise<Record<string,
                    ʒ (s in measure), h, m, n, ŋ (ng in sing), l, ɹ (r in red), 
                    j (y in yes), w
         
-        Examples using IPA:
-        - "seat" would be ["s", "i", "t"]
-        - "loved" would be ["l", "ʌ", "v", "d"]
-        - "Lily" would be ["l", "ɪ", "l", "i"]
-        - "hello" would be ["h", "ə", "l", "oʊ"]
-        - "the" would be ["ð", "ə"]
+        Examples:
+        - "seat" would be [{"ipa": "s", "display": "s"}, {"ipa": "i", "display": "ea"}, {"ipa": "t", "display": "t"}]
+        - "loved" would be [{"ipa": "l", "display": "l"}, {"ipa": "ʌ", "display": "o"}, {"ipa": "v", "display": "v"}, {"ipa": "d", "display": "ed"}]
+        - "Lily" would be [{"ipa": "l", "display": "L"}, {"ipa": "ɪ", "display": "i"}, {"ipa": "l", "display": "l"}, {"ipa": "i", "display": "y"}]
+        - "hello" would be [{"ipa": "h", "display": "h"}, {"ipa": "ə", "display": "e"}, {"ipa": "l", "display": "l"}, {"ipa": "oʊ", "display": "lo"}]
+        - "the" would be [{"ipa": "ð", "display": "th"}, {"ipa": "ə", "display": "e"}]
         
-        Do not add any extra characters like slashes or other formatting to the phonemes.
-        Keep each phoneme as a pure IPA symbol or combination (like "tʃ" for the "ch" sound).
+        The "display" field should always contain the original English letter(s) from the word that make that sound.
+        Do not add any extra characters to the phonemes.
+        Make sure the "display" fields when combined exactly match the original word.
         
         Ensure the format is exactly a JSON object without any additional text.`
       }]
