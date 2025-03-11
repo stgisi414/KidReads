@@ -4,25 +4,63 @@
   <rect width="1200" height="630" fill="#4f46e5"/>
   
   <!-- KidReads Logo/Icon -->
-  <g transform="translate(200, 115) scale(1.5)">
-    <!-- Book Shape -->
-    <path d="M156 146C156 135.507 164.507 127 175 127H337C347.493 127 356 135.507 356 146V366C356 376.493 347.493 385 337 385H175C164.507 385 156 376.493 156 366V146Z" fill="white"/>
+  <g transform="translate(300, 40) scale(0.8)">
+    <!-- Book Body -->
+    <path d="M150 100C130 100 120 110 120 130V382C120 402 130 412 150 412H362C382 412 392 402 392 382V130C392 110 382 100 362 100H150Z" fill="#55A5C4"/>
     
-    <!-- Book Lines -->
-    <rect x="176" y="177" width="160" height="10" rx="5" fill="#E5E7EB"/>
-    <rect x="176" y="207" width="160" height="10" rx="5" fill="#E5E7EB"/>
-    <rect x="176" y="237" width="160" height="10" rx="5" fill="#E5E7EB"/>
-    <rect x="176" y="267" width="160" height="10" rx="5" fill="#E5E7EB"/>
-    <rect x="176" y="297" width="160" height="10" rx="5" fill="#E5E7EB"/>
-    <rect x="176" y="327" width="100" height="10" rx="5" fill="#E5E7EB"/>
+    <!-- Book Spine -->
+    <path d="M140 100C130 100 120 110 120 130V382C120 402 130 412 140 412" stroke="#3A7E9A" stroke-width="15"/>
     
-    <!-- Sound Wave Icons (representing speech) -->
-    <path d="M397 256C397 270.359 385.359 282 371 282C356.641 282 345 270.359 345 256C345 241.641 356.641 230 371 230C385.359 230 397 241.641 397 256Z" fill="#FEF3C7"/>
-    <path d="M371 242V270M359 246V266M383 246V266" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Book Top Corner -->
+    <path d="M392 130L342 80H150L120 130" fill="#F6D06C"/>
+    <path d="M392 130L342 80H150L120 130" stroke="#D6B056" stroke-width="5"/>
     
-    <!-- Microphone Icon (representing speech recognition) -->
-    <path d="M115 256C115 270.359 126.641 282 141 282C155.359 282 167 270.359 167 256C167 241.641 155.359 230 141 230C126.641 230 115 241.641 115 256Z" fill="#FEF3C7"/>
-    <path d="M141 242V270M129 256H153" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Book Bottom Corner -->
+    <path d="M392 382L362 412H150L120 382" fill="#F6D06C"/>
+    <path d="M392 382L362 412H150L120 382" stroke="#D6B056" stroke-width="5"/>
+    
+    <!-- Book Spine Detail -->
+    <line x1="140" y1="150" x2="140" y2="362" stroke="#3A7E9A" stroke-width="5"/>
+    <line x1="155" y1="150" x2="155" y2="362" stroke="#3A7E9A" stroke-width="5"/>
+    <line x1="135" y1="150" x2="160" y2="150" stroke="#F6D06C" stroke-width="5"/>
+    <line x1="135" y1="200" x2="160" y2="200" stroke="#F6D06C" stroke-width="5"/>
+    
+    <!-- Book Face -->
+    <!-- Eyes -->
+    <path d="M220 180C220 180 230 170 250 170C270 170 280 180 280 180" stroke="black" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="230" cy="210" rx="20" ry="25" fill="white" stroke="black" stroke-width="3"/>
+    <ellipse cx="270" cy="210" rx="20" ry="25" fill="white" stroke="black" stroke-width="3"/>
+    <ellipse cx="230" cy="215" rx="8" ry="12" fill="black"/>
+    <ellipse cx="270" cy="215" rx="8" ry="12" fill="black"/>
+    <ellipse cx="226" cy="205" rx="4" ry="4" fill="white"/>
+    <ellipse cx="266" cy="205" rx="4" ry="4" fill="white"/>
+    
+    <!-- Blush -->
+    <ellipse cx="200" cy="250" rx="15" ry="10" fill="#FF9999"/>
+    <ellipse cx="300" cy="250" rx="15" ry="10" fill="#FF9999"/>
+    
+    <!-- Mouth -->
+    <path d="M220 270C220 270 240 290 270 270" stroke="black" stroke-width="5" stroke-linecap="round"/>
+    <path d="M240 277C240 277 245 285 250 277" fill="#FF7777"/>
+    <path d="M240 277C240 277 245 285 250 277" stroke="#CC0000" stroke-width="2"/>
+    
+    <!-- Arms and Legs -->
+    <path d="M120 250C120 250 90 270 80 230C70 190 90 180 90 180" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    <path d="M392 250C392 250 422 230 432 190C442 150 422 180 422 180" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    <path d="M170 412C170 412 160 460 150 470C140 480 120 480 120 480" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    <path d="M342 412C342 412 352 460 362 470C372 480 392 480 392 480" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Shoes -->
+    <path d="M120 480C120 480 110 480 100 470C90 460 100 450 100 450L120 450L130 455L120 480Z" fill="#F6A14C"/>
+    <path d="M392 480C392 480 402 480 412 470C422 460 412 450 412 450L392 450L382 455L392 480Z" fill="#F6A14C"/>
+    
+    <!-- Hand Details -->
+    <circle cx="90" cy="180" r="10" fill="#333333"/>
+    <circle cx="422" cy="180" r="10" fill="#333333"/>
+    
+    <!-- Animation Lines -->
+    <path d="M80 180C80 180 70 175 68 170" stroke="#333333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M432 180C432 180 442 175 444 170" stroke="#333333" stroke-width="3" stroke-linecap="round"/>
   </g>
   
   <!-- Text -->

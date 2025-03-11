@@ -1,18 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Book Shape -->
-  <path d="M5 5C5 4.44772 5.44772 4 6 4H26C26.5523 4 27 4.44772 27 5V27C27 27.5523 26.5523 28 26 28H6C5.44772 28 5 27.5523 5 27V5Z" fill="#4f46e5"/>
-  
-  <!-- Book Pages -->
-  <path d="M7 7H25V25H7V7Z" fill="white"/>
-  
-  <!-- Book Lines -->
-  <rect x="9" y="10" width="14" height="1" rx="0.5" fill="#E5E7EB"/>
-  <rect x="9" y="13" width="14" height="1" rx="0.5" fill="#E5E7EB"/>
-  <rect x="9" y="16" width="14" height="1" rx="0.5" fill="#E5E7EB"/>
-  <rect x="9" y="19" width="14" height="1" rx="0.5" fill="#E5E7EB"/>
-  <rect x="9" y="22" width="8" height="1" rx="0.5" fill="#E5E7EB"/>
-  
-  <!-- Sound Wave (small indicator) -->
-  <path d="M28 16C28 16.5523 27.5523 17 27 17C26.4477 17 26 16.5523 26 16C26 15.4477 26.4477 15 27 15C27.5523 15 28 15.4477 28 16Z" fill="#FEF3C7"/>
+  <svg x="0" y="0" width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Book Body -->
+    <path d="M150 100C130 100 120 110 120 130V382C120 402 130 412 150 412H362C382 412 392 402 392 382V130C392 110 382 100 362 100H150Z" fill="#55A5C4"/>
+    
+    <!-- Book Spine -->
+    <path d="M140 100C130 100 120 110 120 130V382C120 402 130 412 140 412" stroke="#3A7E9A" stroke-width="15"/>
+    
+    <!-- Book Top Corner -->
+    <path d="M392 130L342 80H150L120 130" fill="#F6D06C"/>
+    <path d="M392 130L342 80H150L120 130" stroke="#D6B056" stroke-width="5"/>
+    
+    <!-- Book Bottom Corner -->
+    <path d="M392 382L362 412H150L120 382" fill="#F6D06C"/>
+    <path d="M392 382L362 412H150L120 382" stroke="#D6B056" stroke-width="5"/>
+    
+    <!-- Book Spine Detail -->
+    <line x1="140" y1="150" x2="140" y2="362" stroke="#3A7E9A" stroke-width="5"/>
+    <line x1="155" y1="150" x2="155" y2="362" stroke="#3A7E9A" stroke-width="5"/>
+    <line x1="135" y1="150" x2="160" y2="150" stroke="#F6D06C" stroke-width="5"/>
+    <line x1="135" y1="200" x2="160" y2="200" stroke="#F6D06C" stroke-width="5"/>
+    
+    <!-- Book Face -->
+    <!-- Eyes -->
+    <path d="M220 180C220 180 230 170 250 170C270 170 280 180 280 180" stroke="black" stroke-width="8" stroke-linecap="round"/>
+    <ellipse cx="230" cy="210" rx="20" ry="25" fill="white" stroke="black" stroke-width="3"/>
+    <ellipse cx="270" cy="210" rx="20" ry="25" fill="white" stroke="black" stroke-width="3"/>
+    <ellipse cx="230" cy="215" rx="8" ry="12" fill="black"/>
+    <ellipse cx="270" cy="215" rx="8" ry="12" fill="black"/>
+    <ellipse cx="226" cy="205" rx="4" ry="4" fill="white"/>
+    <ellipse cx="266" cy="205" rx="4" ry="4" fill="white"/>
+    
+    <!-- Blush -->
+    <ellipse cx="200" cy="250" rx="15" ry="10" fill="#FF9999"/>
+    <ellipse cx="300" cy="250" rx="15" ry="10" fill="#FF9999"/>
+    
+    <!-- Mouth -->
+    <path d="M220 270C220 270 240 290 270 270" stroke="black" stroke-width="5" stroke-linecap="round"/>
+    <path d="M240 277C240 277 245 285 250 277" fill="#FF7777"/>
+    <path d="M240 277C240 277 245 285 250 277" stroke="#CC0000" stroke-width="2"/>
+    
+    <!-- Arms and Legs -->
+    <path d="M120 250C120 250 90 270 80 230C70 190 90 180 90 180" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    <path d="M392 250C392 250 422 230 432 190C442 150 422 180 422 180" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    <path d="M170 412C170 412 160 460 150 470C140 480 120 480 120 480" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    <path d="M342 412C342 412 352 460 362 470C372 480 392 480 392 480" stroke="#333333" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Shoes -->
+    <path d="M120 480C120 480 110 480 100 470C90 460 100 450 100 450L120 450L130 455L120 480Z" fill="#F6A14C"/>
+    <path d="M392 480C392 480 402 480 412 470C422 460 412 450 412 450L392 450L382 455L392 480Z" fill="#F6A14C"/>
+    
+    <!-- Hand Details -->
+    <circle cx="90" cy="180" r="10" fill="#333333"/>
+    <circle cx="422" cy="180" r="10" fill="#333333"/>
+    
+    <!-- Animation Lines -->
+    <path d="M80 180C80 180 70 175 68 170" stroke="#333333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M432 180C432 180 442 175 444 170" stroke="#333333" stroke-width="3" stroke-linecap="round"/>
+  </svg>
 </svg>
