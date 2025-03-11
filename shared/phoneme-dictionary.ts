@@ -112,6 +112,7 @@ export const simpleToIPAMap: Record<string, string> = {
   "/r/": "ɹ",
   "/y/": "j",
   "/w/": "w",
+  "/wh/": "wh",
   
   // Common special cases
   "/ĭ/": "ɪ",
