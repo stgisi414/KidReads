@@ -9,13 +9,16 @@ import { useToast } from "@/hooks/use-toast";
 import type { Story } from "@shared/schema";
 import BackgroundSlider from "@/components/BackgroundSlider";
 import SpeechBubble from "@/components/SpeechBubble";
-import { Loader2 } from "lucide-react";
+import { BookOpen, Loader2, Volume2 } from "lucide-react";
+import { useGoogleTTS } from "@/hooks/use-google-tts";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
   const [isCreating, setIsCreating] = useState(false);
   const [accentColor, setAccentColor] = useState("#4CAF50");
+  const [speakingStoryId, setSpeakingStoryId] = useState<number | null>(null);
   const { toast } = useToast();
+  const { speak, isLoading: isSpeaking } = useGoogleTTS();
 
   // Fetch existing stories
   const { data: stories, isLoading: isLoadingStories } = useQuery<Story[]>({
@@ -59,7 +62,26 @@ export default function Home() {
     }
   };
 
-  const isLoading = isLoadingStories || isCreating;
+  const isLoading = isLoadingStories || isCreating || isSpeaking;
+  
+  const handleSpeakTopic = async (story: Story, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (isSpeaking) return;
+    
+    setSpeakingStoryId(story.id);
+    try {
+      await speak(story.topic);
+    } catch (error) {
+      console.error("Error speaking story topic:", error);
+      toast({
+        title: "Error",
+        description: "Failed to speak the story topic. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSpeakingStoryId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
@@ -104,18 +126,44 @@ export default function Home() {
           {stories && stories.length > 0 && (
             <div className="w-full mt-6 overflow-hidden">
               <h2 className="text-xl font-semibold mb-4">Recent Stories</h2>
-              <div className="relative h-[120px] overflow-hidden">
+              <div className="relative h-[220px] overflow-hidden rounded-lg">
                 <div className="absolute w-full transition-transform duration-1000 ease-in-out hover:pause-animation animate-scroll">
                   {[...stories, ...stories].slice(0, 16).map((story, index) => (
-                    <Button
+                    <div
                       key={`${story.id}-${index}`}
-                      variant="outline"
-                      className="w-full justify-start text-left h-auto mb-2"
-                      onClick={() => setLocation(`/read/${story.id}`)}
-                      disabled={isLoading}
+                      className="flex items-center w-full mb-3 bg-white border rounded-lg p-2 hover:shadow-md transition-shadow"
                     >
-                      <span className="line-clamp-1">{story.topic}</span>
-                    </Button>
+                      <img 
+                        src={story.imageUrl} 
+                        alt={story.topic}
+                        className="story-thumbnail"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="line-clamp-1 font-medium">{story.topic}</p>
+                      </div>
+                      <div className="story-actions">
+                        <button 
+                          className="story-actions-button text-primary"
+                          onClick={(e) => handleSpeakTopic(story, e)}
+                          disabled={isLoading}
+                          title="Read topic aloud"
+                        >
+                          {speakingStoryId === story.id ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <Volume2 className="h-5 w-5" />
+                          )}
+                        </button>
+                        <button 
+                          className="story-actions-button text-primary"
+                          onClick={() => setLocation(`/read/${story.id}`)}
+                          disabled={isLoading}
+                          title="Open story"
+                        >
+                          <BookOpen className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

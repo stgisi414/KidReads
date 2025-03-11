@@ -42,9 +42,41 @@
 }
 
 .animate-scroll {
-  animation: scroll 15s linear infinite;
+  animation: scroll 30s linear infinite;
 }
 
 .hover\:pause-animation:hover {
   animation-play-state: paused;
+}
+
+/* Add mini image styles */
+.story-thumbnail {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+/* Story action buttons */
+.story-actions {
+  display: flex;
+  margin-left: auto;
+  gap: 4px;
+}
+
+.story-actions-button {
+  padding: 4px;
+  border-radius: 4px;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.story-actions-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.story-actions-button:active {
+  transform: scale(0.95);
 }
