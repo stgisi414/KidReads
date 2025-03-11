@@ -17,6 +17,7 @@ export default function Home() {
   const [isCreating, setIsCreating] = useState(false);
   const [accentColor, setAccentColor] = useState("#4CAF50");
   const [speakingStoryId, setSpeakingStoryId] = useState<number | null>(null);
+  const [isScrollPaused, setIsScrollPaused] = useState(false);
   const { toast } = useToast();
   const { speak, isLoading: isSpeaking } = useGoogleTTS();
 
@@ -62,13 +63,15 @@ export default function Home() {
     }
   };
 
-  const isLoading = isLoadingStories || isCreating || isSpeaking;
+  const isLoading = isLoadingStories || isCreating;
   
   const handleSpeakTopic = async (story: Story, event: React.MouseEvent) => {
     event.stopPropagation();
     if (isSpeaking) return;
     
     setSpeakingStoryId(story.id);
+    setIsScrollPaused(true); // Pause scrolling while speaking
+    
     try {
       await speak(story.topic);
     } catch (error) {
@@ -80,6 +83,7 @@ export default function Home() {
       });
     } finally {
       setSpeakingStoryId(null);
+      setIsScrollPaused(false); // Resume scrolling after speaking
     }
   };
 
@@ -126,8 +130,13 @@ export default function Home() {
           {stories && stories.length > 0 && (
             <div className="w-full mt-6 overflow-hidden">
               <h2 className="text-xl font-semibold mb-4">Recent Stories</h2>
-              <div className="relative h-[220px] overflow-hidden rounded-lg">
-                <div className="absolute w-full transition-transform duration-1000 ease-in-out hover:pause-animation animate-scroll">
+              <div className="relative h-[220px] overflow-y-auto overflow-x-hidden rounded-lg" 
+                onMouseEnter={() => setIsScrollPaused(true)}
+                onMouseLeave={() => setIsScrollPaused(isSpeaking ? true : false)}
+                onTouchStart={() => setIsScrollPaused(true)}
+                onTouchEnd={() => setIsScrollPaused(isSpeaking ? true : false)}
+              >
+                <div className={`absolute w-full transition-transform duration-1000 ease-in-out ${isScrollPaused ? 'animation-paused' : 'animate-scroll'}`}>
                   {[...stories, ...stories].slice(0, 16).map((story, index) => (
                     <div
                       key={`${story.id}-${index}`}
@@ -145,7 +154,7 @@ export default function Home() {
                         <button 
                           className="story-actions-button text-primary"
                           onClick={(e) => handleSpeakTopic(story, e)}
-                          disabled={isLoading}
+                          disabled={isLoading || (speakingStoryId !== null && speakingStoryId !== story.id)}
                           title="Read topic aloud"
                         >
                           {speakingStoryId === story.id ? (
