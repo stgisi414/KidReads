@@ -490,12 +490,15 @@ export async function getPhonemesBreakdown(text: string): Promise<Record<string,
                    ʒ (s in measure), h, m, n, ŋ (ng in sing), l, ɹ (r in red), 
                    j (y in yes), w
         
+        IMPORTANT: For the letter "e" in words like "went", "send", "get", "tell", use the short "i" sound (ɪ) as in "sit" rather than the "e" sound.
+        
         Examples:
         - "seat" would be [{"ipa": "s", "display": "s"}, {"ipa": "i", "display": "ea"}, {"ipa": "t", "display": "t"}]
         - "loved" would be [{"ipa": "l", "display": "l"}, {"ipa": "ʌ", "display": "o"}, {"ipa": "v", "display": "v"}, {"ipa": "d", "display": "ed"}]
         - "Lily" would be [{"ipa": "l", "display": "L"}, {"ipa": "ɪ", "display": "i"}, {"ipa": "l", "display": "l"}, {"ipa": "i", "display": "y"}]
         - "hello" would be [{"ipa": "h", "display": "h"}, {"ipa": "ə", "display": "e"}, {"ipa": "l", "display": "l"}, {"ipa": "oʊ", "display": "lo"}]
         - "the" would be [{"ipa": "ð", "display": "th"}, {"ipa": "ə", "display": "e"}]
+        - "went" would be [{"ipa": "w", "display": "w"}, {"ipa": "ɪ", "display": "e"}, {"ipa": "n", "display": "n"}, {"ipa": "t", "display": "t"}]
         
         The "display" field should always contain the original English letter(s) from the word that make that sound.
         Do not add any extra characters to the phonemes.
