@@ -24,25 +24,29 @@ if (!fs.existsSync(ICONS_DIR)) {
   fs.mkdirSync(ICONS_DIR, { recursive: true });
 }
 
-// Create SVG from PNG
+// Create SVG that embeds the PNG directly - preserving all colors
 async function convertPngToSvg(inputFile, outputFile, options = {}) {
-  console.log(`Converting ${inputFile} to SVG ${outputFile}`);
+  console.log(`Creating color-preserving SVG wrapper for ${inputFile} at ${outputFile}`);
   
   try {
-    const potraceOptions = {
-      ...options,
-      threshold: options.threshold || 180,
-      background: '#00000000', // transparent
-      color: 'auto',
-      optTolerance: 0.2,
-      turdSize: 0  // Minimum size of shapes to ignore
-    };
+    // Get dimensions of the image
+    const metadata = await sharp(inputFile).metadata();
+    const { width, height } = metadata;
     
-    const svg = await trace(inputFile, potraceOptions);
-    fs.writeFileSync(outputFile, svg);
-    console.log(`SVG created at ${outputFile}`);
+    // Convert PNG to base64 for embedding
+    const imageBuffer = fs.readFileSync(inputFile);
+    const base64Image = imageBuffer.toString('base64');
+    
+    // Create SVG with embedded PNG image (preserves all colors exactly)
+    const svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <image width="${width}" height="${height}" xlink:href="data:image/png;base64,${base64Image}"/>
+</svg>`;
+    
+    fs.writeFileSync(outputFile, svgContent);
+    console.log(`Color-preserving SVG created at ${outputFile}`);
   } catch (error) {
-    console.error(`Error converting to SVG: ${error.message}`);
+    console.error(`Error creating color SVG: ${error.message}`);
   }
 }
 
