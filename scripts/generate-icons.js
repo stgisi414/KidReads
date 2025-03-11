@@ -46,29 +46,16 @@ async function convertPngToSvg(inputFile, outputFile, options = {}) {
   }
 }
 
-// Generate favicon.ico
+// Generate favicon.ico - not using sharp since it doesn't support .ico output directly
 async function generateFaviconIco() {
   try {
-    const sizes = [16, 32, 48];
-    const faviconPath = path.join(PUBLIC_DIR, 'favicon.ico');
-    
-    console.log('Generating favicon.ico...');
-    
-    const buffers = await Promise.all(sizes.map(async (size) => {
-      return await sharp(SOURCE_LOGO)
-        .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-        .toFormat('png')
-        .toBuffer();
-    }));
-    
-    const ico = await sharp(buffers[0])
-      .toFormat('ico')
-      .toBuffer();
-    
-    fs.writeFileSync(faviconPath, ico);
-    console.log(`Favicon created at ${faviconPath}`);
+    // Instead of trying to create an .ico file, we'll use the PNG files
+    // Modern browsers support PNG favicons, so we'll rely on those
+    // The HTML already references both SVG and PNG favicons
+    console.log('Note: Skipping favicon.ico generation as modern browsers support PNG/SVG favicons');
+    console.log('favicon.ico generation is not supported directly by Sharp');
   } catch (error) {
-    console.error(`Error generating favicon.ico: ${error.message}`);
+    console.error(`Error with favicon handling: ${error.message}`);
   }
 }
 
@@ -182,10 +169,58 @@ function createWebManifest() {
   console.log('Web Manifest created');
 }
 
+// Clean up any existing icons
+function cleanupOldIcons() {
+  console.log('Cleaning up old icons...');
+  
+  // Clean up icons directory
+  if (fs.existsSync(ICONS_DIR)) {
+    const files = fs.readdirSync(ICONS_DIR);
+    let cleaned = 0;
+    
+    for (const file of files) {
+      try {
+        const filePath = path.join(ICONS_DIR, file);
+        if (fs.lstatSync(filePath).isFile()) {
+          fs.unlinkSync(filePath);
+          cleaned++;
+        }
+      } catch (error) {
+        console.error(`Error deleting file: ${error.message}`);
+      }
+    }
+    
+    console.log(`Cleaned up ${cleaned} old icon files`);
+  }
+  
+  // Clean up root icon files
+  const rootIconFiles = [
+    'favicon.ico',
+    'apple-touch-icon.png',
+    'apple-touch-icon-precomposed.png',
+    'logo.png'
+  ];
+  
+  for (const file of rootIconFiles) {
+    const filePath = path.join(PUBLIC_DIR, file);
+    if (fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+        console.log(`Removed ${filePath}`);
+      } catch (error) {
+        console.error(`Error deleting ${filePath}: ${error.message}`);
+      }
+    }
+  }
+}
+
 // Run all the functions
 async function main() {
   try {
     console.log('Starting icon generation...');
+    
+    // Clean up old icons first
+    cleanupOldIcons();
     
     // Copy the source logo to the public directory
     const publicLogoPath = path.join(PUBLIC_DIR, 'logo.png');

@@ -1,7 +1,0 @@
-For production, we would need to convert the SVG files to PNG 
-at the following sizes:
-- icon-192x192.png
-- icon-512x512.png
-
-This would be done using a tool like ImageMagick or similar.
-For now, we're using SVG directly which works on most modern browsers.
