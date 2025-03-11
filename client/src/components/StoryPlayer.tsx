@@ -1091,8 +1091,71 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         const googleVoiceId = ELEVENLABS_TO_GOOGLE_VOICE_MAP[voiceId] || "en-US-Wavenet-F";
         
         // Play phoneme with Google TTS, using IPA for pronunciation but displaying English letters
-        // Pass both the IPA symbol and the display representation to ensure Google TTS understands it
-        const formattedPhoneme = `<speak><break time="200ms"/><phoneme alphabet="ipa" ph="${currentPhoneme.text}">${currentPhoneme.display}</phoneme><break time="200ms"/></speak>`;
+        // Map special phoneme cases that Google TTS struggles with
+        let ipaPhoneme = currentPhoneme.text;
+        let displayText = currentPhoneme.display;
+        
+        // Special handling for "th" phonemes (both voiced and unvoiced)
+        if (currentPhoneme.display === "th") {
+          // θ is the unvoiced "th" as in "thin", ð is the voiced "th" as in "the"
+          if (currentPhoneme.text === "θ" || currentPhoneme.text === "ð") {
+            console.log(`Special handling for "th" phoneme: ${currentPhoneme.text}`);
+            
+            // For Google TTS, we need to make sure it recognizes this is a "th" sound
+            // by using a specific pattern that works better
+            if (currentPhoneme.text === "θ") {
+              // Unvoiced th as in "thin"
+              displayText = "th";
+              // Use explicit SSML with "thin" as example word
+              const specialFormattedPhoneme = `<speak><break time="200ms"/><phoneme alphabet="ipa" ph="θ">th</phoneme> as in thin<break time="200ms"/></speak>`;
+              
+              // Pass the special formatted SSML directly
+              await googleTTSSpeak(specialFormattedPhoneme, { 
+                voiceId: googleVoiceId,
+                languageCode: "en-US",
+                useIPAPhonemes: true
+              });
+              continue; // Skip the regular processing below
+            } else {
+              // Voiced th as in "the"
+              displayText = "th";
+              // Use explicit SSML with "the" as example word
+              const specialFormattedPhoneme = `<speak><break time="200ms"/><phoneme alphabet="ipa" ph="ð">th</phoneme> as in the<break time="200ms"/></speak>`;
+              
+              // Pass the special formatted SSML directly
+              await googleTTSSpeak(specialFormattedPhoneme, { 
+                voiceId: googleVoiceId,
+                languageCode: "en-US",
+                useIPAPhonemes: true
+              });
+              continue; // Skip the regular processing below
+            }
+          }
+        }
+        
+        // Handle other special digraphs that might cause issues
+        if (currentPhoneme.display === "sh" && currentPhoneme.text === "ʃ") {
+          const specialFormattedPhoneme = `<speak><break time="200ms"/><phoneme alphabet="ipa" ph="ʃ">sh</phoneme> as in ship<break time="200ms"/></speak>`;
+          await googleTTSSpeak(specialFormattedPhoneme, { 
+            voiceId: googleVoiceId,
+            languageCode: "en-US",
+            useIPAPhonemes: true
+          });
+          continue;
+        }
+        
+        if (currentPhoneme.display === "ch" && currentPhoneme.text === "tʃ") {
+          const specialFormattedPhoneme = `<speak><break time="200ms"/><phoneme alphabet="ipa" ph="tʃ">ch</phoneme> as in chair<break time="200ms"/></speak>`;
+          await googleTTSSpeak(specialFormattedPhoneme, { 
+            voiceId: googleVoiceId,
+            languageCode: "en-US",
+            useIPAPhonemes: true
+          });
+          continue;
+        }
+        
+        // Standard case - format the phoneme normally
+        const formattedPhoneme = `<speak><break time="200ms"/><phoneme alphabet="ipa" ph="${ipaPhoneme}">${displayText}</phoneme><break time="200ms"/></speak>`;
         
         // Pass the formatted SSML directly to avoid double formatting
         await googleTTSSpeak(formattedPhoneme, { 
