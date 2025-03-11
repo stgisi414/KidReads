@@ -59,8 +59,15 @@ export const useGoogleTTS = () => {
     // Format text with IPA phoneme tags if needed
     let formattedText = text;
 
+    // Check if the text is already wrapped in <speak> tags
+    const isAlreadyFormattedAsSsml = text.trim().startsWith('<speak>') && text.trim().endsWith('</speak>');
+
     // Check if this is a phoneme that should be wrapped in SSML
-    if (options.useIPAPhonemes && isSinglePhoneme(text)) {
+    if (isAlreadyFormattedAsSsml) {
+      // Text is already properly formatted as SSML, use it as is
+      console.log(`Text already contains SSML formatting, using as is`);
+      formattedText = text;
+    } else if (options.useIPAPhonemes && isSinglePhoneme(text)) {
       console.log(`Converting phoneme "${text}" to SSML format for Google TTS`);
       formattedText = `<speak>${wrapGoogleIPAInSSML(text.trim())}</speak>`;
     } else if (options.useIPAPhonemes) {

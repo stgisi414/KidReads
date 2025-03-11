@@ -647,7 +647,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             
             // Debug log all phoneme objects created
             console.log(`Phoneme objects created:`, 
-              phonemeObjects.map(p => `${p.display}(${p.text})`).join(', ')
+              phonemeObjects.map((p: PhonemeObject) => `${p.display}(${p.text})`).join(', ')
             );
             
             // Add each phoneme to the group's collection
@@ -1026,11 +1026,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         const googleVoiceId = ELEVENLABS_TO_GOOGLE_VOICE_MAP[voiceId] || "en-US-Wavenet-F";
         
         // Play phoneme with Google TTS, using IPA for pronunciation but displaying English letters
-        // The text property contains the IPA symbol which we'll use for accurate pronunciation 
-        await googleTTSSpeak(currentPhoneme.text, { 
+        // Pass both the IPA symbol and the display representation to ensure Google TTS understands it
+        const formattedPhoneme = `<speak><break time="200ms"/><phoneme alphabet="ipa" ph="${currentPhoneme.text}">${currentPhoneme.display}</phoneme><break time="200ms"/></speak>`;
+        
+        // Pass the formatted SSML directly to avoid double formatting
+        await googleTTSSpeak(formattedPhoneme, { 
           voiceId: googleVoiceId,
           languageCode: "en-US",
-          useIPAPhonemes: true, // Enable IPA phoneme formatting
+          useIPAPhonemes: true, // Enable SSML processing 
         });
         
         // Slightly longer delay between phonemes for clarity
