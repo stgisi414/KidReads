@@ -6,7 +6,6 @@ import VoiceInput from "@/components/VoiceInput";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoImage from "../assets/logo.png";
 import type { Story } from "@shared/schema";
 import BackgroundSlider from "@/components/BackgroundSlider";
 import SpeechBubble from "@/components/SpeechBubble";
@@ -68,8 +67,7 @@ export default function Home() {
         {stories && stories.length > 0 && (
           <BackgroundSlider 
             stories={stories}
-            accentColor={accentColor}
-            onColorChange={setAccentColor}
+            onAccentColorChange={setAccentColor}
           />
         )}
       </div>
@@ -83,7 +81,16 @@ export default function Home() {
           )}
 
           <div className="flex items-center justify-center gap-4 mb-6">
-            <img src={logoImage} alt="KidReads Logo" className="w-48 h-48 object-contain" />
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              className="w-48 h-48 object-contain" 
+              aria-label="KidReads Logo"
+            >
+              <source src="/kidreads.mp4" type="video/mp4" />
+            </video>
             <SpeechBubble text="What would you like to read about?" />
           </div>
           <h1 className="text-4xl font-bold mb-2 sparkle-text">KidReads</h1>
