@@ -17,7 +17,7 @@ const configuration = {
   appShortName: 'KidReads',
   appDescription: 'An interactive read-along app for kids that provides engaging and adaptive storytelling',
   background: '#ffffff',
-  theme_color: '#4f46e5',
+  theme_color: '#55A5C4',
   lang: 'en-US',
   start_url: '/',
   display: 'standalone',
