@@ -622,15 +622,23 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       for (let i = 0; i < words.length; i++) {
         // Support multi-word phrases by splitting the word group
         const wordGroup = words[i];
-        const cleanWordGroup = wordGroup.replace(/[.,!?]$/, '').toLowerCase(); // Remove punctuation and lowercase
+        
+        // Handle punctuation properly for lookup
+        // First clean the word for dictionary lookup by removing punctuation anywhere
+        const cleanWordGroup = wordGroup.replace(/[.,!?]/g, ' ').toLowerCase().trim();
         
         // Split multiple words in a group to handle phoneme lookup
-        const individualWords = cleanWordGroup.split(/\s+/);
+        const individualWords = cleanWordGroup.split(/\s+/).filter(word => word.length > 0);
         const allPhonemesForGroup: PhonemeObject[] = [];
         let allWordsHavePhonemes = true;
         
+        console.log(`Processing word group: "${wordGroup}" -> cleaned to: "${cleanWordGroup}" -> words: [${individualWords.join(', ')}]`);
+        
         // Process each individual word in the group
         for (const individualWord of individualWords) {
+          // Skip empty words (can happen with extra spaces)
+          if (!individualWord) continue;
+          
           // Debug log each word to identify potential phoneme mapping issues
           console.log(`Looking up phoneme data for word: "${individualWord}"`);
           
@@ -660,7 +668,39 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           }
         }
         
-        if (allWordsHavePhonemes && allPhonemesForGroup.length > 0) {
+        // Handle the case where there are commas in the word group
+        // If we have words with commas like "big, blue", we need to handle the display differently
+        if (words[i].includes(',') && individualWords.length > 1) {
+          console.log(`Special handling for group with commas: "${words[i]}"`);
+          
+          if (allWordsHavePhonemes && allPhonemesForGroup.length > 0) {
+            // All words in the group have phonemes
+            console.log(`✅ Added phoneme group for "${words[i]}" with ${allPhonemesForGroup.length} phonemes and comma handling`);
+            
+            // Add the phoneme group with special handling for comma display
+            newPhonemeGroups.push({
+              text: words[i], // Keep original word with punctuation
+              words: [words[i]],
+              startIndex: i,
+              phonemes: allPhonemesForGroup
+            });
+          } else {
+            // Fallback for words with commas that don't have proper phoneme data
+            console.log(`⚠️ Using fallback for word group with commas: "${words[i]}"`);
+            newPhonemeGroups.push({
+              text: words[i],
+              words: [words[i]],
+              startIndex: i,
+              phonemes: [{
+                text: words[i],
+                display: words[i], // Add the display property
+                phonemes: [words[i]]
+              }]
+            });
+          }
+        }
+        // Standard case - no commas or special handling needed
+        else if (allWordsHavePhonemes && allPhonemesForGroup.length > 0) {
           // All words in the group have phonemes
           console.log(`✅ Added phoneme group for "${words[i]}" with ${allPhonemesForGroup.length} phonemes`);
           newPhonemeGroups.push({
@@ -1000,6 +1040,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     setIsLiked(false); // Reset like state
   };
   
+  // Helper function to check if a phoneme object represents punctuation or a comma
+  const isPunctuationPhoneme = (phoneme: PhonemeObject): boolean => {
+    // Check if this is just a punctuation character that should be skipped for pronunciation
+    return /^[.,!?;:]$/.test(phoneme.text) || phoneme.text === 'comma' || phoneme.text === ',' || 
+           phoneme.display === ',' || phoneme.display === '.' || 
+           phoneme.display === '!' || phoneme.display === '?';
+  };
+
   // Function to read individual phonemes with proper highlighting using IPA phonemes
   const phonemePlayback = async (word: WordGroup, voiceId: string) => {
     if (!word.phonemes || word.phonemes.length === 0) return;
@@ -1012,14 +1060,31 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       // Add a slight pause between whole word and phoneme-by-phoneme reading
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Check if all phonemes in this word are valid (not just punctuation)
+      const validPhonemes = word.phonemes.filter(phoneme => !isPunctuationPhoneme(phoneme));
+      if (validPhonemes.length === 0) {
+        console.log('No valid phonemes to pronounce in this word, skipping phoneme breakdown');
+        return;
+      }
+      
+      // Log the valid phonemes we'll be pronouncing
+      console.log(`Word has ${validPhonemes.length} valid phonemes for pronunciation: ${validPhonemes.map(p => p.display).join(', ')}`);
+      
       // Then play and highlight each phoneme individually using Google TTS
       for (let i = 0; i < word.phonemes.length; i++) {
+        const currentPhoneme = word.phonemes[i];
+        
+        // Skip punctuation phonemes
+        if (isPunctuationPhoneme(currentPhoneme)) {
+          console.log(`Skipping punctuation phoneme: "${currentPhoneme.text}" / "${currentPhoneme.display}"`);
+          continue;
+        }
+        
         // Update the current phoneme index to highlight the appropriate phoneme
         setCurrentPhonemeIndex(i);
         
         // Send ONLY the current phoneme to Google TTS, using IPA phoneme tags
-        const currentPhoneme = word.phonemes[i];
-        console.log(`Playing individual phoneme: "${currentPhoneme.text}" using Google TTS with IPA`);
+        console.log(`Playing individual phoneme: "${currentPhoneme.text}" using Google TTS with IPA, display: "${currentPhoneme.display}"`);
         
         // Map ElevenLabs voice ID to Google voice
         // Default to a standard voice if no mapping exists
