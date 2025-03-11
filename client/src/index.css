@@ -20,8 +20,9 @@
 
 /* Add sparkle animation */
 @keyframes sparkle {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .sparkle-text {
@@ -32,7 +33,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: sparkle 3s linear infinite;
+  animation: sparkle 3s ease infinite;
 }
 
 /* Add scroll animation */
@@ -76,13 +77,15 @@
 
 /* Sparkle button styling */
 .sparkle-button {
-  background-image: linear-gradient(90deg, #4CAF50 0%, #2196F3 25%, #9C27B0 50%, #E91E63 75%, #4CAF50 100%);
+  position: relative;
+  background: linear-gradient(90deg, #4CAF50 0%, #2196F3 25%, #9C27B0 50%, #E91E63 75%, #4CAF50 100%);
   background-size: 200% auto;
   color: white;
   text-shadow: 0px 1px 2px rgba(0,0,0,0.2);
   border-radius: 8px;
-  animation: sparkle 3s linear infinite;
-  transition: all 0.3s ease;
+  animation: sparkle 3s ease infinite;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 1;
 }
 
 .sparkle-button:hover {
