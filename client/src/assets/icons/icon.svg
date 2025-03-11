@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="256" fill="#4f46e5"/>
+  
+  <!-- Book Shape -->
+  <path d="M156 146C156 135.507 164.507 127 175 127H337C347.493 127 356 135.507 356 146V366C356 376.493 347.493 385 337 385H175C164.507 385 156 376.493 156 366V146Z" fill="white"/>
+  
+  <!-- Book Pages Detail -->
+  <path d="M176 146C176 146.552 175.552 147 175 147C174.448 147 174 146.552 174 146C174 145.448 174.448 145 175 145C175.552 145 176 145.448 176 146Z" fill="#E5E7EB"/>
+  <path d="M176 366C176 366.552 175.552 367 175 367C174.448 367 174 366.552 174 366C174 365.448 174.448 365 175 365C175.552 365 176 365.448 176 366Z" fill="#E5E7EB"/>
+  <path d="M338 146C338 146.552 337.552 147 337 147C336.448 147 336 146.552 336 146C336 145.448 336.448 145 337 145C337.552 145 338 145.448 338 146Z" fill="#E5E7EB"/>
+  <path d="M338 366C338 366.552 337.552 367 337 367C336.448 367 336 366.552 336 366C336 365.448 336.448 365 337 365C337.552 365 338 365.448 338 366Z" fill="#E5E7EB"/>
+  
+  <!-- Book Lines -->
+  <rect x="176" y="177" width="160" height="10" rx="5" fill="#E5E7EB"/>
+  <rect x="176" y="207" width="160" height="10" rx="5" fill="#E5E7EB"/>
+  <rect x="176" y="237" width="160" height="10" rx="5" fill="#E5E7EB"/>
+  <rect x="176" y="267" width="160" height="10" rx="5" fill="#E5E7EB"/>
+  <rect x="176" y="297" width="160" height="10" rx="5" fill="#E5E7EB"/>
+  <rect x="176" y="327" width="100" height="10" rx="5" fill="#E5E7EB"/>
+  
+  <!-- Sound Wave Icons (representing speech) -->
+  <path d="M397 256C397 270.359 385.359 282 371 282C356.641 282 345 270.359 345 256C345 241.641 356.641 230 371 230C385.359 230 397 241.641 397 256Z" fill="#FEF3C7"/>
+  <path d="M371 242V270M359 246V266M383 246V266" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Microphone Icon (representing speech recognition) -->
+  <path d="M115 256C115 270.359 126.641 282 141 282C155.359 282 167 270.359 167 256C167 241.641 155.359 230 141 230C126.641 230 115 241.641 115 256Z" fill="#FEF3C7"/>
+  <path d="M141 242V270M129 256H153" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
