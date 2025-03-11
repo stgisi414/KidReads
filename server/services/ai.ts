@@ -460,7 +460,7 @@ export interface PhonemeMapping {
 }
 
 export async function getPhonemesBreakdown(text: string): Promise<Record<string, PhonemeMapping[]>> {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
   
   const prompt = {
     contents: [{
