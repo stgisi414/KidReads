@@ -178,10 +178,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`Processing text for phoneme breakdown: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
-      const phonemes = await getPhonemesBreakdown(text);
       
-      console.log(`Phoneme breakdown produced entries for ${Object.keys(phonemes).length} words`);
-      res.json({ phonemes });
+      // Get phoneme breakdown with both IPA and display text
+      const phonemeMappings = await getPhonemesBreakdown(text);
+      
+      console.log(`Phoneme breakdown produced entries for ${Object.keys(phonemeMappings).length} words`);
+      
+      // Return the phoneme mappings containing both IPA and display representations
+      res.json({ phonemes: phonemeMappings });
     } catch (error) {
       console.error('Error in phoneme breakdown:', error);
       res.status(500).json({ 

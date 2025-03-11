@@ -620,7 +620,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             const phonemes = phonemeData[individualWord];
             
             // Create phoneme objects for the word using both IPA and display text
-            const phonemeObjects = phonemes.map((phoneme: PhonemeMapping) => ({
+            const phonemeObjects = phonemes.map((phoneme: any) => ({
               text: phoneme.ipa, // The IPA symbol
               display: phoneme.display, // The English letter representation
               phonemes: [phoneme.ipa] // Keep for backward compatibility
@@ -653,6 +653,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
             startIndex: i,
             phonemes: [{
               text: words[i],
+              display: words[i], // Add the display property
               phonemes: [words[i]]
             }]
           });
@@ -945,7 +946,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         // Default to a standard voice if no mapping exists
         const googleVoiceId = ELEVENLABS_TO_GOOGLE_VOICE_MAP[voiceId] || "en-US-Wavenet-F";
         
-        // Play phoneme with Google TTS, enabling IPA phoneme formatting
+        // Play phoneme with Google TTS, using IPA for pronunciation but displaying English letters
+        // The text property contains the IPA symbol which we'll use for accurate pronunciation 
         await googleTTSSpeak(currentPhoneme.text, { 
           voiceId: googleVoiceId,
           languageCode: "en-US",
@@ -1255,7 +1257,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {phoneme.text}
+                        {phoneme.display || phoneme.text}
                       </span>
                     ))}
                   </div>
