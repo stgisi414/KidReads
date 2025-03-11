@@ -576,99 +576,34 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
     Cookies.set('preferredVoice', selectedVoice, { expires: 365 }); // Expires in 1 year
   }, [selectedVoice]);
 
-  // Phoneme cache to store previously fetched phoneme data
-  const [phonemeCache, setPhonemeCache] = useState<Record<string, Record<string, any>>>({});
-  const [isLoadingPhonemes, setIsLoadingPhonemes] = useState<boolean>(false);
-  const [disablePhonemeAPI, setDisablePhonemeAPI] = useState<boolean>(false);
-  
-  // Get IPA phoneme breakdowns for words in Phoneme mode with caching and optimization
+  // Get IPA phoneme breakdowns for words in Phoneme mode
   const fetchPhonemeGroups = useCallback(async () => {
     if (!story.content) return;
     
-    // If API calls are disabled, only use cached data
-    if (disablePhonemeAPI) {
-      console.log('Phoneme API calls are disabled. Using only cached data if available.');
-      
-      // Check if we already have a content hash in our cache
-      const contentHash = `${story.id}-${story.content.length}`;
-      const cachedPhonemeData = phonemeCache[contentHash];
-      
-      if (cachedPhonemeData) {
-        // Use cached data if available
-        return;
-      } else {
-        // If no cached data and API calls are disabled, show a message
-        toast({
-          title: "Phoneme API Disabled",
-          description: "API calls for phoneme breakdown are disabled. Enable them in settings to use phoneme mode for this story.",
-          variant: "default"
-        });
-        return;
-      }
-    }
-    
     try {
-      // Show loading state
-      setIsLoadingPhonemes(true);
+      console.log('Fetching IPA phoneme breakdowns for story content...');
+      const response = await fetch('/api/phoneme-breakdown', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: story.content }),
+      });
       
-      // Check if we already have a content hash in our cache to avoid duplicate API calls
-      const contentHash = `${story.id}-${story.content.length}`;
-      const cachedPhonemeData = phonemeCache[contentHash];
-      
-      let phonemeData: Record<string, any> = {};
-      
-      if (cachedPhonemeData) {
-        // Use cached data if available
-        console.log('Using cached phoneme breakdown data');
-        phonemeData = cachedPhonemeData;
-      } else {
-        // Fetch new data if not in cache
-        console.log('Fetching IPA phoneme breakdowns for story content...');
-        const response = await fetch('/api/phoneme-breakdown', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ text: story.content }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to get phoneme breakdowns');
-        }
-        
-        const data = await response.json();
-        phonemeData = data.phonemes || {};
-        
-        console.log('Received IPA phoneme breakdown:', phonemeData);
-        
-        // Store in cache for future use
-        setPhonemeCache(prev => {
-          const newCache = { ...prev };
-          newCache[contentHash] = phonemeData;
-          return newCache;
-        });
+      if (!response.ok) {
+        throw new Error('Failed to get phoneme breakdowns');
       }
       
-      // Optimize word group creation
-      const wordDictionary: Record<string, PhonemeObject[]> = {};
+      const data = await response.json();
+      const phonemeData = data.phonemes || {};
+      
+      console.log('Received IPA phoneme breakdown:', phonemeData);
+      
+      // Create word groups with phoneme breakdowns
       const newPhonemeGroups: WordGroup[] = [];
-      const words = story.words;
-      
-      // Pre-process individual words for faster lookups
-      for (const word in phonemeData) {
-        const cleanWord = word.toLowerCase().trim();
-        if (phonemeData[word]) {
-          const phonemes = phonemeData[word];
-          const phonemeObjects = phonemes.map((phoneme: any) => ({
-            text: phoneme.ipa, // The IPA symbol
-            display: phoneme.display, // The English letter representation 
-            phonemes: [phoneme.ipa] // Keep for backward compatibility
-          }));
-          wordDictionary[cleanWord] = phonemeObjects;
-        }
-      }
       
       // Process each word and its phonemes
+      const words = story.words;
       for (let i = 0; i < words.length; i++) {
         // Support multi-word phrases by splitting the word group
         const wordGroup = words[i];
@@ -681,21 +616,18 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         
         // Process each individual word in the group
         for (const individualWord of individualWords) {
-          if (wordDictionary[individualWord]) {
-            // Use the pre-processed phoneme objects from our dictionary
-            allPhonemesForGroup.push(...wordDictionary[individualWord]);
-          } else if (phonemeData[individualWord]) {
-            // Fallback to original phoneme data if not in dictionary
+          if (phonemeData[individualWord]) {
             const phonemes = phonemeData[individualWord];
-            const phonemeObjects = phonemes.map((phoneme: any) => ({
-              text: phoneme.ipa,
-              display: phoneme.display,
-              phonemes: [phoneme.ipa]
-            }));
-            allPhonemesForGroup.push(...phonemeObjects);
             
-            // Add to dictionary for future lookups
-            wordDictionary[individualWord] = phonemeObjects;
+            // Create phoneme objects for the word using both IPA and display text
+            const phonemeObjects = phonemes.map((phoneme: any) => ({
+              text: phoneme.ipa, // The IPA symbol
+              display: phoneme.display, // The English letter representation
+              phonemes: [phoneme.ipa] // Keep for backward compatibility
+            }));
+            
+            // Add each phoneme to the group's collection
+            allPhonemesForGroup.push(...phonemeObjects);
           } else {
             // Mark that this word group is incomplete
             allWordsHavePhonemes = false;
@@ -742,10 +674,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         description: "Failed to load phoneme breakdowns. Some features may be limited.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoadingPhonemes(false);
     }
-  }, [story, readingMode, toast, phonemeCache, disablePhonemeAPI]);
+  }, [story, readingMode, toast]);
 
 
 
@@ -1249,37 +1179,15 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           >
             🧑‍💼 Sentence Mode
           </Button>
-          <div className="flex flex-col items-center">
-            <Button
-              variant={readingMode === 'phoneme' ? 'default' : 'outline'}
-              size="sm"
-              className="text-lg px-4 py-2 whitespace-nowrap"
-              onClick={() => handleModeChange('phoneme')}
-              disabled={isActive || isSpeaking || isPending}
-            >
-              🔤 Phoneme Mode
-            </Button>
-            {readingMode === 'phoneme' && (
-              <div className="flex flex-col items-center text-xs mt-1">
-                {phonemeGroups.length > 0 && (
-                  <span className="text-green-600">✓ Phonemes loaded</span>
-                )}
-                <div className="flex items-center mt-1 gap-1">
-                  <span className={disablePhonemeAPI ? "text-red-500" : "text-green-600"}>
-                    API: {disablePhonemeAPI ? "Disabled" : "Enabled"}
-                  </span>
-                  <div 
-                    className={`w-8 h-4 rounded-full transition-colors duration-300 cursor-pointer ${disablePhonemeAPI ? 'bg-red-200' : 'bg-green-200'}`}
-                    onClick={() => setDisablePhonemeAPI(!disablePhonemeAPI)}
-                  >
-                    <div 
-                      className={`w-4 h-4 rounded-full transition-transform duration-300 transform ${disablePhonemeAPI ? 'bg-red-500 translate-x-4' : 'bg-green-500'}`}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <Button
+            variant={readingMode === 'phoneme' ? 'default' : 'outline'}
+            size="sm"
+            className="text-lg px-4 py-2 whitespace-nowrap"
+            onClick={() => handleModeChange('phoneme')}
+            disabled={isActive || isSpeaking || isPending}
+          >
+            🔤 Phoneme Mode
+          </Button>
         </div>
       </div>
 
@@ -1311,74 +1219,67 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
         {/* Story content display */}
         <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap mb-4">
-          {isLoadingPhonemes && readingMode === 'phoneme' ? (
-            <div className="flex flex-col items-center justify-center h-40 w-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-              <p className="mt-4 text-gray-600">Loading phonemes...</p>
-            </div>
-          ) : (
-            wordGroups.map((group, groupIndex) => {
-              // Adult mode - sentence display with individual word highlighting
-              if (readingMode === 'adult' && groupIndex === currentGroupIndex && group.sentences) {
-                return (
-                  <span key={group.startIndex} className="inline mx-1">
-                    {group.sentences?.map((sentence, wordIdx) => (
+          {wordGroups.map((group, groupIndex) => {
+            // Adult mode - sentence display with individual word highlighting
+            if (readingMode === 'adult' && groupIndex === currentGroupIndex && group.sentences) {
+              return (
+                <span key={group.startIndex} className="inline mx-1">
+                  {group.sentences?.map((sentence, wordIdx) => (
+                    <span
+                      key={`${group.startIndex}-${wordIdx}`}
+                      className={`inline-block mx-[2px] ${
+                        wordIdx === currentWordIndex && isSpeaking
+                          ? 'text-blue-600 font-semibold'
+                          : 'text-gray-600'
+                      }`}
+                    >
+                      {sentence.text}{wordIdx < (group.sentences?.length || 0) - 1 ? ' ' : ''}
+                    </span>
+                  ))}
+                </span>
+              );
+            } 
+            // Phoneme mode - word display with individual phoneme highlighting
+            else if (readingMode === 'phoneme' && groupIndex === currentGroupIndex && group.phonemes) {
+              return (
+                <span key={group.startIndex} className="inline-flex flex-col mx-1 border-2 border-blue-300 rounded-md p-2 bg-blue-50">
+                  {/* Display the whole word first */}
+                  <span className="font-bold text-2xl mb-2 text-blue-600">{group.text}</span>
+                  
+                  {/* Display phonemes below */}
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {group.phonemes.map((phoneme: PhonemeObject, phoneIdx) => (
                       <span
-                        key={`${group.startIndex}-${wordIdx}`}
-                        className={`inline-block mx-[2px] ${
-                          wordIdx === currentWordIndex && isSpeaking
-                            ? 'text-blue-600 font-semibold'
-                            : 'text-gray-600'
+                        key={`${group.startIndex}-ph-${phoneIdx}`}
+                        className={`inline-block px-2 py-1 rounded-md ${
+                          phoneIdx === currentPhonemeIndex && isSpeaking
+                            ? 'bg-green-200 text-green-800 font-bold'
+                            : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {sentence.text}{wordIdx < (group.sentences?.length || 0) - 1 ? ' ' : ''}
+                        {phoneme.display || phoneme.text}
                       </span>
                     ))}
-                  </span>
-                );
-              } 
-              // Phoneme mode - word display with individual phoneme highlighting
-              else if (readingMode === 'phoneme' && groupIndex === currentGroupIndex && group.phonemes) {
-                return (
-                  <span key={group.startIndex} className="inline-flex flex-col mx-1 border-2 border-blue-300 rounded-md p-2 bg-blue-50">
-                    {/* Display the whole word first */}
-                    <span className="font-bold text-2xl mb-2 text-blue-600">{group.text}</span>
-                    
-                    {/* Display phonemes below */}
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {group.phonemes.map((phoneme: PhonemeObject, phoneIdx) => (
-                        <span
-                          key={`${group.startIndex}-ph-${phoneIdx}`}
-                          className={`inline-block px-2 py-1 rounded-md ${
-                            phoneIdx === currentPhonemeIndex && isSpeaking
-                              ? 'bg-green-200 text-green-800 font-bold'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {phoneme.display || phoneme.text}
-                        </span>
-                      ))}
-                    </div>
-                  </span>
-                );
-              } 
-              // Child mode or non-current groups
-              else {
-                return (
-                  <span
-                    key={group.startIndex}
-                    className={`inline-block mx-1 ${
-                      groupIndex === currentGroupIndex
-                        ? 'text-blue-600 font-semibold'
-                        : 'text-gray-600'
-                    }`}
-                  >
-                    {group.text}
-                  </span>
-                );
-              }
-            })
-          )}
+                  </div>
+                </span>
+              );
+            } 
+            // Child mode or non-current groups
+            else {
+              return (
+                <span
+                  key={group.startIndex}
+                  className={`inline-block mx-1 ${
+                    groupIndex === currentGroupIndex
+                      ? 'text-blue-600 font-semibold'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  {group.text}
+                </span>
+              );
+            }
+          })}
         </div>
 
         {/* Read button */}
