@@ -1014,11 +1014,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       // Always refetch phoneme data to ensure it's fresh, even if we already have some
       const loadPhonemeData = async () => {
         try {
-          await fetchPhonemeGroups();
+          // fetchPhonemeGroups returns the new phoneme groups directly
+          const newPhonemeGroups = await fetchPhonemeGroups();
           
-          // After fetching is done, check if we have data and update the word groups
-          if (phonemeGroups.length > 0) {
-            setWordGroups(phonemeGroups);
+          // Check the returned groups instead of the state variable
+          if (newPhonemeGroups && newPhonemeGroups.length > 0) {
+            setWordGroups(newPhonemeGroups);
           } else {
             toast({
               title: "Missing Phoneme Data",
