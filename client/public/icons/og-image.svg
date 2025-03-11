@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#4f46e5"/>
+  
+  <!-- KidReads Logo/Icon -->
+  <g transform="translate(200, 115) scale(1.5)">
+    <!-- Book Shape -->
+    <path d="M156 146C156 135.507 164.507 127 175 127H337C347.493 127 356 135.507 356 146V366C356 376.493 347.493 385 337 385H175C164.507 385 156 376.493 156 366V146Z" fill="white"/>
+    
+    <!-- Book Lines -->
+    <rect x="176" y="177" width="160" height="10" rx="5" fill="#E5E7EB"/>
+    <rect x="176" y="207" width="160" height="10" rx="5" fill="#E5E7EB"/>
+    <rect x="176" y="237" width="160" height="10" rx="5" fill="#E5E7EB"/>
+    <rect x="176" y="267" width="160" height="10" rx="5" fill="#E5E7EB"/>
+    <rect x="176" y="297" width="160" height="10" rx="5" fill="#E5E7EB"/>
+    <rect x="176" y="327" width="100" height="10" rx="5" fill="#E5E7EB"/>
+    
+    <!-- Sound Wave Icons (representing speech) -->
+    <path d="M397 256C397 270.359 385.359 282 371 282C356.641 282 345 270.359 345 256C345 241.641 356.641 230 371 230C385.359 230 397 241.641 397 256Z" fill="#FEF3C7"/>
+    <path d="M371 242V270M359 246V266M383 246V266" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Microphone Icon (representing speech recognition) -->
+    <path d="M115 256C115 270.359 126.641 282 141 282C155.359 282 167 270.359 167 256C167 241.641 155.359 230 141 230C126.641 230 115 241.641 115 256Z" fill="#FEF3C7"/>
+    <path d="M141 242V270M129 256H153" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="600" y="500" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">KidReads</text>
+  <text x="600" y="570" font-family="Arial, sans-serif" font-size="36" fill="white" text-anchor="middle">Interactive Read-Along App for Kids</text>
+</svg>
