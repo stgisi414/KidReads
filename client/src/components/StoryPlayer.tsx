@@ -310,6 +310,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const [isPending, setIsPending] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Added loading state
+  const [isPhonemeLoading, setIsPhonemeLoading] = useState(false); // Specific loading state for phoneme mode
   const [readingMode, setReadingMode] = useState<'child' | 'adult' | 'phoneme'>('child');
   const [sentences, setSentences] = useState<WordGroup[]>([]);
   const [phonemeGroups, setPhonemeGroups] = useState<WordGroup[]>([]);
@@ -578,10 +579,14 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
   // Get IPA phoneme breakdowns for words in Phoneme mode
   const fetchPhonemeGroups = useCallback(async () => {
-    if (!story.content) return;
+    if (!story.content) {
+      console.log('Cannot fetch phoneme data: No story content available');
+      return;
+    }
+    
+    console.log('✅ Fetching IPA phoneme breakdowns for story content:', story.content.substring(0, 50) + '...');
     
     try {
-      console.log('Fetching IPA phoneme breakdowns for story content...');
       const response = await fetch('/api/phoneme-breakdown', {
         method: 'POST',
         headers: {
@@ -590,20 +595,30 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         body: JSON.stringify({ text: story.content }),
       });
       
+      console.log('API response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to get phoneme breakdowns');
+        const errorText = await response.text();
+        console.error('Error response from phoneme API:', errorText);
+        throw new Error(`Failed to get phoneme breakdowns: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
       const phonemeData = data.phonemes || {};
       
-      console.log('Received IPA phoneme breakdown:', phonemeData);
+      console.log('✅ Received IPA phoneme breakdown with', Object.keys(phonemeData).length, 'words');
+      
+      if (Object.keys(phonemeData).length === 0) {
+        console.warn('Warning: Received empty phoneme data from API');
+      }
       
       // Create word groups with phoneme breakdowns
       const newPhonemeGroups: WordGroup[] = [];
       
       // Process each word and its phonemes
       const words = story.words;
+      console.log('Processing', words.length, 'words for phoneme display');
+      
       for (let i = 0; i < words.length; i++) {
         // Support multi-word phrases by splitting the word group
         const wordGroup = words[i];
@@ -616,8 +631,12 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         
         // Process each individual word in the group
         for (const individualWord of individualWords) {
+          // Debug log each word to identify potential phoneme mapping issues
+          console.log(`Looking up phoneme data for word: "${individualWord}"`);
+          
           if (phonemeData[individualWord]) {
             const phonemes = phonemeData[individualWord];
+            console.log(`Found ${phonemes.length} phonemes for "${individualWord}"`);
             
             // Create phoneme objects for the word using both IPA and display text
             const phonemeObjects = phonemes.map((phoneme: any) => ({
@@ -626,18 +645,24 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
               phonemes: [phoneme.ipa] // Keep for backward compatibility
             }));
             
+            // Debug log all phoneme objects created
+            console.log(`Phoneme objects created:`, 
+              phonemeObjects.map(p => `${p.display}(${p.text})`).join(', ')
+            );
+            
             // Add each phoneme to the group's collection
             allPhonemesForGroup.push(...phonemeObjects);
           } else {
             // Mark that this word group is incomplete
             allWordsHavePhonemes = false;
-            console.log(`No IPA phoneme breakdown found for word: ${individualWord} in group: ${cleanWordGroup}`);
+            console.warn(`⚠️ No IPA phoneme breakdown found for word: "${individualWord}" in group: "${cleanWordGroup}"`);
             break;
           }
         }
         
         if (allWordsHavePhonemes && allPhonemesForGroup.length > 0) {
           // All words in the group have phonemes
+          console.log(`✅ Added phoneme group for "${words[i]}" with ${allPhonemesForGroup.length} phonemes`);
           newPhonemeGroups.push({
             text: words[i], // Keep original word with punctuation
             words: [words[i]],
@@ -646,7 +671,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
           });
         } else {
           // If any word in the group doesn't have phonemes, use the word group as is
-          console.log(`Using word group without phoneme breakdown: ${cleanWordGroup}`);
+          console.log(`⚠️ Using word group without phoneme breakdown: "${cleanWordGroup}"`);
           newPhonemeGroups.push({
             text: words[i],
             words: [words[i]],
@@ -660,26 +685,31 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
         }
       }
       
+      console.log(`✅ Created ${newPhonemeGroups.length} phoneme groups from ${words.length} words`);
       setPhonemeGroups(newPhonemeGroups);
       
       // If currently in phoneme mode, update the word groups
       if (readingMode === 'phoneme') {
+        console.log('Currently in phoneme mode, updating word groups');
         setWordGroups(newPhonemeGroups);
       }
       
+      return newPhonemeGroups;
+      
     } catch (error) {
-      console.error('Error fetching phoneme breakdowns:', error);
+      console.error('❌ Error fetching phoneme breakdowns:', error);
       toast({
         title: "Error",
         description: "Failed to load phoneme breakdowns. Some features may be limited.",
         variant: "destructive"
       });
+      return [];
     }
   }, [story, readingMode, toast]);
 
 
 
-  // Check for inappropriate content when story is loaded
+  // Check for inappropriate content and prefetch phoneme data when story is loaded
   useEffect(() => {
     if (containsForbiddenContent(story.topic) || containsForbiddenContent(story.content)) {
       toast({
@@ -689,7 +719,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
       });
     }
     
-    // Load phoneme breakdown data when story changes
+    // OPTIMIZATION: Immediately prefetch phoneme breakdown data when component mounts
+    // This way it's ready before the user switches to phoneme mode
     fetchPhonemeGroups();
   }, [story, toast, fetchPhonemeGroups]);
 
@@ -889,25 +920,73 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
   const handleModeChange = (mode: 'child' | 'adult' | 'phoneme') => {
     if (mode === readingMode) return;
 
-    setReadingMode(mode);
+    // Reset all state for the new mode immediately
     setCurrentGroupIndex(0);
     setCurrentWordIndex(0);
     setCurrentPhonemeIndex(0);
     setShowCelebration(false);
     setLastHeard("");
     setIsActive(false);
-
-    // Update word groups based on mode
+    
+    // For standard modes, update immediately
     if (mode === 'adult') {
+      setReadingMode(mode);
       setWordGroups(sentences);
-    } else if (mode === 'phoneme') {
-      // If phoneme groups not loaded yet, they will be loaded in the useEffect
-      if (phonemeGroups.length > 0) {
-        setWordGroups(phonemeGroups);
+      return;
+    } 
+    
+    if (mode === 'child') {
+      setReadingMode(mode);
+      
+      // Make sure we don't have any lingering phoneme groups in the view
+      const originalChildGroups = wordGroups.filter(group => 
+        !group.phonemes && !group.sentences
+      );
+      
+      if (originalChildGroups.length > 0) {
+        setWordGroups(originalChildGroups);
       }
-    } else {
-      // Default child mode
-      setWordGroups(wordGroups);
+      return;
+    }
+    
+    // Special handling for phoneme mode
+    if (mode === 'phoneme') {
+      // Set loading state before anything happens
+      setIsPhonemeLoading(true);
+      
+      // Update the mode first
+      setReadingMode('phoneme');
+      
+      // Always refetch phoneme data to ensure it's fresh, even if we already have some
+      const loadPhonemeData = async () => {
+        try {
+          await fetchPhonemeGroups();
+          
+          // After fetching is done, check if we have data and update the word groups
+          if (phonemeGroups.length > 0) {
+            setWordGroups(phonemeGroups);
+          } else {
+            toast({
+              title: "Missing Phoneme Data",
+              description: "Could not load phoneme data for this story.",
+              variant: "destructive"
+            });
+          }
+        } catch (error) {
+          console.error("Error initializing phoneme mode:", error);
+          toast({
+            title: "Error",
+            description: "Failed to initialize phoneme mode properly.",
+            variant: "destructive"
+          });
+        } finally {
+          // Always turn off loading state when done
+          setIsPhonemeLoading(false);
+        }
+      };
+      
+      // Start the loading process
+      loadPhonemeData();
     }
   };
 
@@ -1219,9 +1298,17 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
 
         {/* Story content display */}
         <div className="max-w-2xl mx-auto text-xl leading-relaxed break-words whitespace-pre-wrap mb-4">
-          {wordGroups.map((group, groupIndex) => {
-            // Adult mode - sentence display with individual word highlighting
+          {isPhonemeLoading && (
+            <div className="text-center p-4">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+              <p className="text-gray-600">Loading phoneme data...</p>
+            </div>
+          )}
+          
+          {!isPhonemeLoading && wordGroups.map((group, groupIndex) => {
+            // Determine which mode to render
             if (readingMode === 'adult' && groupIndex === currentGroupIndex && group.sentences) {
+              // Adult mode - sentence display with individual word highlighting
               return (
                 <span key={group.startIndex} className="inline mx-1">
                   {group.sentences?.map((sentence, wordIdx) => (
@@ -1239,8 +1326,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                 </span>
               );
             } 
-            // Phoneme mode - word display with individual phoneme highlighting
             else if (readingMode === 'phoneme' && groupIndex === currentGroupIndex && group.phonemes) {
+              // Phoneme mode - word display with individual phoneme highlighting
               return (
                 <span key={group.startIndex} className="inline-flex flex-col mx-1 border-2 border-blue-300 rounded-md p-2 bg-blue-50">
                   {/* Display the whole word first */}
@@ -1248,7 +1335,7 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                   
                   {/* Display phonemes below */}
                   <div className="flex flex-wrap gap-2 justify-center">
-                    {group.phonemes.map((phoneme: PhonemeObject, phoneIdx) => (
+                    {group.phonemes.map((phoneme, phoneIdx) => (
                       <span
                         key={`${group.startIndex}-ph-${phoneIdx}`}
                         className={`inline-block px-2 py-1 rounded-md ${
@@ -1264,8 +1351,8 @@ export default function StoryPlayer({ story }: StoryPlayerProps) {
                 </span>
               );
             } 
-            // Child mode or non-current groups
             else {
+              // Child mode or non-current groups
               return (
                 <span
                   key={group.startIndex}
