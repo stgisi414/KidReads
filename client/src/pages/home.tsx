@@ -98,7 +98,7 @@ export default function Home() {
         )}
       </div>
 
-      <Card className={`w-full max-w-lg mx-auto m-4 p-2 transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
+      <Card className={`bg-white w-full max-w-lg mx-auto m-4 p-2 transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'}`}>
         <div className="flex flex-col items-center justify-center text-center relative">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50 rounded-lg">
